@@ -1,3 +1,21 @@
+# API Settings
+API_V1_PREFIX=/api/v1
+DEBUG=True
+ENVIRONMENT=development
+
+# Stock Data API Keys
+ALPHA_VANTAGE_API_KEY=your_alpha_vantage_key_here
+YAHOO_FINANCE_API_KEY=your_yahoo_finance_key_here
+
+# Database Settings (for future use)
+DATABASE_URL=sqlite:///./stock_portfolio.db
+
+# Security
+SECRET_KEY=your_secret_key_here
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+# CORS Settings
+FRONTEND_URL=https://preview--alpha-ai-portfolio-pro.lovable.app
 
 # Engineering Tasks — Build AI Stock Backend MVP
 
