@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from typing import List
-from ....models.stock import StockIn, StockOut
-from ....services.screener import StockScreener
+from app.models.stock import StockIn, StockOut
+from app.services.screener import StockScreener
 
 router = APIRouter()
 
