@@ -24,6 +24,7 @@ wheels/
 venv/
 env/
 ENV/
+.venv/
 
 # IDE
 .idea/
@@ -34,9 +35,32 @@ ENV/
 # Environment variables
 .env
 .env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
 # Logs
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# React
+/app/frontend/build
+/app/frontend/.env.local
+/app/frontend/.env.development.local
+/app/frontend/.env.test.local
+/app/frontend/.env.production.local
+/app/frontend/coverage
+/app/frontend/.pnp
+/app/frontend/.pnp.js
 
 # Unit test / coverage reports
 htmlcov/
@@ -48,6 +72,7 @@ nosetests.xml
 coverage.xml
 *.cover
 .hypothesis/
+.pytest_cache/
 
 # Distribution / packaging
 .Python
@@ -66,4 +91,12 @@ var/
 wheels/
 *.egg-info/
 .installed.cfg
-*.egg 
+*.egg
+
+# Database
+*.sqlite3
+*.db
+
+# OS
+.DS_Store
+Thumbs.db 

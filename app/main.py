@@ -14,6 +14,7 @@ import logging
 from typing import Union
 from fastapi.exceptions import RequestValidationError
 from pydantic import ValidationError
+from app.api.endpoints import zerodha
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -60,6 +61,12 @@ app.include_router(
     api_router,
     prefix=settings.API_V1_STR,
     dependencies=[Depends(validate_api_key)]
+)
+
+app.include_router(
+    zerodha.router,
+    prefix="/api/v1/zerodha",
+    tags=["zerodha"]
 )
 
 @app.get("/")

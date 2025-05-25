@@ -1,3 +1,4 @@
+from typing import List
 from pydantic_settings import BaseSettings
 from functools import lru_cache
 import os
@@ -5,21 +6,33 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-class ProductionSettings(BaseSettings):
-    # API Settings
+class Settings(BaseSettings):
+    PROJECT_NAME: str = "ML Trading Dashboard"
+    VERSION: str = "1.0.0"
     API_V1_STR: str = "/api/v1"
-    PROJECT_NAME: str = "AI Stock Analysis"
+    ENVIRONMENT: str = "production"
     
     # Security
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key-here")
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
+    SECRET_KEY: str = "your-secret-key-here"  # Change in production
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
+    ALGORITHM: str = "HS256"
+    
+    # CORS
+    BACKEND_CORS_ORIGINS: List[str] = [
+        "http://localhost:3000",  # React dev server
+        "http://localhost:8000",  # FastAPI dev server
+        "https://your-production-domain.com"  # Add your production domain
+    ]
     
     # Database
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./app.db")
+    DATABASE_URL: str = "postgresql://user:password@localhost:5432/dbname"
     
-    # External APIs
-    ALPHA_VANTAGE_API_KEY: str = os.getenv("ALPHA_VANTAGE_API_KEY")
-    FINNHUB_API_KEY: str = os.getenv("FINNHUB_API_KEY")
+    # Rate Limiting
+    RATE_LIMIT_PER_MINUTE: int = 60
+    
+    # API Keys
+    ALPHA_VANTAGE_API_KEY: str = ""
+    NEWS_API_KEY: str = ""
     
     # Logging
     LOG_LEVEL: str = "INFO"
@@ -29,17 +42,12 @@ class ProductionSettings(BaseSettings):
     ENABLE_METRICS: bool = True
     METRICS_PORT: int = 9090
     
-    # CORS
-    BACKEND_CORS_ORIGINS: list = ["https://your-frontend-domain.com"]
-    
-    # Rate Limiting
-    RATE_LIMIT_PER_MINUTE: int = 60
-    
     class Config:
         case_sensitive = True
+        env_file = ".env"
 
 @lru_cache()
-def get_settings() -> ProductionSettings:
-    return ProductionSettings()
+def get_settings() -> Settings:
+    return Settings()
 
 settings = get_settings() 
