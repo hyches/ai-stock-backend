@@ -1,32 +1,133 @@
 from typing import Dict, List, Optional
 from datetime import datetime, timedelta
 import logging
-from kiteconnect import KiteConnect, KiteTicker
+import json
+import websockets
+import asyncio
 from app.core.config import settings
 from app.db.session import SessionLocal
 from app.models.zerodha import ZerodhaToken, PaperTrade
+from app.core.cache import redis_cache
+from app.services.market_data_service import MarketDataService
 
 logger = logging.getLogger(__name__)
 
 class ZerodhaService:
     def __init__(self):
-        self.kite = KiteConnect(api_key=settings.ZERODHA_API_KEY)
-        self.kws = None
-        self._setup_websocket()
+        self.api_key = settings.ZERODHA_API_KEY
+        self.api_secret = settings.ZERODHA_API_SECRET
+        self.ws_url = "wss://ws.kite.trade"
+        self.ws = None
+        self.connected = False
+        self.reconnect_attempts = 0
+        self.max_reconnect_attempts = 5
+        self.reconnect_delay = 1  # seconds
+        self.heartbeat_interval = 30  # seconds
+        self.message_queue = asyncio.Queue()
+        self.market_data_service = MarketDataService()
+        self.use_alternative_data = not (self.api_key and self.api_secret)
+        if not self.use_alternative_data:
+            self._setup_websocket()
 
-    def _setup_websocket(self):
-        """Setup WebSocket connection for real-time data"""
+    async def _setup_websocket(self):
+        """Setup WebSocket connection for MCP"""
+        while self.reconnect_attempts < self.max_reconnect_attempts:
+            try:
+                self.ws = await websockets.connect(self.ws_url)
+                self.connected = True
+                self.reconnect_attempts = 0
+                await self._authenticate()
+                await self._subscribe_to_default_instruments()
+                asyncio.create_task(self._start_heartbeat())
+                asyncio.create_task(self._process_message_queue())
+                break
+            except Exception as e:
+                logger.error(f"Error setting up WebSocket: {str(e)}")
+                self.reconnect_attempts += 1
+                await asyncio.sleep(self.reconnect_delay * self.reconnect_attempts)
+
+    async def _start_heartbeat(self):
+        """Start heartbeat mechanism"""
+        while self.connected:
+            try:
+                await self.ws.send(json.dumps({"type": "ping"}))
+                await asyncio.sleep(self.heartbeat_interval)
+            except Exception as e:
+                logger.error(f"Heartbeat error: {str(e)}")
+                await self._handle_connection_error()
+
+    async def _handle_connection_error(self):
+        """Handle connection errors"""
+        self.connected = False
+        if self.ws:
+            await self.ws.close()
+        await self._setup_websocket()
+
+    async def _process_message_queue(self):
+        """Process messages from queue"""
+        while self.connected:
+            try:
+                message = await self.message_queue.get()
+                await self._handle_message(message)
+                self.message_queue.task_done()
+            except Exception as e:
+                logger.error(f"Error processing message: {str(e)}")
+
+    async def _handle_message(self, message: Dict):
+        """Handle incoming WebSocket messages"""
         try:
-            self.kws = KiteTicker(settings.ZERODHA_API_KEY, self._get_access_token())
-            self.kws.on_ticks = self._on_ticks
-            self.kws.on_connect = self._on_connect
-            self.kws.on_close = self._on_close
-            self.kws.on_error = self._on_error
-            self.kws.connect(threaded=True)
+            if message.get("type") == "quote":
+                await self._handle_quote(message)
+            elif message.get("type") == "error":
+                await self._handle_error(message)
+            elif message.get("type") == "pong":
+                logger.debug("Received pong")
         except Exception as e:
-            logger.error(f"Error setting up WebSocket: {str(e)}")
+            logger.error(f"Error handling message: {str(e)}")
 
-    def _get_access_token(self) -> str:
+    async def _handle_quote(self, quote: Dict):
+        """Handle quote updates"""
+        try:
+            # Cache the latest quote
+            await redis_cache.set(
+                f"quote:{quote['instrument_token']}",
+                quote,
+                expire=60  # 1 minute
+            )
+        except Exception as e:
+            logger.error(f"Error handling quote: {str(e)}")
+
+    async def _handle_error(self, error: Dict):
+        """Handle error messages"""
+        logger.error(f"WebSocket error: {error}")
+        if error.get("code") in ["auth_failed", "token_expired"]:
+            await self._handle_connection_error()
+
+    async def _authenticate(self):
+        """Authenticate with MCP"""
+        auth_message = {
+            "type": "auth",
+            "api_key": self.api_key,
+            "api_secret": self.api_secret
+        }
+        await self.ws.send(json.dumps(auth_message))
+        response = await self.ws.recv()
+        auth_response = json.loads(response)
+        if auth_response.get("status") != "success":
+            raise Exception("MCP authentication failed")
+
+    async def _subscribe_to_default_instruments(self):
+        """Subscribe to default instruments"""
+        subscribe_message = {
+            "type": "subscribe",
+            "instruments": [
+                {"instrument_token": 256265, "type": "quote"},  # NIFTY 50
+                {"instrument_token": 260105, "type": "quote"}   # BANK NIFTY
+            ]
+        }
+        await self.ws.send(json.dumps(subscribe_message))
+
+    async def _get_access_token(self) -> str:
         """Get stored access token from database"""
         db = SessionLocal()
         try:
@@ -41,41 +142,32 @@ class ZerodhaService:
         """Check if token is expired"""
         return datetime.utcnow() >= token.expires_at
 
-    def _on_ticks(self, ws, ticks):
-        """Handle incoming ticks"""
-        logger.debug(f"Received ticks: {ticks}")
+    async def get_login_url(self) -> str:
+        """Get Zerodha login URL for MCP"""
+        return f"https://kite.trade/connect/login?api_key={self.api_key}"
 
-    def _on_connect(self, ws, response):
-        """Handle WebSocket connection"""
-        logger.info("WebSocket connected")
-        # Subscribe to default instruments
-        ws.subscribe([256265, 256265])  # Example: NIFTY 50 and BANK NIFTY
-
-    def _on_close(self, ws, code, reason):
-        """Handle WebSocket close"""
-        logger.info(f"WebSocket closed: {code} - {reason}")
-
-    def _on_error(self, ws, code, reason):
-        """Handle WebSocket error"""
-        logger.error(f"WebSocket error: {code} - {reason}")
-
-    def get_login_url(self) -> str:
-        """Get Zerodha login URL"""
-        return self.kite.login_url()
-
-    def generate_session(self, request_token: str) -> Dict:
+    async def generate_session(self, request_token: str) -> Dict:
         """Generate session using request token"""
         try:
-            data = self.kite.generate_session(
-                request_token,
-                api_secret=settings.ZERODHA_API_SECRET
-            )
+            # MCP uses a different authentication flow
+            auth_message = {
+                "type": "auth",
+                "api_key": self.api_key,
+                "api_secret": self.api_secret,
+                "request_token": request_token
+            }
+            await self.ws.send(json.dumps(auth_message))
+            response = await self.ws.recv()
+            session_data = json.loads(response)
             
+            if session_data.get("status") != "success":
+                raise Exception("Session generation failed")
+
             # Store token in database
             db = SessionLocal()
             try:
                 token = ZerodhaToken(
-                    access_token=data["access_token"],
+                    access_token=session_data["access_token"],
                     expires_at=datetime.utcnow() + timedelta(days=1)
                 )
                 db.add(token)
@@ -83,12 +175,12 @@ class ZerodhaService:
             finally:
                 db.close()
 
-            return data
+            return session_data
         except Exception as e:
             logger.error(f"Error generating session: {str(e)}")
             raise
 
-    def get_historical_data(
+    async def get_historical_data(
         self,
         instrument_token: int,
         from_date: datetime,
@@ -97,17 +189,102 @@ class ZerodhaService:
     ) -> List[Dict]:
         """Get historical OHLC data"""
         try:
-            return self.kite.historical_data(
-                instrument_token,
-                from_date,
-                to_date,
-                interval
-            )
+            if self.use_alternative_data:
+                # Get symbol from instrument token
+                symbol = await self._get_symbol_from_token(instrument_token)
+                return await self.market_data_service.get_historical_data(
+                    symbol,
+                    from_date,
+                    to_date,
+                    interval
+                )
+            else:
+                request = {
+                    "type": "historical",
+                    "instrument_token": instrument_token,
+                    "from": from_date.isoformat(),
+                    "to": to_date.isoformat(),
+                    "interval": interval
+                }
+                await self.ws.send(json.dumps(request))
+                response = await self.ws.recv()
+                return json.loads(response)["data"]
         except Exception as e:
             logger.error(f"Error fetching historical data: {str(e)}")
             raise
 
-    def place_paper_trade(
+    async def _get_symbol_from_token(self, instrument_token: int) -> str:
+        """Get symbol from instrument token"""
+        # This is a simplified mapping. In production, you'd want to maintain
+        # a proper mapping of tokens to symbols
+        token_to_symbol = {
+            256265: "NIFTY 50",
+            260105: "BANK NIFTY",
+            # Add more mappings as needed
+        }
+        return token_to_symbol.get(instrument_token, "NIFTY 50")
+
+    async def get_live_quote(self, symbol: str) -> Dict:
+        """Get live quote"""
+        try:
+            if self.use_alternative_data:
+                return await self.market_data_service.get_live_quote(symbol)
+            else:
+                # Get instrument token
+                instrument_token = await self._get_instrument_token(symbol)
+                if not instrument_token:
+                    raise Exception(f"Invalid symbol: {symbol}")
+
+                # Get from cache first
+                cache_key = f"quote:{instrument_token}"
+                cached_quote = await redis_cache.get(cache_key)
+                if cached_quote:
+                    return cached_quote
+
+                # Subscribe to quote
+                subscribe_message = {
+                    "type": "subscribe",
+                    "instruments": [
+                        {"instrument_token": instrument_token, "type": "quote"}
+                    ]
+                }
+                await self.ws.send(json.dumps(subscribe_message))
+
+                # Wait for quote
+                while True:
+                    message = await self.ws.recv()
+                    data = json.loads(message)
+                    if data.get("type") == "quote" and data.get("instrument_token") == instrument_token:
+                        quote = {
+                            "symbol": symbol,
+                            "last_price": data["last_price"],
+                            "change": data["change"],
+                            "change_percent": data["change_percent"],
+                            "volume": data["volume"],
+                            "high": data["high"],
+                            "low": data["low"],
+                            "open": data["open"],
+                            "previous_close": data["previous_close"],
+                            "timestamp": datetime.utcnow().isoformat()
+                        }
+                        await redis_cache.set(cache_key, quote, 60)  # Cache for 1 minute
+                        return quote
+        except Exception as e:
+            logger.error(f"Error getting live quote: {str(e)}")
+            raise
+
+    async def _get_instrument_token(self, symbol: str) -> Optional[int]:
+        """Get instrument token for symbol"""
+        # This is a simplified mapping. In production, you'd want to maintain
+        # a proper mapping of symbols to tokens
+        symbol_to_token = {
+            "NIFTY 50": 256265,
+            "BANK NIFTY": 260105,
+            # Add more mappings as needed
+        }
+        return symbol_to_token.get(symbol)
+
+    async def place_paper_trade(
         self,
         symbol: str,
         action: str,
@@ -134,7 +311,7 @@ class ZerodhaService:
         finally:
             db.close()
 
-    def get_paper_portfolio(self) -> List[Dict]:
+    async def get_paper_portfolio(self) -> List[Dict]:
         """Get paper trading portfolio"""
         db = SessionLocal()
         try:
@@ -143,7 +320,7 @@ class ZerodhaService:
         finally:
             db.close()
 
-    def calculate_pnl(self) -> Dict:
+    async def calculate_pnl(self) -> Dict:
         """Calculate paper trading PnL"""
         db = SessionLocal()
         try:

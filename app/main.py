@@ -14,13 +14,20 @@ from typing import Union
 from fastapi.exceptions import RequestValidationError
 from pydantic import ValidationError
 from app.api.endpoints import zerodha
+from app.middleware.error_handler import setup_error_handlers
+from sqlalchemy.orm import Session
+from app.core.config import settings
+from app.db.session import get_db
+from app.core.middleware import RequestLoggingMiddleware
+from app.core.middleware import ErrorHandlingMiddleware
+from app.core.middleware import MetricsMiddleware
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI(
-    title=settings.PROJECT_NAME,
+    title=settings.SERVER_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
 
@@ -55,6 +62,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Set up error handlers
+setup_error_handlers(app)
+
 # Include API router with API key validation
 app.include_router(
     api_router,
@@ -68,17 +78,47 @@ app.include_router(
     tags=["zerodha"]
 )
 
+# Add custom middleware
+app.add_middleware(RequestLoggingMiddleware)
+app.add_middleware(ErrorHandlingMiddleware)
+if settings.ENABLE_METRICS:
+    app.add_middleware(MetricsMiddleware)
+
 @app.get("/")
 async def root():
-    return {"message": "Welcome to AI Stock Analysis Platform"}
+    """Root endpoint"""
+    return {
+        "message": "Welcome to the Trading System API",
+        "version": "1.0.0",
+        "docs_url": "/docs",
+        "redoc_url": "/redoc"
+    }
 
-# Health check endpoint
 @app.get("/health")
 async def health_check():
+    """Health check endpoint"""
     return {
         "status": "healthy",
-        "version": settings.VERSION,
-        "environment": settings.ENVIRONMENT
+        "version": "1.0.0"
     }
+
+@app.get("/db-test")
+async def test_db(db: Session = Depends(get_db)):
+    """Test database connection"""
+    try:
+        # Try to execute a simple query
+        db.execute("SELECT 1")
+        return {"status": "Database connection successful"}
+    except Exception as e:
+        return {"status": "Database connection failed", "error": str(e)}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(
+        "app.main:app",
+        host=settings.SERVER_HOST,
+        port=settings.SERVER_PORT,
+        reload=True
+    )
 
 settings = Settings() 

@@ -4,6 +4,11 @@ import numpy as np
 from datetime import datetime, timedelta
 from app.services.zerodha_service import ZerodhaService
 from app.core.cache import redis_cache
+import ta
+from ta.trend import SMAIndicator, EMAIndicator, MACD
+from ta.momentum import RSIIndicator, StochasticOscillator
+from ta.volatility import BollingerBands
+from ta.volume import VolumeWeightedAveragePrice
 
 class TechnicalAnalysis:
     def __init__(self):
@@ -12,176 +17,286 @@ class TechnicalAnalysis:
 
     async def get_comprehensive_analysis(self, symbol: str, interval: str = "1d") -> Dict:
         """Get comprehensive technical analysis"""
-        return {
-            "trend_analysis": await self._analyze_trend(symbol, interval),
-            "momentum_indicators": await self._analyze_momentum(symbol, interval),
-            "volatility_indicators": await self._analyze_volatility(symbol, interval),
-            "volume_analysis": await self._analyze_volume(symbol, interval),
-            "support_resistance": await self._find_support_resistance(symbol, interval),
-            "pattern_recognition": await self._identify_patterns(symbol, interval),
-            "market_structure": await self._analyze_market_structure(symbol, interval)
-        }
+        try:
+            # Get historical data
+            end_date = datetime.utcnow()
+            start_date = end_date - timedelta(days=365)  # 1 year of data
+            data = await self.zerodha_service.get_historical_data(
+                symbol,
+                start_date,
+                end_date,
+                interval
+            )
+            
+            # Convert to DataFrame
+            df = pd.DataFrame(data)
+            df['date'] = pd.to_datetime(df['date'])
+            df.set_index('date', inplace=True)
 
-    async def _analyze_trend(self, symbol: str, interval: str) -> Dict:
+            return {
+                "trend_analysis": await self._analyze_trend(df),
+                "momentum_indicators": await self._analyze_momentum(df),
+                "volatility_indicators": await self._analyze_volatility(df),
+                "volume_analysis": await self._analyze_volume(df),
+                "support_resistance": await self._find_support_resistance(df),
+                "pattern_recognition": await self._identify_patterns(df),
+                "market_structure": await self._analyze_market_structure(df),
+                "vwap_analysis": await self._analyze_vwap(df)
+            }
+        except Exception as e:
+            logger.error(f"Error in comprehensive analysis: {str(e)}")
+            raise
+
+    async def _analyze_trend(self, df: pd.DataFrame) -> Dict:
         """Analyze price trends"""
         try:
-            ohlc_data = await self._get_ohlc_data(symbol, interval)
+            # Calculate moving averages
+            sma_20 = SMAIndicator(close=df['close'], window=20)
+            sma_50 = SMAIndicator(close=df['close'], window=50)
+            sma_200 = SMAIndicator(close=df['close'], window=200)
+            
+            # Calculate MACD
+            macd = MACD(close=df['close'])
             
             return {
-                "moving_averages": {
-                    "sma": self._calculate_sma(ohlc_data, [20, 50, 100, 200]),
-                    "ema": self._calculate_ema(ohlc_data, [20, 50, 100, 200]),
-                    "vwap": self._calculate_vwap(ohlc_data)
-                },
-                "trend_strength": {
-                    "adx": self._calculate_adx(ohlc_data),
-                    "trend_strength_index": self._calculate_trend_strength_index(ohlc_data),
-                    "ichimoku": self._calculate_ichimoku(ohlc_data)
-                },
-                "trend_direction": {
-                    "macd": self._calculate_macd(ohlc_data),
-                    "parabolic_sar": self._calculate_parabolic_sar(ohlc_data),
-                    "supertrend": self._calculate_supertrend(ohlc_data)
-                }
+                "sma_20": sma_20.sma_indicator().iloc[-1],
+                "sma_50": sma_50.sma_indicator().iloc[-1],
+                "sma_200": sma_200.sma_indicator().iloc[-1],
+                "macd": macd.macd().iloc[-1],
+                "macd_signal": macd.macd_signal().iloc[-1],
+                "macd_histogram": macd.macd_diff().iloc[-1],
+                "trend_strength": self._calculate_trend_strength(df),
+                "trend_direction": self._determine_trend_direction(df)
             }
         except Exception as e:
-            logger.error(f"Error analyzing trend: {str(e)}")
-            return {}
+            logger.error(f"Error in trend analysis: {str(e)}")
+            raise
 
-    async def _analyze_momentum(self, symbol: str, interval: str) -> Dict:
+    async def _analyze_momentum(self, df: pd.DataFrame) -> Dict:
         """Analyze momentum indicators"""
         try:
-            ohlc_data = await self._get_ohlc_data(symbol, interval)
+            # Calculate RSI
+            rsi = RSIIndicator(close=df['close'])
+            
+            # Calculate Stochastic Oscillator
+            stoch = StochasticOscillator(high=df['high'], low=df['low'], close=df['close'])
             
             return {
-                "oscillators": {
-                    "rsi": self._calculate_rsi(ohlc_data),
-                    "stochastic": self._calculate_stochastic(ohlc_data),
-                    "cci": self._calculate_cci(ohlc_data),
-                    "mfi": self._calculate_mfi(ohlc_data)
-                },
-                "momentum": {
-                    "roc": self._calculate_roc(ohlc_data),
-                    "momentum": self._calculate_momentum(ohlc_data),
-                    "williams_r": self._calculate_williams_r(ohlc_data)
-                },
-                "divergence": {
-                    "rsi_divergence": self._find_rsi_divergence(ohlc_data),
-                    "macd_divergence": self._find_macd_divergence(ohlc_data)
-                }
+                "rsi": rsi.rsi().iloc[-1],
+                "stoch_k": stoch.stoch().iloc[-1],
+                "stoch_d": stoch.stoch_signal().iloc[-1],
+                "momentum": self._calculate_momentum(df),
+                "overbought_oversold": self._check_overbought_oversold(df)
             }
         except Exception as e:
-            logger.error(f"Error analyzing momentum: {str(e)}")
-            return {}
+            logger.error(f"Error in momentum analysis: {str(e)}")
+            raise
 
-    async def _analyze_volatility(self, symbol: str, interval: str) -> Dict:
+    async def _analyze_volatility(self, df: pd.DataFrame) -> Dict:
         """Analyze volatility indicators"""
         try:
-            ohlc_data = await self._get_ohlc_data(symbol, interval)
+            # Calculate Bollinger Bands
+            bb = BollingerBands(close=df['close'])
+            
+            # Calculate ATR
+            atr = ta.volatility.AverageTrueRange(
+                high=df['high'],
+                low=df['low'],
+                close=df['close']
+            )
             
             return {
-                "volatility_indicators": {
-                    "bollinger_bands": self._calculate_bollinger_bands(ohlc_data),
-                    "atr": self._calculate_atr(ohlc_data),
-                    "keltner_channels": self._calculate_keltner_channels(ohlc_data)
-                },
-                "volatility_analysis": {
-                    "historical_volatility": self._calculate_historical_volatility(ohlc_data),
-                    "implied_volatility": self._calculate_implied_volatility(ohlc_data),
-                    "volatility_breakout": self._identify_volatility_breakout(ohlc_data)
-                }
+                "bb_upper": bb.bollinger_hband().iloc[-1],
+                "bb_middle": bb.bollinger_mavg().iloc[-1],
+                "bb_lower": bb.bollinger_lband().iloc[-1],
+                "bb_width": bb.bollinger_wband().iloc[-1],
+                "atr": atr.average_true_range().iloc[-1],
+                "volatility_ratio": self._calculate_volatility_ratio(df)
             }
         except Exception as e:
-            logger.error(f"Error analyzing volatility: {str(e)}")
-            return {}
+            logger.error(f"Error in volatility analysis: {str(e)}")
+            raise
 
-    async def _analyze_volume(self, symbol: str, interval: str) -> Dict:
-        """Analyze volume indicators"""
+    async def _analyze_volume(self, df: pd.DataFrame) -> Dict:
+        """Analyze volume patterns"""
         try:
-            ohlc_data = await self._get_ohlc_data(symbol, interval)
+            # Calculate VWAP
+            vwap = VolumeWeightedAveragePrice(
+                high=df['high'],
+                low=df['low'],
+                close=df['close'],
+                volume=df['volume']
+            )
             
             return {
-                "volume_indicators": {
-                    "obv": self._calculate_obv(ohlc_data),
-                    "vpt": self._calculate_vpt(ohlc_data),
-                    "cmf": self._calculate_cmf(ohlc_data)
-                },
-                "volume_analysis": {
-                    "volume_profile": self._calculate_volume_profile(ohlc_data),
-                    "volume_delta": self._calculate_volume_delta(ohlc_data),
-                    "volume_trend": self._analyze_volume_trend(ohlc_data)
-                }
+                "volume_sma": df['volume'].rolling(window=20).mean().iloc[-1],
+                "volume_ratio": df['volume'].iloc[-1] / df['volume'].rolling(window=20).mean().iloc[-1],
+                "vwap": vwap.volume_weighted_average_price().iloc[-1],
+                "volume_trend": self._analyze_volume_trend(df),
+                "volume_support_resistance": self._find_volume_support_resistance(df)
             }
         except Exception as e:
-            logger.error(f"Error analyzing volume: {str(e)}")
-            return {}
+            logger.error(f"Error in volume analysis: {str(e)}")
+            raise
 
-    async def _find_support_resistance(self, symbol: str, interval: str) -> Dict:
+    async def _analyze_vwap(self, df: pd.DataFrame) -> Dict:
+        """Analyze VWAP patterns"""
+        try:
+            vwap = VolumeWeightedAveragePrice(
+                high=df['high'],
+                low=df['low'],
+                close=df['close'],
+                volume=df['volume']
+            )
+            vwap_value = vwap.volume_weighted_average_price()
+            
+            return {
+                "vwap": vwap_value.iloc[-1],
+                "vwap_trend": self._analyze_vwap_trend(vwap_value),
+                "vwap_deviation": self._calculate_vwap_deviation(df['close'], vwap_value),
+                "vwap_support_resistance": self._find_vwap_support_resistance(vwap_value)
+            }
+        except Exception as e:
+            logger.error(f"Error in VWAP analysis: {str(e)}")
+            raise
+
+    def _calculate_trend_strength(self, df: pd.DataFrame) -> float:
+        """Calculate trend strength using ADX"""
+        try:
+            adx = ta.trend.ADXIndicator(
+                high=df['high'],
+                low=df['low'],
+                close=df['close']
+            )
+            return adx.adx().iloc[-1]
+        except Exception as e:
+            logger.error(f"Error calculating trend strength: {str(e)}")
+            return 0.0
+
+    def _determine_trend_direction(self, df: pd.DataFrame) -> str:
+        """Determine trend direction"""
+        try:
+            sma_20 = df['close'].rolling(window=20).mean()
+            sma_50 = df['close'].rolling(window=50).mean()
+            
+            if sma_20.iloc[-1] > sma_50.iloc[-1]:
+                return "uptrend"
+            elif sma_20.iloc[-1] < sma_50.iloc[-1]:
+                return "downtrend"
+            else:
+                return "sideways"
+        except Exception as e:
+            logger.error(f"Error determining trend direction: {str(e)}")
+            return "unknown"
+
+    def _calculate_momentum(self, df: pd.DataFrame) -> float:
+        """Calculate momentum"""
+        try:
+            return (df['close'].iloc[-1] - df['close'].iloc[-20]) / df['close'].iloc[-20] * 100
+        except Exception as e:
+            logger.error(f"Error calculating momentum: {str(e)}")
+            return 0.0
+
+    def _check_overbought_oversold(self, df: pd.DataFrame) -> str:
+        """Check if price is overbought or oversold"""
+        try:
+            rsi = RSIIndicator(close=df['close']).rsi().iloc[-1]
+            if rsi > 70:
+                return "overbought"
+            elif rsi < 30:
+                return "oversold"
+            else:
+                return "neutral"
+        except Exception as e:
+            logger.error(f"Error checking overbought/oversold: {str(e)}")
+            return "unknown"
+
+    def _calculate_volatility_ratio(self, df: pd.DataFrame) -> float:
+        """Calculate volatility ratio"""
+        try:
+            return df['close'].pct_change().std() * np.sqrt(252)
+        except Exception as e:
+            logger.error(f"Error calculating volatility ratio: {str(e)}")
+            return 0.0
+
+    def _analyze_volume_trend(self, df: pd.DataFrame) -> str:
+        """Analyze volume trend"""
+        try:
+            volume_sma = df['volume'].rolling(window=20).mean()
+            if df['volume'].iloc[-1] > volume_sma.iloc[-1] * 1.5:
+                return "high"
+            elif df['volume'].iloc[-1] < volume_sma.iloc[-1] * 0.5:
+                return "low"
+            else:
+                return "normal"
+        except Exception as e:
+            logger.error(f"Error analyzing volume trend: {str(e)}")
+            return "unknown"
+
+    def _analyze_vwap_trend(self, vwap: pd.Series) -> str:
+        """Analyze VWAP trend"""
+        try:
+            if vwap.iloc[-1] > vwap.iloc[-20]:
+                return "uptrend"
+            elif vwap.iloc[-1] < vwap.iloc[-20]:
+                return "downtrend"
+            else:
+                return "sideways"
+        except Exception as e:
+            logger.error(f"Error analyzing VWAP trend: {str(e)}")
+            return "unknown"
+
+    def _calculate_vwap_deviation(self, close: pd.Series, vwap: pd.Series) -> float:
+        """Calculate VWAP deviation"""
+        try:
+            return (close.iloc[-1] - vwap.iloc[-1]) / vwap.iloc[-1] * 100
+        except Exception as e:
+            logger.error(f"Error calculating VWAP deviation: {str(e)}")
+            return 0.0
+
+    async def _find_support_resistance(self, df: pd.DataFrame) -> Dict:
         """Find support and resistance levels"""
         try:
-            ohlc_data = await self._get_ohlc_data(symbol, interval)
-            
-            return {
-                "pivot_points": self._calculate_pivot_points(ohlc_data),
-                "support_resistance_levels": self._identify_support_resistance(ohlc_data),
-                "fibonacci_levels": self._calculate_fibonacci_levels(ohlc_data)
-            }
+            # Implement support and resistance level calculation logic here
+            return {}
         except Exception as e:
             logger.error(f"Error finding support/resistance: {str(e)}")
             return {}
 
-    async def _identify_patterns(self, symbol: str, interval: str) -> Dict:
+    async def _identify_patterns(self, df: pd.DataFrame) -> Dict:
         """Identify chart patterns"""
         try:
-            ohlc_data = await self._get_ohlc_data(symbol, interval)
-            
-            return {
-                "candlestick_patterns": self._identify_candlestick_patterns(ohlc_data),
-                "chart_patterns": {
-                    "head_and_shoulders": self._identify_head_and_shoulders(ohlc_data),
-                    "double_top_bottom": self._identify_double_top_bottom(ohlc_data),
-                    "triangles": self._identify_triangles(ohlc_data),
-                    "flags_pennants": self._identify_flags_pennants(ohlc_data)
-                },
-                "harmonic_patterns": self._identify_harmonic_patterns(ohlc_data)
-            }
+            # Implement pattern recognition logic here
+            return {}
         except Exception as e:
             logger.error(f"Error identifying patterns: {str(e)}")
             return {}
 
-    async def _analyze_market_structure(self, symbol: str, interval: str) -> Dict:
+    async def _analyze_market_structure(self, df: pd.DataFrame) -> Dict:
         """Analyze market structure"""
         try:
-            ohlc_data = await self._get_ohlc_data(symbol, interval)
-            
-            return {
-                "market_phases": self._identify_market_phases(ohlc_data),
-                "trend_structure": {
-                    "higher_highs_lows": self._identify_higher_highs_lows(ohlc_data),
-                    "trend_channels": self._identify_trend_channels(ohlc_data),
-                    "breakouts_breakdowns": self._identify_breakouts_breakdowns(ohlc_data)
-                },
-                "market_regime": self._identify_market_regime(ohlc_data)
-            }
+            # Implement market structure analysis logic here
+            return {}
         except Exception as e:
             logger.error(f"Error analyzing market structure: {str(e)}")
             return {}
 
-    # Helper methods for calculations
-    def _calculate_sma(self, data: pd.DataFrame, periods: List[int]) -> Dict:
-        """Calculate Simple Moving Average"""
-        return {f"sma_{period}": data['close'].rolling(window=period).mean() for period in periods}
+    async def _find_volume_support_resistance(self, df: pd.DataFrame) -> Dict:
+        """Find volume support and resistance levels"""
+        try:
+            # Implement volume support and resistance level calculation logic here
+            return {}
+        except Exception as e:
+            logger.error(f"Error finding volume support/resistance: {str(e)}")
+            return {}
 
-    def _calculate_ema(self, data: pd.DataFrame, periods: List[int]) -> Dict:
-        """Calculate Exponential Moving Average"""
-        return {f"ema_{period}": data['close'].ewm(span=period, adjust=False).mean() for period in periods}
-
-    def _calculate_vwap(self, data: pd.DataFrame) -> pd.Series:
-        """Calculate Volume Weighted Average Price"""
-        v = data['volume'].values
-        tp = (data['high'] + data['low'] + data['close']) / 3
-        return (tp * v).cumsum() / v.cumsum()
-
-    # Add more calculation methods for other indicators...
+    async def _find_vwap_support_resistance(self, vwap: pd.Series) -> Dict:
+        """Find VWAP support and resistance levels"""
+        try:
+            # Implement VWAP support and resistance level calculation logic here
+            return {}
+        except Exception as e:
+            logger.error(f"Error finding VWAP support/resistance: {str(e)}")
+            return {}
 
 technical_analysis = TechnicalAnalysis() 

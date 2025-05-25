@@ -1,73 +1,57 @@
-# ML Trading Dashboard
+# Trading System
 
-A full-stack application for ML-powered stock market analysis and trading, built with FastAPI and React.
+A modern web-based trading system built with Python (FastAPI) and React (TypeScript).
 
 ## Features
 
-### Backend (FastAPI)
-- 🔐 Secure authentication with JWT
-- 📊 Real-time market data integration
-- 🤖 ML-powered stock predictions
-- 📈 Technical analysis indicators
-- 🔄 Automated trading capabilities
-- 📱 RESTful API endpoints
-- 🔍 Advanced search functionality
-- 📊 Performance monitoring
-- 🔔 Real-time notifications
-
-### Frontend (React)
-- 📱 Modern, responsive UI with Material-UI
-- 📊 Interactive charts and visualizations
-- 🔍 Real-time market data
-- 📈 Portfolio tracking
-- 📋 Watchlist management
-- ⚙️ User preferences and settings
-- 🔔 Real-time notifications
-- 🌙 Dark/Light theme support
+- Real-time trading signals and execution
+- Portfolio management and tracking
+- Multiple trading strategies support
+- Backtesting capabilities
+- Performance analytics and reporting
+- User authentication and authorization
+- Modern, responsive UI
 
 ## Tech Stack
 
 ### Backend
+- Python 3.8+
 - FastAPI
 - SQLAlchemy
 - PostgreSQL
-- Redis
-- JWT Authentication
-- yfinance
-- scikit-learn
-- pandas
-- numpy
-- pytest
+- Pandas
+- NumPy
+- TA-Lib
 
 ### Frontend
-- React
+- React 18
 - TypeScript
 - Material-UI
 - Recharts
 - Axios
-- React Router
-- React Query
 
-## Prerequisites
+## Getting Started
 
-- Python 3.8+
-- Node.js 16+
+### Prerequisites
+
+- Python 3.8 or higher
+- Node.js 14 or higher
 - PostgreSQL
-- Redis (optional, for caching)
+- TA-Lib
 
-## Installation
+### Installation
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/ml-trading-dashboard.git
-cd ml-trading-dashboard
+git clone https://github.com/yourusername/trading-system.git
+cd trading-system
 ```
 
 2. Set up the backend:
 ```bash
 # Create and activate virtual environment
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
@@ -78,75 +62,80 @@ cp .env.example .env
 
 # Run database migrations
 alembic upgrade head
+
+# Start the backend server
+uvicorn app.main:app --reload
 ```
 
 3. Set up the frontend:
 ```bash
-cd app/frontend
+cd frontend
 
 # Install dependencies
 npm install
 
-# Set up environment variables
-cp .env.example .env
-# Edit .env with your configuration
-```
-
-## Running the Application
-
-1. Start the backend server:
-```bash
-# From the root directory
-uvicorn app.main:app --reload
-```
-
-2. Start the frontend development server:
-```bash
-# From app/frontend directory
+# Start the development server
 npm start
 ```
 
-The application will be available at:
-- Frontend: http://localhost:3000
+4. Access the application:
 - Backend API: http://localhost:8000
+- Frontend: http://localhost:3000
 - API Documentation: http://localhost:8000/docs
+
+## Project Structure
+
+```
+trading-system/
+├── app/
+│   ├── api/
+│   │   └── v1/
+│   │       └── endpoints/
+│   ├── core/
+│   ├── db/
+│   ├── models/
+│   ├── schemas/
+│   └── services/
+├── frontend/
+│   ├── public/
+│   └── src/
+│       ├── components/
+│       ├── hooks/
+│       └── utils/
+├── tests/
+├── alembic/
+├── .env.example
+├── requirements.txt
+└── README.md
+```
 
 ## Development
 
 ### Backend Development
-- API endpoints are in `app/api/endpoints/`
+
+- API endpoints are defined in `app/api/v1/endpoints/`
 - Database models are in `app/models/`
-- Schemas are in `app/schemas/`
-- Services are in `app/services/`
+- Pydantic schemas are in `app/schemas/`
+- Business logic is in `app/services/`
 
 ### Frontend Development
-- Components are in `app/frontend/src/components/`
-- Pages are in `app/frontend/src/pages/`
-- Hooks are in `app/frontend/src/hooks/`
-- API services are in `app/frontend/src/services/`
+
+- React components are in `frontend/src/components/`
+- Custom hooks are in `frontend/src/hooks/`
+- API integration is handled in `frontend/src/hooks/useApi.ts`
 
 ## Testing
 
 ### Backend Tests
 ```bash
-# Run all tests
 pytest
-
-# Run with coverage
-pytest --cov=app tests/
 ```
 
 ### Frontend Tests
 ```bash
-cd app/frontend
+cd frontend
 npm test
 ```
-
-## API Documentation
-
-The API documentation is available at:
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
 
 ## Contributing
 
@@ -165,40 +154,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [FastAPI](https://fastapi.tiangolo.com/)
 - [React](https://reactjs.org/)
 - [Material-UI](https://mui.com/)
-- [yfinance](https://pypi.org/project/yfinance/)
-- [scikit-learn](https://scikit-learn.org/)
-
-## Support
-
-For support, email your-email@example.com or open an issue in the GitHub repository.
-
-## Syncing with GitHub
-
-To push your local changes to GitHub:
-```bash
-git add .
-git commit -m "Your commit message"
-git push origin main
-```
-
-To check your sync status:
-```bash
-git status
-git log --oneline -n 5
-git remote -v
-```
-
-## Troubleshooting
-
-- If you see `ModuleNotFoundError` for any module, install it with `pip install <module>` and add it to `requirements.txt`.
-- If you see `AttributeError: module 'bcrypt' has no attribute '__about__'`, upgrade bcrypt and passlib:
-  ```bash
-  pip install --upgrade bcrypt passlib
-  ```
-- If you see FastAPI errors about response models, ensure you use Pydantic schemas (not ORM models) for `response_model` in endpoints.
-- For test import errors, run tests with:
-  ```bash
-  set PYTHONPATH=%CD% && pytest --maxfail=5 --disable-warnings -v
-  # or
-  python -m pytest --maxfail=5 --disable-warnings -v
-  ``` 
+- [Recharts](https://recharts.org/) 
