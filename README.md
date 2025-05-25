@@ -170,4 +170,35 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Support
 
-For support, email your-email@example.com or open an issue in the GitHub repository. 
+For support, email your-email@example.com or open an issue in the GitHub repository.
+
+## Syncing with GitHub
+
+To push your local changes to GitHub:
+```bash
+git add .
+git commit -m "Your commit message"
+git push origin main
+```
+
+To check your sync status:
+```bash
+git status
+git log --oneline -n 5
+git remote -v
+```
+
+## Troubleshooting
+
+- If you see `ModuleNotFoundError` for any module, install it with `pip install <module>` and add it to `requirements.txt`.
+- If you see `AttributeError: module 'bcrypt' has no attribute '__about__'`, upgrade bcrypt and passlib:
+  ```bash
+  pip install --upgrade bcrypt passlib
+  ```
+- If you see FastAPI errors about response models, ensure you use Pydantic schemas (not ORM models) for `response_model` in endpoints.
+- For test import errors, run tests with:
+  ```bash
+  set PYTHONPATH=%CD% && pytest --maxfail=5 --disable-warnings -v
+  # or
+  python -m pytest --maxfail=5 --disable-warnings -v
+  ``` 
