@@ -3,7 +3,7 @@ import os
 import sys
 from alembic import context
 from sqlalchemy import engine_from_config, pool
-from app.config.production import settings
+from app.config import Settings
 from app.models.database import Base
 
 # Add the parent directory to sys.path
@@ -26,6 +26,8 @@ target_metadata = Base.metadata
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
+
+settings = Settings()
 
 def get_url():
     """Get database URL from settings"""

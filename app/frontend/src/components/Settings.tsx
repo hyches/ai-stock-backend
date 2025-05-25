@@ -76,6 +76,13 @@ const Settings: React.FC = () => {
     }
   };
 
+  const handleSelectChange = (field: keyof MLSettings) => (
+    event: React.ChangeEvent<{ value: unknown }> | any
+  ) => {
+    const value = event.target.value;
+    setSettings((prev) => ({ ...prev, [field]: value }));
+  };
+
   const handleChange = (field: keyof MLSettings) => (
     event: React.ChangeEvent<HTMLInputElement | { value: unknown }>
   ) => {
@@ -104,7 +111,7 @@ const Settings: React.FC = () => {
                 <Select
                   value={settings.modelType}
                   label="Model Type"
-                  onChange={handleChange('modelType')}
+                  onChange={handleSelectChange('modelType')}
                 >
                   <MenuItem value="lstm">LSTM</MenuItem>
                   <MenuItem value="xgboost">XGBoost</MenuItem>
@@ -186,7 +193,7 @@ const Settings: React.FC = () => {
                   <Select
                     value={settings.retrainInterval}
                     label="Retrain Interval"
-                    onChange={handleChange('retrainInterval')}
+                    onChange={handleSelectChange('retrainInterval')}
                   >
                     <MenuItem value={1}>Daily</MenuItem>
                     <MenuItem value={7}>Weekly</MenuItem>
@@ -206,7 +213,7 @@ const Settings: React.FC = () => {
                 <Select
                   value={settings.dataSource}
                   label="Data Source"
-                  onChange={handleChange('dataSource')}
+                  onChange={handleSelectChange('dataSource')}
                 >
                   <MenuItem value="alpha_vantage">Alpha Vantage</MenuItem>
                   <MenuItem value="yahoo_finance">Yahoo Finance</MenuItem>

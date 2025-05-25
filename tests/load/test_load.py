@@ -4,13 +4,15 @@ import aiohttp
 import time
 from typing import List, Dict
 import statistics
-from app.config.production import settings
+from app.config import Settings
 
 # Test configuration
 BASE_URL = "http://localhost:8000"
 CONCURRENT_USERS = 50
 REQUESTS_PER_USER = 20
 THINK_TIME = 1  # seconds between requests
+
+settings = Settings()
 
 class LoadTest:
     def __init__(self, base_url: str):

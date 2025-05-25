@@ -3,9 +3,10 @@ import shutil
 import datetime
 import logging
 from pathlib import Path
-from app.config.production import settings
+from app.config import Settings
 
 logger = logging.getLogger("ai_stock_analysis")
+settings = Settings()
 
 class BackupManager:
     def __init__(self):

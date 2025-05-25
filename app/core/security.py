@@ -5,12 +5,13 @@ from fastapi.security import OAuth2PasswordBearer, APIKeyHeader
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from pydantic import BaseModel, validator
-from app.config.production import settings
+from app.config import Settings
+settings = Settings() 
 import time
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import secrets
-from app.core.cache import get_redis
+from app.core.cache import redis_cache
 import logging
 
 # Configure logging
@@ -77,7 +78,7 @@ class SecurityMiddleware:
     
     def __init__(self, app):
         self.app = app
-        self.redis = get_redis()
+        self.redis = redis_cache
         self.rate_limiter = RateLimiter(self.redis)
     
     async def __call__(self, request: Request, call_next):
@@ -239,4 +240,4 @@ class APIKeyManager:
         )
 
 # Initialize security components
-api_key_manager = APIKeyManager(get_redis()) 
+api_key_manager = APIKeyManager(redis_cache)

@@ -9,8 +9,7 @@ from app.core.security import (
     csrf_middleware,
     validate_api_key
 )
-from app.config.production import settings
-import logging
+from app.config import Settings
 from typing import Union
 from fastapi.exceptions import RequestValidationError
 from pydantic import ValidationError
@@ -80,4 +79,6 @@ async def health_check():
         "status": "healthy",
         "version": settings.VERSION,
         "environment": settings.ENVIRONMENT
-    } 
+    }
+
+settings = Settings() 

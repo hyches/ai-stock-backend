@@ -7,7 +7,8 @@ from app.models.sentiment import SentimentAnalysis, NewsSentiment, SocialSentime
 import requests
 from textblob import TextBlob
 import numpy as np
-from app.config.production import settings
+from app.config import Settings
+settings = Settings()
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 logger = logging.getLogger(__name__)

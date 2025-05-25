@@ -2,7 +2,7 @@ from prometheus_client import Counter, Histogram, Gauge, start_http_server
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.core.database import get_db
-from app.core.cache import get_redis
+from app.core.cache import redis_cache
 import time
 import psutil
 import logging
@@ -72,7 +72,7 @@ async def db_health_check(db: Session = Depends(get_db)):
 async def cache_health_check():
     """Cache health check"""
     try:
-        redis = get_redis()
+        redis = redis_cache
         redis.ping()
         return {"status": "healthy", "cache": "connected"}
     except Exception as e:

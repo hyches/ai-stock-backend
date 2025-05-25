@@ -3,11 +3,12 @@ from fastapi.testclient import TestClient
 from app.main import app
 import jwt
 from datetime import datetime, timedelta
-from app.config.production import settings
+from app.config import Settings
 import re
 import asyncio
 
 client = TestClient(app)
+settings = Settings()
 
 def test_jwt_token_validation():
     """Test JWT token validation"""

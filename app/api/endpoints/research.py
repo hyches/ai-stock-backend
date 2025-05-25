@@ -1,7 +1,8 @@
 from fastapi import APIRouter, HTTPException
 from app.models.report import ReportRequest, ReportResponse
-from app.services.report_generator import ReportGenerator
+from app.services.report_generator import ReportGenerator, generate_research_report
 import logging
+from typing import Dict, Any
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -40,4 +41,15 @@ async def generate_report(request: ReportRequest):
         raise HTTPException(
             status_code=500,
             detail=f"Failed to generate report: {str(e)}"
-        ) 
+        )
+
+@router.get("/research/{symbol}", response_model=Dict[str, Any])
+async def get_research_report(symbol: str):
+    """
+    Generate a comprehensive research report for a given stock symbol.
+    """
+    try:
+        report = generate_research_report(symbol)
+        return report
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) 

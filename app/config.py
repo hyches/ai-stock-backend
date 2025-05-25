@@ -26,6 +26,10 @@ class Settings(BaseSettings):
 
     # CORS Settings
     FRONTEND_URL: str = "https://preview--alpha-ai-portfolio-pro.lovable.app"
+    BACKEND_CORS_ORIGINS: list[str] = ["http://localhost:3000"]
+
+    # Redis Settings
+    REDIS_URL: str = "redis://localhost:6379/0"
 
     class Config:
         env_file = ".env"

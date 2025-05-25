@@ -1,12 +1,13 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from app.config.production import settings
+from app.config import Settings
 import logging
 
 logger = logging.getLogger(__name__)
 
 # Create database engine
+settings = Settings()
 engine = create_engine(
     settings.DATABASE_URL,
     pool_pre_ping=True,

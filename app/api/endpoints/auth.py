@@ -6,7 +6,7 @@ from app.core.security import (
     get_current_user, get_password_hash
 )
 from app.schemas.user import UserCreate, UserResponse
-from app.models.user import User
+from app.models.database import User
 from sqlalchemy.orm import Session
 from app.database import get_db
 from typing import Optional
@@ -89,8 +89,8 @@ async def get_current_user(
             detail="Invalid authentication credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    return user
+    return UserResponse.from_orm(user)
 
-@router.get("/users/me", response_model=User)
+@router.get("/users/me", response_model=UserResponse)
 async def read_users_me(current_user: User = Depends(get_current_user)):
-    return current_user 
+    return UserResponse.from_orm(current_user) 
