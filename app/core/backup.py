@@ -9,6 +9,22 @@ logger = logging.getLogger("ai_stock_analysis")
 settings = Settings()
 
 class BackupManager:
+    """
+    BackupManager class provides functionality to create, restore, list, and cleanup backups.
+    Parameters:
+        - None
+    Processing Logic:
+        - Initializes a backup directory on creation if it doesn't exist.
+        - Creates a timestamped backup folder containing the database and reports.
+        - Can restore backups by copying files back to their original locations.
+        - Lists backups with details including creation date and size.
+        - Cleans up old backups keeping a specified number of recent backups.
+    Examples:
+        - To create a backup: `backup_manager.create_backup()`
+        - To restore a backup: `backup_manager.restore_backup("backup_20220912_153000")`
+        - To list backups: `backup_manager.list_backups()`
+        - To clean up keeping last 5 backups: `backup_manager.cleanup_old_backups(5)`
+    """
     def __init__(self):
         self.backup_dir = Path("backups")
         self.backup_dir.mkdir(exist_ok=True)

@@ -11,6 +11,19 @@ class ZerodhaToken(Base):
     expires_at = Column(DateTime)
 
 class PaperTrade(Base):
+    """
+    Represents a paper trade entity used for storing simulated trade data.
+    Parameters:
+        - id (Integer): Unique identifier for the paper trade.
+        - symbol (String): The stock symbol associated with the trade.
+        - action (Enum): Specifies if the trade action is either a 'buy' or 'sell'.
+        - quantity (Integer): The number of shares involved in the trade.
+        - price (Float): The price per share at the time of the trade.
+        - status (String): The current status of the trade.
+        - created_at (DateTime): Timestamp indicating when the trade entry was created, defaulting to the current UTC time.
+    Processing Logic:
+        - Converts 'created_at' attribute to ISO format when transforming attributes to a dictionary representation.
+    """
     __tablename__ = "paper_trades"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -22,6 +35,13 @@ class PaperTrade(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     def to_dict(self):
+        """Convert object attributes to a dictionary format.
+        Parameters:
+            None
+        Returns:
+            - dict: A dictionary representation of the object's attributes.
+        Processing Logic:
+            - Converts the 'created_at' attribute to ISO format before adding to the dictionary."""
         return {
             "id": self.id,
             "symbol": self.symbol,

@@ -40,6 +40,18 @@ const darkTheme = createTheme({
   },
 });
 
+/**
+ * Renders the main application layout with a sidebar and routing functionality.
+ * @example
+ * renderApp()
+ * Returns the JSX layout for the application.
+ * @returns {JSX.Element} Returns the structured layout for the application's main view including navigation and routing.
+ * @description
+ *   - Utilizes React Router for navigating between different pages.
+ *   - Implements a sidebar toggle mechanism for interactive layout adjustments.
+ *   - The sidebar's width of 240px is used when open; it collapses and adjusts the main content margin accordingly.
+ *   - Employs Material-UI components to style and structure the application's interface.
+ */
 const App: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = React.useState(true);
 

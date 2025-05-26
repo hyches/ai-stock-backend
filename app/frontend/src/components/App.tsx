@@ -25,6 +25,19 @@ const darkTheme = createTheme({
   typography: { fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif' },
 });
 
+/**
+ * Main application component that wraps routing and theme configuration.
+ * @example
+ * App()
+ * JSX.Element containing the application's layout and routing logic
+ * @param {void} - This component does not take any props.
+ * @returns {JSX.Element} The function returns the main application layout including navigation and routing.
+ * @description
+ *   - Utilizes Material-UI's ThemeProvider and CssBaseline for styling consistency.
+ *   - Sidebar visibility is controlled via component state and can be toggled.
+ *   - Protected routes redirect to the login page if the user is not authenticated.
+ *   - Supports routing to multiple pages including Dashboard, Portfolio, Watchlist, Settings, and more.
+ */
 const App: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = React.useState(true);
   const { isAuthenticated } = useAuth();

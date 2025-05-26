@@ -50,6 +50,20 @@ const defaultSettings: ChartSettings = {
   timeRange: '1M',
 };
 
+/**
+ * Custom React hook to manage and fetch chart data for a given stock symbol with adjustable settings.
+ * @example
+ * const { data, settings, loading, error, updateSettings, refresh } = useChart('AAPL', { interval: '1d' })
+ * // Handles chart data and settings for the stock symbol 'AAPL'
+ * @param {string} symbol - The stock symbol for which to fetch and manage chart data.
+ * @param {Partial<ChartSettings>} [initialSettings] - Optional initial chart settings to customize data fetching behavior.
+ * @returns {UseChartReturn} An object containing the chart data, settings, loading state, error message, and functions to update settings and refresh data.
+ * @description
+ *   - Utilizes useState and useEffect hooks to manage internal state and perform side effects.
+ *   - Handles errors gracefully, providing an error message if data fetching fails.
+ *   - Allows updating of settings dynamically with the `updateSettings` function.
+ *   - Automatically refetches data when `symbol` or `settings.interval` changes.
+ */
 export const useChart = (
   symbol: string,
   initialSettings?: Partial<ChartSettings>

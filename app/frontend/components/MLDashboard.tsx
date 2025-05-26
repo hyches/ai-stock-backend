@@ -73,6 +73,19 @@ interface MLDashboardProps {
   symbol: string;
 }
 
+/**
+ * Displays machine learning predictions and feature importance for a specific stock symbol.
+ * @example
+ * MLComponent({ symbol: 'AAPL' })
+ * Returns JSX elements showing predictions data and UI components.
+ * @param {Object} {symbol} - The stock symbol for which predictions are fetched.
+ * @returns {JSX.Element | null} Rendered dashboard of predictions or loading/error UI.
+ * @description
+ *   - Fetches predictions data every 5 minutes using the specified stock symbol.
+ *   - Displays loading indicator or error message based on fetch status.
+ *   - Renders prediction cards and feature importance charts using Material-UI components.
+ *   - Allows user to switch between different prediction categories using tabs.
+ */
 const MLDashboard: React.FC<MLDashboardProps> = ({ symbol }) => {
   const [activeTab, setActiveTab] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -84,6 +97,18 @@ const MLDashboard: React.FC<MLDashboardProps> = ({ symbol }) => {
   } | null>(null);
 
   useEffect(() => {
+    /**
+     * Fetches machine learning predictions for a given symbol and updates the application state.
+     * @example
+     * sync('AAPL')
+     * // Fetches predictions for Apple Inc.
+     * @param {string} symbol - The stock symbol for which predictions are to be fetched.
+     * @returns {void} The function does not return a value; it updates the application state directly.
+     * @description
+     *   - Starts by setting a loading state to true and resets it to false after completion.
+     *   - Handles errors by updating the error state with a meaningful message.
+     *   - Ensures that the predictions are updated only if the fetch response is successful.
+     */
     const fetchPredictions = async () => {
       try {
         setLoading(true);
@@ -130,6 +155,20 @@ const MLDashboard: React.FC<MLDashboardProps> = ({ symbol }) => {
     return null;
   }
 
+  /**
+  * Renders a styled card displaying the machine learning prediction details.
+  * @example
+  * renderPredictionCard("Prediction Title", mlPredictionObject)
+  * Returns a styled card component displaying prediction details.
+  * @param {string} title - The title to be displayed on the card.
+  * @param {MLPrediction} prediction - An object containing prediction details, including predictions and confidence levels.
+  * @returns {JSX.Element} A JSX component representing the styled card with prediction information.
+  * @description
+  *   - Utilizes styled components and Material-UI typography.
+  *   - Displays ensemble prediction value to two decimal places.
+  *   - Confidence levels are shown as percentages.
+  *   - Includes individual model predictions from Random Forest and Gradient Boosting.
+  */
   const renderPredictionCard = (title: string, prediction: MLPrediction) => (
     <StyledCard>
       <CardContent>
@@ -178,6 +217,18 @@ const MLDashboard: React.FC<MLDashboardProps> = ({ symbol }) => {
     </StyledCard>
   );
 
+  /**
+   * Creates a chart displaying the importance of various features in a machine learning prediction.
+   * @example
+   * prediction({ feature_importance: { 'feature1': 0.8, 'feature2': 0.2 } })
+   * // Renders a chart with lines showing the importance of 'feature1' and 'feature2'.
+   * @param {MLPrediction} prediction - An object containing the feature importance mapping.
+   * @returns {React.JSXElement} A Paper component containing a line chart displaying the feature importance.
+   * @description
+   *   - Utilizes the `LineChart` component to visualize the importance of features from the prediction object.
+   *   - Maps feature importance data into a format suitable for the `LineChart` component.
+   *   - Adjusts the layout of the chart with padding and margins for better visual appearance.
+   */
   const renderFeatureImportance = (prediction: MLPrediction) => (
     <Paper sx={{ p: 2, mt: 2 }}>
       <Typography variant="h6" gutterBottom>

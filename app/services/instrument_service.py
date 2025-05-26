@@ -7,6 +7,15 @@ from app.services.zerodha_service import ZerodhaService
 logger = logging.getLogger(__name__)
 
 class InstrumentService:
+    """
+    InstrumentService class provides functionality to manage financial instrument data using caching techniques.
+    Parameters:
+        - None: Initialization does not accept parameters.
+    Processing Logic:
+        - Fetches instrument data from Zerodha API.
+        - Utilizes Redis cache to store and retrieve instrument data efficiently.
+        - Implements error handling to log issues during data retrieval or caching processes.
+    """
     def __init__(self):
         self.zerodha_service = ZerodhaService()
         self.cache_ttl = 3600  # 1 hour

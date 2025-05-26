@@ -34,6 +34,20 @@ const menuItems = [
   { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
 ];
 
+/**
+* Renders a sidebar drawer component with navigation functionalities.
+* @example
+* Sidebar({ open: true, onClose: () => {} })
+* Returns a Drawer component that allows navigation and closes on small screens.
+* @param {boolean} open - Boolean flag to control the drawer's open state.
+* @param {function} onClose - Callback function executed to close the drawer.
+* @returns {JSX.Element} A styled sidebar drawer component.
+* @description
+*   - Utilizes Material UI's Drawer component for styling and layout.
+*   - Ensures navigation buttons are styled based on their selected state.
+*   - Implements responsive design by closing the drawer on small screen sizes.
+*   - Integrates React Router hooks to manage navigation within the application.
+*/
 const Sidebar: React.FC<SidebarProps> = ({ open, onClose }) => {
   const theme = useTheme();
   const navigate = useNavigate();

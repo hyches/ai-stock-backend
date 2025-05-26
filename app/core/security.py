@@ -28,6 +28,18 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 # CSRF protection
 class CSRFMiddleware:
+    """
+    CSRFMiddleware:
+    A class to manage Cross-Site Request Forgery (CSRF) tokens for secure web application sessions.
+    Parameters:
+        - None during initialization.
+    Processing Logic:
+        - Generates a unique, secure token for use in CSRF protection.
+        - Validates the presence of a given token in the stored collection of CSRF tokens.
+    Examples:
+        - Use `generate_token()` to create a new CSRF token.
+        - Verify a token's validity with `validate_token(token)`.
+    """
     def __init__(self):
         self.csrf_tokens = {}
 
@@ -83,6 +95,17 @@ class SecurityMiddleware:
     
     async def __call__(self, request: Request, call_next):
         # Get client IP
+        """Handle incoming requests with rate limiting and security headers.
+        Parameters:
+            - request (Request): The incoming HTTP request.
+            - call_next (function): The function to proceed with the next part of the request pipeline.
+        Returns:
+            - Response: The HTTP response with appropriate security headers.
+        Processing Logic:
+            - Extracts the client's IP address from the request.
+            - Determines the type of rate limit to apply based on the request path.
+            - Checks if the request exceeds the rate limit, raising an HTTP 429 exception if it does.
+            - Adds security headers to the response for enhanced web security."""
         client_ip = request.client.host
         
         # Determine rate limit type based on path
@@ -118,6 +141,15 @@ class SecurityMiddleware:
 
 # Request size limit middleware
 async def request_size_limit_middleware(request: Request, call_next):
+    """Request size limit middleware to restrict oversized HTTP requests.
+    Parameters:
+        - request (Request): The incoming HTTP request.
+        - call_next (Callable): A function to process the next middleware or endpoint.
+    Returns:
+        - Response: The HTTP response from the subsequent middleware or endpoint.
+    Processing Logic:
+        - Checks if the 'Content-Length' header of the request exceeds a defined maximum request size.
+        - Raises an HTTPException with status code 413 if the request entity is too large."""
     content_length = request.headers.get("content-length")
     if content_length and int(content_length) > settings.MAX_REQUEST_SIZE:
         raise HTTPException(
@@ -145,6 +177,12 @@ class TokenData(BaseModel):
     username: Optional[str] = None
 
 class User(BaseModel):
+    """The `User` class represents a user entity with a username and an optional disabled status.
+    Parameters:
+        - username (str): The username of the user, must be alphanumeric.
+        - disabled (Optional[bool]): Indicates if the user is disabled; defaults to None.
+    Processing Logic:
+        - Validates that the `username` must be alphanumeric; raises a `ValueError` if not."""
     username: str
     disabled: Optional[bool] = None
 
@@ -202,6 +240,17 @@ cors_middleware = CORSMiddleware(
 
 # Security headers middleware
 async def security_headers_middleware(request: Request, call_next):
+    """Add security headers to HTTP responses.
+    Parameters:
+        - request (Request): The HTTP request object.
+        - call_next: A callable that takes a request and returns a response.
+    Returns:
+        - Response: The HTTP response object with added security headers.
+    Processing Logic:
+        - Adds standard security headers to enhance protection against common vulnerabilities.
+        - Ensures 'X-Content-Type-Options' to prevent MIME-type sniffing.
+        - Sets 'X-Frame-Options' to DENY to prevent clickjacking.
+        - Implements 'X-XSS-Protection' to enable cross-site scripting filters."""
     response = await call_next(request)
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"

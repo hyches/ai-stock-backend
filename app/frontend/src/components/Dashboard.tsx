@@ -1,6 +1,18 @@
 import React from 'react';
 import { Box, Typography, Card, CardContent, Grid } from '@mui/material';
 
+/**
+* Creates a dashboard component with sections for ML Predictions, Quick Stats, and Market Overview.
+* @example
+* DashboardComponent()
+* <Box>...</Box>
+* @param {none} none - This function takes no parameters.
+* @returns {JSX.Element} A JSX element representing the dashboard layout with three sections.
+* @description
+*   - Utilizes Material-UI components to structure the dashboard.
+*   - Provides placeholders for future data such as ML predictions and quick stats.
+*   - Each section is encapsulated within a card layout for organized presentation.
+*/
 const Dashboard: React.FC = () => {
   return (
     <Box>

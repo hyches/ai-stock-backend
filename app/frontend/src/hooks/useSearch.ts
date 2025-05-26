@@ -17,6 +17,19 @@ interface UseSearchReturn {
   clearResults: () => void;
 }
 
+/**
+ * Custom hook to handle search functionality with debounced query execution.
+ * @example
+ * const { results, loading, error, search, clearResults } = useSearch();
+ * search('example query');
+ * // results will reflect the search outcome
+ * @param {void} - No direct parameters, usage through object destructuring of hook return values.
+ * @returns {UseSearchReturn} An object containing search results, loading state, error message, and functions for executing search and clearing results.
+ * @description
+ *   - Utilizes debouncing to minimize repeated API calls by delaying the search execution.
+ *   - Handles asynchronous search API calls and manages loading and error states.
+ *   - Provides a method to clear the search results and reset error state.
+ */
 export const useSearch = (): UseSearchReturn => {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);

@@ -16,6 +16,18 @@ depends_on = None
 
 def upgrade():
     # Create users table
+    """Creates initial database schema with tables and indexes for users, stocks, portfolios, and related entities.
+    Parameters:
+        - None
+    Returns:
+        - None
+    Processing Logic:
+        - Defines the 'users' table with unique constraints on 'username' and 'email', and an index on 'created_at'.
+        - Defines the 'stocks' table with unique constraint on 'symbol', and indexes on 'sector', 'industry', and 'last_updated'.
+        - Defines the 'portfolios' table with foreign key linking to 'users', and indexes on 'user_id', 'created_at', and 'last_updated'.
+        - Defines association tables 'stock_portfolio' and 'portfolio_weights' with foreign keys linking stocks and portfolios.
+        - Defines the 'reports' table to associate 'users' and 'stocks', with various indexes based on 'user_id', 'stock_id', and 'report_type'.
+        - Defines the 'backups' table with indexes on 'status' and 'created_at' linked to status.   """
     op.create_table(
         'users',
         sa.Column('id', sa.Integer(), nullable=False),
@@ -126,6 +138,14 @@ def upgrade():
     op.create_index('ix_backups_created_status', 'backups', ['created_at', 'status'])
 
 def downgrade():
+    """Drops a series of tables from the database.
+    Parameters:
+        - None
+    Returns:
+        - None
+    Processing Logic:
+        - Executes a sequence of operations to remove tables one by one.
+        - Removes tables in the order prescribed to maintain integrity."""
     op.drop_table('backups')
     op.drop_table('reports')
     op.drop_table('portfolio_weights')

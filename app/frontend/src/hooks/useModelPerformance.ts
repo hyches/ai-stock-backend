@@ -38,6 +38,24 @@ interface UseModelPerformanceReturn {
   retrainModel: () => Promise<void>;
 }
 
+/**
+ * Fetches and manages model performance data based on a provided symbol.
+ * @example
+ * useModelPerformance('APPL')
+ * {
+ *   performance: { ... },
+ *   loading: false,
+ *   error: null,
+ *   refresh: [Function],
+ *   retrainModel: [Function]
+ * }
+ * @param {string} symbol - The symbol of the model to retrieve and manage performance data for.
+ * @returns {UseModelPerformanceReturn} An object containing the model performance, loading and error states, and functions to refresh data and retrain the model.
+ * @description
+ *   - Utilizes the useState and useEffect hooks to manage asynchronous data fetching and UI state.
+ *   - fetchPerformance is memoized using useCallback to avoid unnecessary re-creations.
+ *   - The retrainModel function allows for triggering a model retraining based on the current symbol, followed by updating the performance data.
+ */
 export const useModelPerformance = (
   symbol: string
 ): UseModelPerformanceReturn => {
@@ -63,6 +81,19 @@ export const useModelPerformance = (
     fetchPerformance();
   }, [fetchPerformance]);
 
+  /**
+   * Initiates the retraining of a machine learning model and fetches updated performance metrics.
+   * @example
+   * sync()
+   * Error message or completed retraining process
+   * @param {string} symbol - The symbol representing the specific model to retrain.
+   * @returns {void} This function does not return a value.
+   * @description
+   *   - Sets loading state to true at the beginning and false at the end of the process.
+   *   - Resets any existing error state before beginning execution.
+   *   - If an error occurs during retraining, captures the error message for display.
+   *   - Ensures performance metrics are fetched upon successful retraining.
+   */
   const retrainModel = async () => {
     try {
       setLoading(true);
