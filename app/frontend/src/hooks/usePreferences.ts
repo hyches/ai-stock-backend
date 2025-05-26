@@ -66,6 +66,16 @@ const defaultPreferences: UserPreferences = {
   },
 };
 
+/**
+* Custom hook to manage user preferences with loading and error states.
+* @example
+* const { preferences, loading, error, updatePreferences, resetPreferences } = usePreferences();
+* @returns {UsePreferencesReturn} An object containing the preferences state, loading indicator, error message, and functions to update or reset preferences.
+* @description
+*   - Fetches user preferences from a mocked API endpoint initially and sets them into local state.
+*   - Provides functionality to update user preferences via a PATCH request and reset preferences to default values.
+*   - Handles loading and error states to inform the UI about ongoing asynchronous operations.
+*/
 export const usePreferences = (): UsePreferencesReturn => {
   const [preferences, setPreferences] = useState<UserPreferences | null>(null);
   const [loading, setLoading] = useState(true);
@@ -92,6 +102,18 @@ export const usePreferences = (): UsePreferencesReturn => {
     fetchPreferences();
   }, [fetchPreferences]);
 
+  /**
+   * Updates user preferences asynchronously using PATCH request.
+   * @example
+   * sync({ theme: 'dark', language: 'en' })
+   * // Returns updated user preferences object
+   * @param {Partial<UserPreferences>} updates - Partial object of user preferences to update.
+   * @returns {Promise<void>} Resolves when preferences are successfully updated.
+   * @description
+   *   - The function sets the loading state while processing the request.
+   *   - Handles errors by setting an error state and logging the issue.
+   *   - Ensures the loading state is reset in the finally block, regardless of the success or failure of the operation.
+   */
   const updatePreferences = async (updates: Partial<UserPreferences>) => {
     try {
       setLoading(true);
@@ -113,6 +135,18 @@ export const usePreferences = (): UsePreferencesReturn => {
     }
   };
 
+  /**
+   * Resets the user preferences to default settings asynchronously.
+   * @example
+   * sync()
+   * Resets preferences without any return value.
+   * @returns {void} Does not return any value.
+   * @description
+   *   - The function is designed to handle errors that may occur during the API call to reset preferences.
+   *   - It sets the loading state to true while the operation is in progress, and false once it is completed or failed.
+   *   - The function updates the error state with a descriptive error message in case of failure.
+   *   - It logs the error to the console to help with debugging when the preferences reset fails.
+   */
   const resetPreferences = async () => {
     try {
       setLoading(true);

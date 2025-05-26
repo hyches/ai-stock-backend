@@ -9,6 +9,21 @@ from app.core.config import settings
 from app.core.cache import redis_cache
 
 class SentimentAnalysis:
+    """
+    SentimentAnalysis class provides comprehensive sentiment analysis aggregating various data points for a given market symbol, including news, social media, market indicators, options, institutional, and retail sentiments.
+    Parameters:
+        - symbol (str): The market symbol or ticker for which sentiment analysis is performed.
+    Processing Logic:
+        - Utilizes asynchronous methods to fetch data related to different sentiment sources such as news articles, social media posts, and market indicators.
+        - Employs techniques like text sentiment analysis and financial metric calculations across various sources to generate sentiment scores.
+        - Aggregates sentiment scores from multiple channels to create a comprehensive sentiment report for the given symbol.
+        - Includes error handling to log and return empty results in case of exceptions during data processing.
+    Examples:
+        async def example_usage():
+            analysis = SentimentAnalysis()
+            sentiment_report = await analysis.get_comprehensive_sentiment("AAPL")
+            print(sentiment_report)
+    """
     def __init__(self):
         self.vader = SentimentIntensityAnalyzer()
         self.cache_ttl = 3600  # 1 hour

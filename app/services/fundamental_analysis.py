@@ -6,6 +6,20 @@ from app.services.zerodha_service import ZerodhaService
 from app.core.cache import redis_cache
 
 class FundamentalAnalysis:
+    """
+    FundamentalAnalysis class is designed to perform a comprehensive assessment of a company's financial health by analyzing various metrics including financial ratios, valuation metrics, growth metrics, quality metrics, risk metrics, and credit analysis.
+    Parameters:
+        - symbol (str): The stock ticker symbol for which the fundamental analysis is to be performed.
+    Processing Logic:
+        - Utilizes asynchronous methods to fetch required financial data, optimizing performance by allowing concurrent data fetching.
+        - Handles any exceptions during calculations to ensure robustness and reliability of the analysis process.
+        - Integrates various categories of financial analysis to provide a holistic view of the company's strengths and weaknesses.
+        - Implements helper methods for calculating specific financial ratios, ensuring clarity and separation of concerns in the analysis logic.
+    Example:
+        fundamental_analysis = FundamentalAnalysis()
+        analysis = await fundamental_analysis.get_comprehensive_analysis("AAPL")
+        print(analysis['financial_ratios'])
+    """
     def __init__(self):
         self.zerodha_service = ZerodhaService()
         self.cache_ttl = 3600  # 1 hour
