@@ -99,12 +99,31 @@ class MetricsMiddleware:
         self.app = app
     
     async def __call__(self, scope, receive, send):
+        """Handles incoming HTTP requests, recording metrics related to request count and latency.
+        Parameters:
+            - scope (dict): Contains details about the current request, including type, method, and path.
+            - receive (awaitable): Function to receive messages.
+            - send (awaitable): Function to send messages.
+        Returns:
+            - None: This function does not return a value but processes or forwards the request.
+        Processing Logic:
+            - Ignores non-HTTP requests, forwarding them directly to the wrapped application.
+            - Records the count of HTTP requests with labels for method, endpoint, and status when response starts.
+            - Measures latency from the start of the request to when the response starts."""
         if scope["type"] != "http":
             return await self.app(scope, receive, send)
         
         start_time = time.time()
         
         async def send_wrapper(message):
+            """Send a wrapped message and record metrics for HTTP requests.
+            Parameters:
+                - message (dict): The message to be sent, including 'type' and potentially 'status'.
+            Returns:
+                - None: This function does not return a value.
+            Processing Logic:
+                - Increments the request count based on method, endpoint, and status.
+                - Observes and records the latency of the request processing."""
             if message["type"] == "http.response.start":
                 # Record request metrics
                 REQUEST_COUNT.labels(
@@ -130,6 +149,15 @@ class CacheMetrics:
         self.func = func
     
     async def __call__(self, *args, **kwargs):
+        """Asynchronously calls a function and updates cache metrics.
+        Parameters:
+            - args (tuple): Positional arguments to pass to the function call.
+            - kwargs (dict): Keyword arguments to pass to the function call.
+        Returns:
+            - result (any): The result from the asynchronous function call.
+        Processing Logic:
+            - Increments cache hit metric if function execution is successful.
+            - Increments cache miss metric and raises an exception if a KeyError occurs."""
         try:
             result = await self.func(*args, **kwargs)
             CACHE_HITS.inc()

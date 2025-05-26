@@ -64,6 +64,19 @@ interface NavbarProps {
   onMenuClick: () => void;
 }
 
+/**
+* Functional component for rendering the navigation bar with search and menu functionality.
+* @example
+* Navbar({ onMenuClick: handleMenuToggle })
+* Renders a top app bar with search, menu, and user profile interactions.
+* @param {function} onMenuClick - Function to be executed when the menu icon is clicked.
+* @returns {JSX.Element} The rendered navigation component.
+* @description
+*   - Utilizes `useTheme` to access current theme settings for styling purposes.
+*   - Employs `useNavigate` from React Router for navigation handling upon search submission.
+*   - Manages local state for search input and menu visibility using React's `useState`.
+*   - Integrates Material-UI components for consistent styling and layout.
+*/
 const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
   const theme = useTheme();
   const navigate = useNavigate();

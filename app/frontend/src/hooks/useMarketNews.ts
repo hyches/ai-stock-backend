@@ -24,6 +24,21 @@ interface UseMarketNewsReturn {
   clearFilters: () => void;
 }
 
+/**
+ * Custom hook to fetch and filter market news based on given criteria.
+ * @example
+ * useMarketNews({ symbols: ['AAPL', 'GOOG'], categories: ['Tech'], sentiment: 'positive' })
+ * returns an object containing news items, loading status, errors, methods for filtering news, and a refresh function.
+ * @param {?Object} [initialFilters] - Optional initial filters to apply for news fetching.
+ * @param {?string[]} [initialFilters.symbols] - List of stock symbols to filter news.
+ * @param {?string[]} [initialFilters.categories] - List of categories to filter news.
+ * @param {?string} [initialFilters.sentiment] - Type of sentiment to filter news.
+ * @returns {Object} - An object containing the fetched news data, loading state, error, and methods for managing filters.
+ * @description
+ *   - Utilizes useState and useEffect hooks to manage data fetching and component lifecycle.
+ *   - Employs fetch API to retrieve news data, handling errors by setting an error state.
+ *   - Provides methods to dynamically update filters, retry fetching news, and reset filters.
+ */
 export const useMarketNews = (
   initialFilters?: {
     symbols?: string[];

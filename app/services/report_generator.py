@@ -352,12 +352,28 @@ class ReportGenerator:
             raise
 
 class ResearchReport:
+    """ResearchReport class enables generation of a comprehensive financial stock report.
+    Parameters:
+        - symbol (str): The stock ticker symbol for which the report is generated.
+    Processing Logic:
+        - Initializes instance with ticker data and historical stock data using Yahoo Finance API.
+        - Utilizes various analysis methods for generating different elements of the report.
+        - Handles missing data gracefully by setting sensible defaults, e.g., default company name and price.
+    """
     def __init__(self, symbol: str):
         self.symbol = symbol
         self.stock = yf.Ticker(symbol)
         self.historical_data = self.stock.history(period="1y")
         
     def generate_report(self) -> Dict[str, Any]:
+        """Generate a comprehensive report for a stock.
+        Parameters:
+            - None
+        Returns:
+            - Dict[str, Any]: A dictionary containing various elements of the stock report, including the symbol, company name, report date, current price, and various analyses.
+        Processing Logic:
+            - Retrieves stock information and analyses from various instance methods like `_generate_summary`, `_analyze_technical`, `_analyze_fundamental`, `_get_predictions`, `_analyze_sentiment`, `_assess_risk`, and `_generate_recommendation`.
+            - Utilizes the current date for the report date and ensures defaults are set for missing data, e.g., company name and current price."""
         return {
             "symbol": self.symbol,
             "company_name": self.stock.info.get("longName", "Honeywell Automation India Ltd"),
@@ -380,6 +396,15 @@ class ResearchReport:
         """
     
     def _analyze_technical(self) -> Dict[str, Any]:
+        """Perform analysis of technical indicators based on historical data.
+        Parameters:
+            - None
+        Returns:
+            - Dict[str, Any]: A dictionary with keys 'trend', 'momentum', and 'volatility', each containing relevant technical indicator metrics.
+        Processing Logic:
+            - Computes the 'trend' by comparing short-term and long-term simple moving averages (SMA).
+            - Assesses the 'momentum' using indicators like RSI and MACD.
+            - Evaluates 'volatility' by analyzing Bollinger Bands and ATR values."""
         indicators = calculate_technical_indicators(self.historical_data)
         return {
             "trend": {
@@ -401,6 +426,15 @@ class ResearchReport:
         }
     
     def _analyze_fundamental(self) -> Dict[str, Any]:
+        """Analyze fundamental financial metrics of a stock.
+        Parameters:
+            - None
+        Returns:
+            - Dict[str, Any]: A dictionary containing key financial, growth, and valuation metrics of the stock.
+        Processing Logic:
+            - Extracts various financial metrics such as PE ratio, EPS, and dividend yield from the stock's information.
+            - Collects growth metrics like revenue and earnings growth, along with profit margins.
+            - Includes valuation metrics such as book value, price-to-book ratio, and enterprise value."""
         return {
             "financial_metrics": {
                 "pe_ratio": self.stock.info.get("trailingPE", 0),
@@ -421,6 +455,15 @@ class ResearchReport:
         }
     
     def _get_predictions(self) -> Dict[str, Any]:
+        """Fetch predictions for a financial symbol.
+        Parameters:
+            - None: This method does not accept any parameters.
+        Returns:
+            - Dict[str, Any]: A dictionary containing price targets for 1 week, 1 month, and 3 months, a confidence score, and prediction factors.
+        Processing Logic:
+            - Uses `get_price_predictions` to fetch prediction data.
+            - Constructs a dictionary with keys 'price_targets', 'confidence_score', and 'prediction_factors'.
+            - Defaults are provided (e.g., `0` or empty list) if prediction values are unavailable."""
         predictions = get_price_predictions(self.symbol)
         return {
             "price_targets": {
@@ -433,6 +476,19 @@ class ResearchReport:
         }
     
     def _analyze_sentiment(self) -> Dict[str, Any]:
+        """Analyze sentiment for a given financial symbol.
+        Parameters:
+            - self: Implied parameter representing an instance of the class containing this method.
+            - self.symbol (str): Financial symbol for which sentiment analysis is performed.
+        Returns:
+            - Dict[str, Any]: A dictionary containing various sentiment metrics:
+                - overall_sentiment (str): Overall sentiment based on the analyzed data, default is "Neutral".
+                - news_sentiment (int): Sentiment score derived from news sources, default is 0.
+                - social_sentiment (int): Sentiment score derived from social media, default is 0.
+                - analyst_ratings (dict): Analysis data from financial analysts, default is an empty dictionary.
+        Processing Logic:
+            - Utilizes the `analyze_sentiment` function to perform the sentiment analysis.
+            - Defaults are provided for sentiment categories if specific values are missing."""
         sentiment = analyze_sentiment(self.symbol)
         return {
             "overall_sentiment": sentiment.get("overall", "Neutral"),
@@ -442,6 +498,13 @@ class ResearchReport:
         }
     
     def _assess_risk(self) -> Dict[str, Any]:
+        """Calculates and returns a summary of various risk assessments.
+        Returns:
+            - Dict[str, Any]: A dictionary containing risk level categorized by risk types, including 'market_risk', 'volatility_risk', 'liquidity_risk', and 'sector_risk', along with influencing 'risk_factors'.
+        Processing Logic:
+            - Risk levels are pre-defined as 'Medium' for market and sector risk, 'Low' for volatility and liquidity.
+            - Includes a list of potential risk factors which impact the overall assessment.
+            - The function does not take any parameters or perform any dynamic calculations."""
         return {
             "market_risk": "Medium",
             "volatility_risk": "Low",
@@ -456,6 +519,16 @@ class ResearchReport:
         }
     
     def _generate_recommendation(self) -> Dict[str, Any]:
+        """Generates a stock recommendation based on current price and technical analysis.
+        Parameters:
+            - self: Instance of the class containing stock data and methods for analysis.
+        Returns:
+            - Dict[str, Any]: A dictionary containing stock recommendation details including rating, target price, time horizon, entry points, position sizing, rationale, risk level, stop loss, and risk-reward ratio.
+        Processing Logic:
+            - Calculates optimal entry points using support levels derived from Bollinger lower band, SMA 50, and a 5% threshold below current price.
+            - Determines position sizing with initial allocation and scale-in levels based on calculated optimal entry.
+            - Sets stop-loss to 10% below current price.
+            - Computes risk-reward ratio using predicted target price and calculated optimal entry."""
         current_price = self.stock.info.get("currentPrice", 0)
         technical_analysis = self._analyze_technical()
         

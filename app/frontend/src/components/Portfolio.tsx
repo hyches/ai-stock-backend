@@ -48,12 +48,37 @@ interface PortfolioItem {
   };
 }
 
+/**
+ * Displays a portfolio with its current value, change, and machine learning predictions.
+ * @example
+ * Portfolio()
+ * <Box>...</Box>
+ * @param {none} - This component does not take any arguments.
+ * @returns {JSX.Element} A React component rendering the portfolio overview including tables, charts, and various details.
+ * @description
+ *   - Fetches and displays portfolio data from a specified API endpoint.
+ *   - Utilizes `useState` and `useEffect` hooks for state management and data fetching.
+ *   - Renders dynamic value changes and machine learning predictions using specialized UI components.
+ *   - Provides a manual refresh capability to reload portfolio data via button interaction.
+ */
 const Portfolio: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>([]);
   const [totalValue, setTotalValue] = useState(0);
   const [totalChange, setTotalChange] = useState(0);
 
+  /**
+  * Fetches and updates the portfolio information from the API
+  * @example
+  * sync()
+  * // Updates portfolio state with retrieved data
+  * @param {None}
+  * @returns {void} Does not return a value.
+  * @description
+  *   - Uses a placeholder API endpoint `/api/portfolio` to fetch portfolio data.
+  *   - Handles API call errors by logging them to the console.
+  *   - Ensures the loading state is set appropriately before and after the API call.
+  */
   const fetchPortfolio = async () => {
     try {
       setLoading(true);
@@ -74,6 +99,20 @@ const Portfolio: React.FC = () => {
     fetchPortfolio();
   }, []);
 
+  /**
+  * Renders a component displaying a financial value and its percentage change with appropriate styling.
+  * @example
+  * renderFinancialChange(120.50, 5.45)
+  * // Returns a JSX element showing "$120.50" in green and "5.45%" with an upward trending icon.
+  * @param {number} value - The financial value whose change is represented.
+  * @param {number} percent - The percentage change of the financial value.
+  * @returns {JSX.Element} A styled Box component with Typography and an icon indicating the trend direction.
+  * @description
+  *   - Values are styled according to whether they are positive or negative.
+  *   - Adjusts font and color based on the value's sign for visual representation.
+  *   - Includes an icon representing upward or downward trend correlated with the value sign.
+  *   - Uses Material-UI components for styling and structure.
+  */
   const renderValueChange = (value: number, percent: number) => (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
       <Typography
@@ -97,6 +136,18 @@ const Portfolio: React.FC = () => {
     </Box>
   );
 
+  /**
+   * Renders a UI component displaying machine learning predictions for a portfolio item.
+   * @example
+   * predictionComponent({ direction: 'up', confidence: 0.95, prediction: 1.5 })
+   * <Box>...</Box>
+   * @param {Object} prediction - The portfolio item prediction object containing direction, confidence, and prediction values.
+   * @returns {JSX.Element} A React component that consists of a Chip and a Tooltip, visually representing the prediction details.
+   * @description
+   *   - The chip color changes based on the prediction direction ('up', 'down', or default).
+   *   - The confidence level is displayed as a percentage within the chip label.
+   *   - Tooltip provides additional detail on the predicted percentage change.
+   */
   const renderMLPrediction = (prediction: PortfolioItem['mlPrediction']) => (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
       <Chip

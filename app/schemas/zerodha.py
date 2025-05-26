@@ -23,6 +23,20 @@ class PaperTradeCreate(BaseModel):
     price: float = Field(..., gt=0)
 
 class PaperTradeResponse(BaseModel):
+    """
+    Represents the response of a paper trade transaction.
+    Parameters:
+        - id (int): Unique identifier for the trade.
+        - symbol (str): The trading symbol, e.g., 'AAPL'.
+        - action (str): The trade action, e.g., 'buy' or 'sell'.
+        - quantity (int): The number of units traded.
+        - price (float): The trade price per unit.
+        - status (str): Current status of the trade, e.g., 'completed'.
+        - created_at (datetime): Timestamp when the trade was executed.
+    Processing Logic:
+        - Inherits configurations from BaseModel for data validation and processing.
+        - Ensures compatibility with attribute-based initialization through Config.
+    """
     id: int
     symbol: str
     action: str
