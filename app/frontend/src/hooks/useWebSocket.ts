@@ -13,6 +13,32 @@ interface UseWebSocketReturn {
   error: string | null;
 }
 
+/**
+ * Establishes and manages a WebSocket connection with options for auto reconnection and handlers for different events.
+ * @example
+ * useWebSocket('ws://example.com/socket', {
+ *   autoReconnect: true,
+ *   reconnectInterval: 3000,
+ *   onMessage: (message) => console.log(message),
+ *   onOpen: () => console.log('Connection opened'),
+ *   onClose: () => console.log('Connection closed'),
+ *   onError: (error) => console.error(error),
+ * });
+ * // { isConnected: true, lastMessage: {...}, sendMessage: fn, reconnect: fn, error: null }
+ * @param {string} url - The URL for the WebSocket connection.
+ * @param {Object} options - Configuration options for the WebSocket.
+ * @param {boolean} [options.autoReconnect=true] - Whether to automatically reconnect on connection failure.
+ * @param {number} [options.reconnectInterval=5000] - The interval in milliseconds between reconnection attempts.
+ * @param {function} [options.onMessage] - Handler called when a message is received.
+ * @param {function} [options.onOpen] - Handler called when the WebSocket connection is opened.
+ * @param {function} [options.onClose] - Handler called when the WebSocket connection is closed.
+ * @param {function} [options.onError] - Handler called when an error occurs with the WebSocket.
+ * @returns {Object} An object containing connection status, last received message, and utility functions.
+ * @description
+ *   - Automatically attempts reconnection using the specified interval if `autoReconnect` is enabled.
+ *   - Handlers (onMessage, onOpen, onClose, onError) are optional but provide hooks for custom logic.
+ *   - The `reconnect` function can be used to manually trigger a reconnection attempt.
+ */
 export const useWebSocket = (
   url: string,
   options: {

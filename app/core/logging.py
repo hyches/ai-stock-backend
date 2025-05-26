@@ -6,6 +6,16 @@ settings = Settings()
 
 def setup_logging():
     # Create logger
+    """Set up logging configuration for the AI stock analysis application.
+    Parameters:
+        - None
+    Returns:
+        - logging.Logger: Configured logger for application-level logging.
+    Processing Logic:
+        - Sets the logging level to a predefined level from settings.
+        - Configures console and file handlers with specific formats.
+        - Uses a RotatingFileHandler to manage log file size and backups.
+        - Applies the same formatter from settings to both handlers."""
     logger = logging.getLogger("ai_stock_analysis")
     logger.setLevel(settings.LOG_LEVEL)
 

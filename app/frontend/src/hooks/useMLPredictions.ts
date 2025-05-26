@@ -23,6 +23,12 @@ interface UseMLPredictionsReturn {
   getFeatureImportance: () => Promise<Record<string, number>>;
 }
 
+/**
+* Fetches and periodically refreshes machine learning predictions for a given stock symbol.
+* @example
+* useMLPredictions('AAPL', false, 600000)
+* {
+*   prediction: { /* Prediction object */
 export const useMLPredictions = (
   symbol: string,
   autoRefresh: boolean = true,

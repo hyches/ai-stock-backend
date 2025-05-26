@@ -14,6 +14,18 @@ from app.services.sentiment_analysis import sentiment_analysis
 from app.core.cache import redis_cache
 
 class MLPredictions:
+    """
+    MLPredictions is a class designed to provide comprehensive machine learning-based predictions for financial markets, including price movements, volatility, and trend directions.
+    Parameters:
+        - cache_ttl (int): Time-to-live for cached data, default is 3600 seconds (1 hour).
+        - models (Dict): Dictionary storing the initialized machine learning models.
+        - scalers (Dict): Dictionary storing the data scalers for feature preprocessing.
+    Processing Logic:
+        - The class initializes models using RandomForestRegressor and GradientBoostingRegressor techniques for predicting prices, volatility, and trends.
+        - It employs asynchronous methods to fetch historical stock data and generate predictions efficiently.
+        - Comprehensive predictions for a given symbol are derived from a combination of models, with ensemble methods used to improve reliability.
+        - Confidence measures and technical indicators are calculated to assess validity and importance of predictions with specific emphasis on feature significance and prediction confidence.
+    """
     def __init__(self):
         self.cache_ttl = 3600  # 1 hour
         self.models = {}

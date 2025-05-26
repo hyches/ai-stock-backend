@@ -9,6 +9,19 @@ from app.models.alert import Alert
 logger = logging.getLogger(__name__)
 
 class AlertService:
+    """
+    AlertService class to manage alerts and send notifications.
+    Parameters:
+        - message (str): Description of the alert.
+        - level (str): Severity of the alert, optional, default is "info".
+        - source (str): Origin of the alert, optional, default is "system".
+        - metadata (Optional[Dict]): Additional data for the alert, optional.
+    Processing Logic:
+        - Ensures the alert level is valid; defaults to "info" if not specified.
+        - Adds alert to database and commits the transaction.
+        - Sends notifications through webhooks and emails for critical alerts.
+        - Filters alerts based on level, source, and date parameters.
+    """
     def __init__(self):
         self.alert_levels = {
             "info": "INFO",

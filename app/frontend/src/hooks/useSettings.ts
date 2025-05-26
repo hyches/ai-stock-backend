@@ -19,6 +19,19 @@ interface UseSettingsReturn {
   updateSettings: (newSettings: Partial<MLSettings>) => Promise<void>;
 }
 
+/**
+* Provides a hook to manage and update settings using state and API calls.
+* @example
+* const { settings, loading, error, updateSettings } = useSettings();
+* settings - current settings object, loading - boolean, error - error message
+* @param {Partial<MLSettings>} newSettings - An object representing the partial updated settings.
+* @returns {UseSettingsReturn} An object containing settings, loading state, error message, and updateSettings function.
+* @description
+*   - Utilizes effects to automatically fetch settings when the hook is initialized.
+*   - Handles loading and error state for both fetching and updating settings operations.
+*   - Merges new settings with existing settings before updating.
+*   - Throws an error if the updateSettings API operation fails.
+*/
 export const useSettings = (): UseSettingsReturn => {
   const [settings, setSettings] = useState<MLSettings | null>(null);
   const [loading, setLoading] = useState(true);
@@ -42,6 +55,18 @@ export const useSettings = (): UseSettingsReturn => {
     fetchSettings();
   }, [fetchSettings]);
 
+  /**
+   * Updates the settings by synchronizing new data.
+   * @example
+   * sync({ theme: 'dark', notifications: true })
+   * // Updates the application settings with the new values.
+   * @param {Partial<MLSettings>} newSettings - The new settings to be merged and updated.
+   * @returns {void} No direct return value, but throws an error if the update fails.
+   * @description
+   *   - Uses the settings API to send updated settings.
+   *   - Provides a loading state and error handling during the update process.
+   *   - Logs errors to the console and propagates exceptions for further handling.
+   */
   const updateSettings = async (newSettings: Partial<MLSettings>) => {
     try {
       setLoading(true);

@@ -30,6 +30,19 @@ interface MLSettings {
   apiKey?: string;
 }
 
+/**
+* Handles initialization, display, and modification of machine learning model settings.
+* @example
+* SettingsComponent()
+* Renders the settings interface with current configurations and provides ways to modify them.
+* @param {void} None - The component doesn't take any direct input when initialized.
+* @returns {JSX.Element} The rendered settings component.
+* @description
+*   - Retrieves and populates settings from an API upon component mounting.
+*   - Allows users to modify settings via interactive UI elements including sliders and switches.
+*   - Provides feedback mechanisms for successful or failed attempts to save settings.
+*   - Resets save confirmation message after a set duration.
+*/
 const Settings: React.FC = () => {
   const [settings, setSettings] = useState<MLSettings>({
     modelType: 'lstm',
@@ -60,6 +73,18 @@ const Settings: React.FC = () => {
     fetchSettings();
   }, []);
 
+  /**
+   * Sends user settings to the server and manages success or error states.
+   * @example
+   * sync()
+   * undefined
+   * @param {Object} settings - The settings object to be sent to the server.
+   * @returns {void} Indicates the operation has completed.
+   * @description
+   *   - Utilizes a POST request to send the settings data.
+   *   - Sets a 'saved' flag to true upon successful save, which resets after 3 seconds.
+   *   - Logs errors and updates error state if the operation fails.
+   */
   const handleSave = async () => {
     try {
       // TODO: Replace with actual API call

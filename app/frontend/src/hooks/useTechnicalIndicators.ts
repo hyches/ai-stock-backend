@@ -24,6 +24,20 @@ interface UseTechnicalIndicatorsReturn {
   refresh: () => Promise<void>;
 }
 
+/**
+ * Custom hook to manage and manipulate technical indicators for a given symbol and timeframe.
+ * @example
+ * useTechnicalIndicators('AAPL', '1d')
+ * { indicators: [], loading: true, error: null, addIndicator: [Function], removeIndicator: [Function], updateIndicator: [Function], refresh: [Function] }
+ * @param {string} symbol - The stock symbol for which to fetch and manage technical indicators.
+ * @param {'1d' | '1w' | '1M' | '3M' | '6M' | '1y' | '5y' | 'max'} timeframe - The timeframe representing the period over which to fetch indicators; default is '1M'.
+ * @returns {UseTechnicalIndicatorsReturn} An object containing the indicators data, loading and error states, and functions to add, remove, update, and refresh indicators.
+ * @description
+ *   - Utilizes React hooks such as useState, useEffect, and useCallback to manage component state and side effects.
+ *   - Includes async functions for CRUD operations on indicators, simulating API calls with fetch.
+ *   - Handles potential errors during data fetch or update with error management.
+ *   - Automatically refreshes indicators on symbol or timeframe change.
+ */
 export const useTechnicalIndicators = (
   symbol: string,
   timeframe: '1d' | '1w' | '1M' | '3M' | '6M' | '1y' | '5y' | 'max' = '1M'
@@ -52,6 +66,18 @@ export const useTechnicalIndicators = (
     fetchIndicators();
   }, [fetchIndicators]);
 
+  /**
+  * Synchronizes a new technical indicator using provided configuration.
+  * @example
+  * sync({ symbol: 'AAPL', type: 'SMA', period: 14 })
+  * // Adds a new SMA indicator for AAPL with a period of 14
+  * @param {IndicatorConfig} config - Configuration for the indicator, including symbol, type, and period.
+  * @returns {void} No return value.
+  * @description
+  *   - Adds a new indicator to existing indicators list.
+  *   - Catches and logs errors related to the indicator addition process.
+  *   - Throws an error if the API call fails.
+  */
   const addIndicator = async (config: IndicatorConfig) => {
     try {
       // TODO: Replace with actual API call
@@ -79,6 +105,20 @@ export const useTechnicalIndicators = (
     }
   };
 
+  /**
+   * Updates the configuration for a specific technical indicator type.
+   * @example
+   * sync('SMA', { period: 14 })
+   * { type: 'SMA', period: 14, updated: true }
+   * @param {IndicatorConfig['type']} type - The type of indicator to update.
+   * @param {Partial<IndicatorConfig>} config - Partial configuration object containing the properties to update.
+   * @returns {Promise<object>} Updated indicator configuration object.
+   * @description
+   *   - Makes an asynchronous PATCH request to update the indicator configuration.
+   *   - Merges the provided config with existing configurations, including timeframe.
+   *   - Updates the state by replacing the old indicator configuration with the new one.
+   *   - Logs and rethrows errors encountered during the API call for further handling.
+   */
   const updateIndicator = async (
     type: IndicatorConfig['type'],
     config: Partial<IndicatorConfig>

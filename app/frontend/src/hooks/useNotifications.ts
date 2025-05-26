@@ -21,6 +21,17 @@ interface UseNotificationsReturn {
   addNotification: (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => void;
 }
 
+/**
+ * Provides functionalities to manage notifications including fetching, marking as read, removing, and adding notifications.
+ * @example
+ * useNotifications()
+ * { notifications: Notification[], unreadCount: number, loading: boolean, error: string | null, markAsRead: function, markAllAsRead: function, removeNotification: function, clearAll: function, addNotification: function }
+ * @returns {UseNotificationsReturn} An object containing notifications and related operations.
+ * @description
+ *   - Fetches notifications from a predefined API endpoint and updates the state accordingly.
+ *   - Handles notification state including marking notifications as read and removing them.
+ *   - Provides a count of unread notifications.
+ */
 export const useNotifications = (): UseNotificationsReturn => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,6 +57,18 @@ export const useNotifications = (): UseNotificationsReturn => {
     fetchNotifications();
   }, [fetchNotifications]);
 
+  /**
+   * Marks a notification as read asynchronously.
+   * @example
+   * sync('notificationId')
+   * // Marks the notification with the given id as read.
+   * @param {string} id - Identifier of the notification to be marked as read.
+   * @returns {void} Updates the read status of the specified notification.
+   * @description
+   *   - Assumes the existence of a server endpoint at `/api/notifications/{id}/read`.
+   *   - Uses HTTP POST method to mark the notification as read.
+   *   - Handles errors by logging to the console.
+   */
   const markAsRead = async (id: string) => {
     try {
       // TODO: Replace with actual API call

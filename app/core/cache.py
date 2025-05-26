@@ -5,6 +5,21 @@ from app.config import Settings
 settings = Settings()
 
 class RedisCache:
+    """
+    RedisCache class provides an interface for interacting with a Redis cache, enabling set, get, delete, and clear operations with optional time-to-live (TTL) management.
+    Parameters:
+        - None during initialization. The class utilizes the Redis URL from settings to establish a connection.
+    Processing Logic:
+        - Uses JSON serialization/deserialization to handle cache values for flexibility in storing complex types.
+        - Default TTL for stored keys is set to 3600 seconds (1 hour) unless specified otherwise during the set operation.
+        - Error logging is implemented to record any issues during operations, aiding in debugging and monitoring.
+        - Redis commands are wrapped in asynchronous operations to support non-blocking I/O operations.
+    Examples:
+        - To store a value: `await cache.set('key', {'data': 'value'})`
+        - To retrieve a value: `result = await cache.get('key')`
+        - To delete a key: `await cache.delete('key')`
+        - To clear the cache: `await cache.clear()`
+    """
     def __init__(self):
         self.redis = redis.from_url(settings.REDIS_URL)
         self.default_ttl = 3600  # 1 hour
