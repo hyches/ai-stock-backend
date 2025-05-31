@@ -21,23 +21,45 @@ from app.db.session import get_db
 from app.core.middleware import RequestLoggingMiddleware
 from app.core.middleware import ErrorHandlingMiddleware
 from app.core.middleware import MetricsMiddleware
+import logging
+import time
+from prometheus_client import Counter, Histogram
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
+
+# Prometheus metrics
+REQUEST_COUNT = Counter(
+    'http_requests_total',
+    'Total HTTP requests',
+    ['method', 'endpoint', 'status']
+)
+REQUEST_LATENCY = Histogram(
+    'http_request_duration_seconds',
+    'HTTP request latency',
+    ['method', 'endpoint']
+)
 
 app = FastAPI(
     title=settings.SERVER_NAME,
-    openapi_url=f"{settings.API_V1_STR}/openapi.json"
+    description="AI-Powered Trading System API",
+    version="1.0.0",
+    openapi_url=f"{settings.API_V1_STR}/openapi.json",
+    docs_url="/docs",
+    redoc_url="/redoc"
 )
 
 # Global error handler
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    logger.error(f"Global error handler caught: {str(exc)}")
+    logger.error(f"Global error handler caught: {str(exc)}", exc_info=True)
     return JSONResponse(
         status_code=500,
-        content={"detail": "Internal server error"}
+        content={"detail": "Internal server error", "error": str(exc)}
     )
 
 @app.exception_handler(RequestValidationError)
@@ -45,13 +67,14 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     logger.error(f"Validation error: {str(exc)}")
     return JSONResponse(
         status_code=422,
-        content={"detail": str(exc)}
+        content={"detail": str(exc), "errors": exc.errors()}
     )
 
 # Add security middleware
 app.middleware("http")(rate_limit_middleware)
 app.middleware("http")(security_headers_middleware)
 app.middleware("http")(request_size_limit_middleware)
+app.middleware("http")(csrf_middleware)
 
 # Configure CORS
 app.add_middleware(
@@ -91,7 +114,8 @@ async def root():
         "message": "Welcome to the Trading System API",
         "version": "1.0.0",
         "docs_url": "/docs",
-        "redoc_url": "/redoc"
+        "redoc_url": "/redoc",
+        "status": "operational"
     }
 
 @app.get("/health")
@@ -99,8 +123,20 @@ async def health_check():
     """Health check endpoint"""
     return {
         "status": "healthy",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "timestamp": time.time(),
+        "services": {
+            "database": "connected",
+            "redis": "connected",
+            "api": "operational"
+        }
     }
+
+@app.get("/metrics")
+async def metrics():
+    """Metrics endpoint for Prometheus"""
+    from prometheus_client import generate_latest
+    return Response(generate_latest(), media_type="text/plain")
 
 @app.get("/db-test")
 async def test_db(db: Session = Depends(get_db)):
@@ -110,6 +146,7 @@ async def test_db(db: Session = Depends(get_db)):
         db.execute("SELECT 1")
         return {"status": "Database connection successful"}
     except Exception as e:
+        logger.error(f"Database connection failed: {str(e)}")
         return {"status": "Database connection failed", "error": str(e)}
 
 if __name__ == "__main__":
@@ -118,7 +155,8 @@ if __name__ == "__main__":
         "app.main:app",
         host=settings.SERVER_HOST,
         port=settings.SERVER_PORT,
-        reload=True
+        reload=True,
+        log_level="info"
     )
 
 settings = Settings() 

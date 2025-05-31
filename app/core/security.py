@@ -13,6 +13,11 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import secrets
 from app.core.cache import redis_cache
 import logging
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import Response
+from typing import Callable
+import hashlib
+import hmac
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -27,108 +32,60 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 # CSRF protection
-class CSRFMiddleware:
-    def __init__(self):
-        self.csrf_tokens = {}
-
-    def generate_token(self) -> str:
-        token = secrets.token_urlsafe(32)
-        return token
-
-    def validate_token(self, token: str) -> bool:
-        return token in self.csrf_tokens
+class CSRFMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next: Callable) -> Response:
+        if request.method in ["POST", "PUT", "DELETE", "PATCH"]:
+            csrf_token = request.headers.get("X-CSRF-Token")
+            if not csrf_token or not self._verify_csrf_token(csrf_token, request):
+                raise HTTPException(status_code=403, detail="Invalid CSRF token")
+        return await call_next(request)
+    
+    def _verify_csrf_token(self, token: str, request: Request) -> bool:
+        # Implement your CSRF token verification logic here
+        return True  # Placeholder
 
 csrf_middleware = CSRFMiddleware()
 
 # Rate limiting configuration
 RATE_LIMIT_WINDOW = 60  # 1 minute
-RATE_LIMIT_MAX_REQUESTS = {
-    "default": 60,
-    "auth": 5,
-    "stock_analysis": 30,
-    "portfolio": 20,
-    "report": 10
-}
+RATE_LIMIT_MAX_REQUESTS = 100  # 100 requests per minute
+request_counts = {}
 
-class RateLimiter:
-    """Rate limiting implementation using Redis"""
-    
-    def __init__(self, redis_client):
-        self.redis = redis_client
-    
-    async def check_rate_limit(self, key: str, limit_type: str = "default") -> bool:
-        """Check if request is within rate limits"""
-        current = int(time.time())
-        window_start = current - RATE_LIMIT_WINDOW
-        
-        # Get request count for the window
-        pipe = self.redis.pipeline()
-        pipe.zremrangebyscore(key, 0, window_start)
-        pipe.zcard(key)
-        pipe.zadd(key, {str(current): current})
-        pipe.expire(key, RATE_LIMIT_WINDOW)
-        _, request_count, _, _ = await pipe.execute()
-        
-        # Check against limit
-        max_requests = RATE_LIMIT_MAX_REQUESTS.get(limit_type, RATE_LIMIT_MAX_REQUESTS["default"])
-        return request_count < max_requests
-
-class SecurityMiddleware:
-    """Security middleware for request validation and rate limiting"""
-    
-    def __init__(self, app):
-        self.app = app
-        self.redis = redis_cache
-        self.rate_limiter = RateLimiter(self.redis)
-    
-    async def __call__(self, request: Request, call_next):
-        # Get client IP
+class RateLimitMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next: Callable) -> Response:
         client_ip = request.client.host
+        current_time = time.time()
         
-        # Determine rate limit type based on path
-        path = request.url.path
-        if path.startswith("/api/auth"):
-            limit_type = "auth"
-        elif path.startswith("/api/stocks"):
-            limit_type = "stock_analysis"
-        elif path.startswith("/api/portfolios"):
-            limit_type = "portfolio"
-        elif path.startswith("/api/reports"):
-            limit_type = "report"
-        else:
-            limit_type = "default"
+        # Clean up old entries
+        request_counts[client_ip] = {
+            timestamp: count for timestamp, count in request_counts.get(client_ip, {}).items()
+            if current_time - timestamp < RATE_LIMIT_WINDOW
+        }
         
-        # Check rate limit
-        rate_limit_key = f"rate_limit:{client_ip}:{limit_type}"
-        if not await self.rate_limiter.check_rate_limit(rate_limit_key, limit_type):
-            raise HTTPException(
-                status_code=429,
-                detail="Too many requests",
-                headers={"Retry-After": str(RATE_LIMIT_WINDOW)}
-            )
+        # Count requests in the current window
+        window_requests = sum(request_counts.get(client_ip, {}).values())
         
-        # Add security headers
-        response = await call_next(request)
-        response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["X-Frame-Options"] = "DENY"
-        response.headers["X-XSS-Protection"] = "1; mode=block"
-        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        if window_requests >= RATE_LIMIT_MAX_REQUESTS:
+            logger.warning(f"Rate limit exceeded for IP: {client_ip}")
+            raise HTTPException(status_code=429, detail="Too many requests")
         
-        return response
+        # Add current request
+        if client_ip not in request_counts:
+            request_counts[client_ip] = {}
+        request_counts[client_ip][current_time] = request_counts[client_ip].get(current_time, 0) + 1
+        
+        return await call_next(request)
 
 # Request size limit middleware
-async def request_size_limit_middleware(request: Request, call_next):
-    content_length = request.headers.get("content-length")
-    if content_length and int(content_length) > settings.MAX_REQUEST_SIZE:
-        raise HTTPException(
-            status_code=413,
-            detail="Request entity too large"
-        )
-    response = await call_next(request)
-    return response
+class RequestSizeLimitMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next: Callable) -> Response:
+        content_length = request.headers.get("content-length")
+        if content_length and int(content_length) > settings.MAX_REQUEST_SIZE:
+            raise HTTPException(status_code=413, detail="Request entity too large")
+        return await call_next(request)
 
 # API key validation
-async def validate_api_key(api_key: str = Security(api_key_header)):
+async def validate_api_key(api_key: str = Depends(api_key_header)):
     if api_key != settings.API_KEY:
         raise HTTPException(
             status_code=401,
@@ -201,6 +158,20 @@ cors_middleware = CORSMiddleware(
 )
 
 # Security headers middleware
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next: Callable) -> Response:
+        response = await call_next(request)
+        
+        # Add security headers
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        response.headers["Content-Security-Policy"] = "default-src 'self'"
+        
+        return response
+
+# Security headers middleware
 async def security_headers_middleware(request: Request, call_next):
     response = await call_next(request)
     response.headers["X-Content-Type-Options"] = "nosniff"
@@ -241,3 +212,9 @@ class APIKeyManager:
 
 # Initialize security components
 api_key_manager = APIKeyManager(redis_cache)
+
+# Export middleware functions
+rate_limit_middleware = RateLimitMiddleware
+security_headers_middleware = SecurityHeadersMiddleware
+request_size_limit_middleware = RequestSizeLimitMiddleware
+csrf_middleware = CSRFMiddleware

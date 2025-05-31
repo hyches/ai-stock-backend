@@ -1,17 +1,33 @@
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
 from app.services.zerodha_service import ZerodhaService
 from app.core.cache import redis_cache
+import logging
+
+logger = logging.getLogger(__name__)
 
 class FundamentalAnalysis:
-    def __init__(self):
+    """
+    Provides methods for comprehensive fundamental analysis of stocks, including
+    financial ratios, valuation, growth, quality, risk, industry comparison, and credit analysis.
+    """
+    def __init__(self) -> None:
+        """
+        Initialize FundamentalAnalysis with ZerodhaService and cache TTL.
+        """
         self.zerodha_service = ZerodhaService()
         self.cache_ttl = 3600  # 1 hour
 
-    async def get_comprehensive_analysis(self, symbol: str) -> Dict:
-        """Get comprehensive fundamental analysis"""
+    async def get_comprehensive_analysis(self, symbol: str) -> Dict[str, Any]:
+        """
+        Get comprehensive fundamental analysis for a given symbol.
+        Args:
+            symbol (str): Stock symbol.
+        Returns:
+            Dict[str, Any]: Dictionary containing various analysis metrics.
+        """
         return {
             "financial_ratios": await self._calculate_financial_ratios(symbol),
             "valuation_metrics": await self._calculate_valuation_metrics(symbol),
@@ -22,8 +38,14 @@ class FundamentalAnalysis:
             "credit_analysis": await self._perform_credit_analysis(symbol)
         }
 
-    async def _calculate_financial_ratios(self, symbol: str) -> Dict:
-        """Calculate key financial ratios"""
+    async def _calculate_financial_ratios(self, symbol: str) -> Dict[str, Any]:
+        """
+        Calculate key financial ratios for a given symbol.
+        Args:
+            symbol (str): Stock symbol.
+        Returns:
+            Dict[str, Any]: Dictionary of financial ratios.
+        """
         try:
             # Get financial statements
             balance_sheet = await self._get_balance_sheet(symbol)
@@ -56,11 +78,17 @@ class FundamentalAnalysis:
                 }
             }
         except Exception as e:
-            logger.error(f"Error calculating financial ratios: {str(e)}")
+            logger.error("Error calculating financial ratios: %s", str(e))
             return {}
 
-    async def _calculate_valuation_metrics(self, symbol: str) -> Dict:
-        """Calculate valuation metrics"""
+    async def _calculate_valuation_metrics(self, symbol: str) -> Dict[str, Any]:
+        """
+        Calculate valuation metrics for a given symbol.
+        Args:
+            symbol (str): Stock symbol.
+        Returns:
+            Dict[str, Any]: Dictionary of valuation metrics.
+        """
         try:
             market_data = await self._get_market_data(symbol)
             financials = await self._get_financial_statements(symbol)
@@ -85,11 +113,17 @@ class FundamentalAnalysis:
                 }
             }
         except Exception as e:
-            logger.error(f"Error calculating valuation metrics: {str(e)}")
+            logger.error("Error calculating valuation metrics: %s", str(e))
             return {}
 
-    async def _calculate_growth_metrics(self, symbol: str) -> Dict:
-        """Calculate growth metrics"""
+    async def _calculate_growth_metrics(self, symbol: str) -> Dict[str, Any]:
+        """
+        Calculate growth metrics for a given symbol.
+        Args:
+            symbol (str): Stock symbol.
+        Returns:
+            Dict[str, Any]: Dictionary of growth metrics.
+        """
         try:
             financials = await self._get_financial_statements(symbol)
             
@@ -101,11 +135,17 @@ class FundamentalAnalysis:
                 "dividend_growth": self._calculate_dividend_growth(financials)
             }
         except Exception as e:
-            logger.error(f"Error calculating growth metrics: {str(e)}")
+            logger.error("Error calculating growth metrics: %s", str(e))
             return {}
 
-    async def _calculate_quality_metrics(self, symbol: str) -> Dict:
-        """Calculate quality metrics"""
+    async def _calculate_quality_metrics(self, symbol: str) -> Dict[str, Any]:
+        """
+        Calculate quality metrics for a given symbol.
+        Args:
+            symbol (str): Stock symbol.
+        Returns:
+            Dict[str, Any]: Dictionary of quality metrics.
+        """
         try:
             financials = await self._get_financial_statements(symbol)
             
@@ -127,11 +167,17 @@ class FundamentalAnalysis:
                 }
             }
         except Exception as e:
-            logger.error(f"Error calculating quality metrics: {str(e)}")
+            logger.error("Error calculating quality metrics: %s", str(e))
             return {}
 
-    async def _calculate_risk_metrics(self, symbol: str) -> Dict:
-        """Calculate risk metrics"""
+    async def _calculate_risk_metrics(self, symbol: str) -> Dict[str, Any]:
+        """
+        Calculate risk metrics for a given symbol.
+        Args:
+            symbol (str): Stock symbol.
+        Returns:
+            Dict[str, Any]: Dictionary of risk metrics.
+        """
         try:
             market_data = await self._get_market_data(symbol)
             financials = await self._get_financial_statements(symbol)
@@ -154,11 +200,17 @@ class FundamentalAnalysis:
                 }
             }
         except Exception as e:
-            logger.error(f"Error calculating risk metrics: {str(e)}")
+            logger.error("Error calculating risk metrics: %s", str(e))
             return {}
 
-    async def _perform_credit_analysis(self, symbol: str) -> Dict:
-        """Perform credit analysis"""
+    async def _perform_credit_analysis(self, symbol: str) -> Dict[str, Any]:
+        """
+        Perform credit analysis for a given symbol.
+        Args:
+            symbol (str): Stock symbol.
+        Returns:
+            Dict[str, Any]: Dictionary of credit analysis metrics.
+        """
         try:
             financials = await self._get_financial_statements(symbol)
             
@@ -182,18 +234,30 @@ class FundamentalAnalysis:
                 }
             }
         except Exception as e:
-            logger.error(f"Error performing credit analysis: {str(e)}")
+            logger.error("Error performing credit analysis: %s", str(e))
             return {}
 
     # Helper methods for calculations
     def _calculate_current_ratio(self, balance_sheet: pd.DataFrame) -> float:
-        """Calculate current ratio"""
+        """
+        Calculate current ratio.
+        Args:
+            balance_sheet (pd.DataFrame): Balance sheet dataframe.
+        Returns:
+            float: Current ratio.
+        """
         current_assets = balance_sheet['total_current_assets']
         current_liabilities = balance_sheet['total_current_liabilities']
         return current_assets / current_liabilities
 
     def _calculate_quick_ratio(self, balance_sheet: pd.DataFrame) -> float:
-        """Calculate quick ratio"""
+        """
+        Calculate quick ratio.
+        Args:
+            balance_sheet (pd.DataFrame): Balance sheet dataframe.
+        Returns:
+            float: Quick ratio.
+        """
         current_assets = balance_sheet['total_current_assets']
         inventory = balance_sheet['inventory']
         current_liabilities = balance_sheet['total_current_liabilities']

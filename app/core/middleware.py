@@ -5,6 +5,7 @@ from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 from prometheus_client import Counter, Histogram, generate_latest
 from app.core.config import settings
+import json
 
 # Configure logging
 logging.basicConfig(
@@ -29,65 +30,86 @@ REQUEST_LATENCY = Histogram(
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
-        # Log request
-        logger.info(f"Request: {request.method} {request.url.path}")
-        
-        # Process request
         start_time = time.time()
-        response = await call_next(request)
-        process_time = time.time() - start_time
         
-        # Log response
-        logger.info(
-            f"Response: {request.method} {request.url.path} "
-            f"Status: {response.status_code} "
-            f"Time: {process_time:.2f}s"
-        )
+        # Log request
+        logger.info(f"Request started: {request.method} {request.url.path}")
         
-        return response
+        try:
+            response = await call_next(request)
+            
+            # Log response
+            process_time = time.time() - start_time
+            logger.info(
+                f"Request completed: {request.method} {request.url.path} "
+                f"Status: {response.status_code} Duration: {process_time:.2f}s"
+            )
+            
+            # Record metrics
+            REQUEST_COUNT.labels(
+                method=request.method,
+                endpoint=request.url.path,
+                status=response.status_code
+            ).inc()
+            
+            REQUEST_LATENCY.labels(
+                method=request.method,
+                endpoint=request.url.path
+            ).observe(process_time)
+            
+            return response
+            
+        except Exception as e:
+            logger.error(f"Request failed: {str(e)}", exc_info=True)
+            raise
 
 class ErrorHandlingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         try:
             return await call_next(request)
         except Exception as e:
-            # Log error
-            logger.error(
-                f"Error processing request: {request.method} {request.url.path}",
-                exc_info=True
-            )
+            logger.error(f"Error handling request: {str(e)}", exc_info=True)
             
-            # Return error response
+            # Record error metrics
+            REQUEST_COUNT.labels(
+                method=request.method,
+                endpoint=request.url.path,
+                status=500
+            ).inc()
+            
             return Response(
-                content=str(e),
+                content=json.dumps({
+                    "detail": "Internal server error",
+                    "error": str(e)
+                }),
                 status_code=500,
-                media_type="text/plain"
+                media_type="application/json"
             )
 
 class MetricsMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
-        # Skip metrics endpoint
-        if request.url.path == "/metrics":
-            return await call_next(request)
-        
-        # Process request
         start_time = time.time()
-        response = await call_next(request)
-        process_time = time.time() - start_time
         
-        # Record metrics
-        REQUEST_COUNT.labels(
-            method=request.method,
-            endpoint=request.url.path,
-            status=response.status_code
-        ).inc()
-        
-        REQUEST_LATENCY.labels(
-            method=request.method,
-            endpoint=request.url.path
-        ).observe(process_time)
-        
-        return response
+        try:
+            response = await call_next(request)
+            
+            # Record metrics
+            process_time = time.time() - start_time
+            REQUEST_LATENCY.labels(
+                method=request.method,
+                endpoint=request.url.path
+            ).observe(process_time)
+            
+            return response
+            
+        except Exception as e:
+            # Record error metrics
+            REQUEST_COUNT.labels(
+                method=request.method,
+                endpoint=request.url.path,
+                status=500
+            ).inc()
+            raise
 
     @staticmethod
     async def metrics_endpoint(request: Request) -> Response:

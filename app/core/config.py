@@ -1,51 +1,66 @@
 from typing import Any, Dict, List, Optional, Union
-from pydantic import BaseSettings, PostgresDsn, validator
+from pydantic import BaseSettings, PostgresDsn, validator, RedisDsn
 import secrets
 from pathlib import Path
 
 class Settings(BaseSettings):
-    # API settings
+    # API Settings
     API_V1_STR: str = "/api/v1"
-    SECRET_KEY: str = secrets.token_urlsafe(32)
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
-    
-    # Server settings
-    SERVER_NAME: str = "Trading System"
+    SERVER_NAME: str = "AI Trading System"
     SERVER_HOST: str = "0.0.0.0"
     SERVER_PORT: int = 8000
-    BACKEND_CORS_ORIGINS: List[str] = ["*"]
+    DEBUG: bool = False
+    ENVIRONMENT: str = "development"
     
-    # Database settings
-    POSTGRES_SERVER: str = "localhost"
-    POSTGRES_USER: str = "postgres"
-    POSTGRES_PASSWORD: str = "postgres"
-    POSTGRES_DB: str = "trading_system"
-    SQLALCHEMY_DATABASE_URI: Optional[PostgresDsn] = None
-
-    @validator("SQLALCHEMY_DATABASE_URI", pre=True)
-    def assemble_db_connection(cls, v: Optional[str], values: Dict[str, Any]) -> Any:
-        if isinstance(v, str):
-            return v
-        return PostgresDsn.build(
-            scheme="postgresql",
-            user=values.get("POSTGRES_USER"),
-            password=values.get("POSTGRES_PASSWORD"),
-            host=values.get("POSTGRES_SERVER"),
-            path=f"/{values.get('POSTGRES_DB') or ''}",
-        )
-
-    # Redis settings
+    # Security
+    SECRET_KEY: str = secrets.token_urlsafe(32)
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    API_KEY: str = secrets.token_urlsafe(32)
+    MAX_REQUEST_SIZE: int = 10 * 1024 * 1024  # 10MB
+    
+    # Database
+    DATABASE_URL: PostgresDsn
+    SQL_ECHO: bool = False
+    
+    # Redis
     REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379
     REDIS_DB: int = 0
     REDIS_PASSWORD: Optional[str] = None
+    
+    # CORS
+    BACKEND_CORS_ORIGINS: List[str] = ["*"]
+    
+    # Logging
+    LOG_LEVEL: str = "INFO"
+    LOG_FORMAT: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    LOG_FILE: Optional[Path] = None
+    
+    # Monitoring
+    ENABLE_METRICS: bool = True
+    PROMETHEUS_MULTIPROC_DIR: Optional[Path] = None
+    
+    # Trading Settings
+    ZERODHA_API_KEY: Optional[str] = None
+    ZERODHA_API_SECRET: Optional[str] = None
+    TRADING_ENABLED: bool = False
+    MAX_POSITION_SIZE: float = 100000.0
+    RISK_FREE_RATE: float = 0.02
+    
+    # Cache Settings
+    CACHE_TTL: int = 300  # 5 minutes
+    CACHE_PREFIX: str = "trading"
+    
+    # Rate Limiting
+    RATE_LIMIT_WINDOW: int = 60  # 1 minute
+    RATE_LIMIT_MAX_REQUESTS: int = 100
 
     # Trading settings
     DEFAULT_TIMEFRAME: str = "1d"
     DEFAULT_SYMBOLS: List[str] = ["AAPL", "MSFT", "GOOGL", "AMZN", "META"]
     MAX_POSITIONS: int = 10
     MAX_LEVERAGE: float = 3.0
-    RISK_FREE_RATE: float = 0.02
     DEFAULT_RISK_PER_TRADE: float = 0.02
     MAX_DRAWDOWN_LIMIT: float = 0.20
     POSITION_SIZE_LIMIT: float = 0.10
@@ -59,16 +74,6 @@ class Settings(BaseSettings):
     DATA_DIR: Path = Path("data")
     HISTORICAL_DATA_DAYS: int = 365
     CACHE_EXPIRY: int = 3600  # 1 hour
-
-    # Logging settings
-    LOG_LEVEL: str = "INFO"
-    LOG_FORMAT: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    LOG_FILE: Optional[str] = "trading_system.log"
-
-    # Monitoring settings
-    ENABLE_METRICS: bool = True
-    METRICS_PORT: int = 9090
-    SENTRY_DSN: Optional[str] = None
 
     # Strategy settings
     STRATEGY_PARAMETERS: Dict[str, Dict[str, Any]] = {
