@@ -1,10 +1,13 @@
 import logging
 import sys
 from logging.handlers import RotatingFileHandler
-from app.config import Settings
-settings = Settings()
+from app.core.config import settings
+import os
 
 def setup_logging():
+    # Ensure logs directory exists
+    os.makedirs("logs", exist_ok=True)
+
     # Create logger
     logger = logging.getLogger("ai_stock_analysis")
     logger.setLevel(settings.LOG_LEVEL)

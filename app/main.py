@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from app.api.api import api_router
 from app.core.security import (
     rate_limit_middleware,
@@ -10,20 +10,20 @@ from app.core.security import (
     validate_api_key
 )
 from app.config import Settings
-from typing import Union
 from fastapi.exceptions import RequestValidationError
-from pydantic import ValidationError
 from app.api.endpoints import zerodha
 from app.middleware.error_handler import setup_error_handlers
 from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.db.session import get_db
-from app.core.middleware import RequestLoggingMiddleware
-from app.core.middleware import ErrorHandlingMiddleware
-from app.core.middleware import MetricsMiddleware
+from app.core.middleware import (
+    RequestLoggingMiddleware,
+    ErrorHandlingMiddleware,
+    MetricsMiddleware
+)
 import logging
 import time
-from prometheus_client import Counter, Histogram
+from prometheus_client import Counter, Histogram, generate_latest
 
 # Configure logging
 logging.basicConfig(
@@ -53,7 +53,7 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# Global error handler
+# Global error handlers
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     logger.error(f"Global error handler caught: {str(exc)}", exc_info=True)
@@ -88,7 +88,7 @@ app.add_middleware(
 # Set up error handlers
 setup_error_handlers(app)
 
-# Include API router with API key validation
+# Include API routers
 app.include_router(
     api_router,
     prefix=settings.API_V1_STR,
@@ -107,6 +107,7 @@ app.add_middleware(ErrorHandlingMiddleware)
 if settings.ENABLE_METRICS:
     app.add_middleware(MetricsMiddleware)
 
+# API Endpoints
 @app.get("/")
 async def root():
     """Root endpoint"""
@@ -135,7 +136,6 @@ async def health_check():
 @app.get("/metrics")
 async def metrics():
     """Metrics endpoint for Prometheus"""
-    from prometheus_client import generate_latest
     return Response(generate_latest(), media_type="text/plain")
 
 @app.get("/db-test")

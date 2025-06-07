@@ -1,7 +1,9 @@
 from typing import Any, Dict, List, Optional, Union
-from pydantic import BaseSettings, PostgresDsn, validator, RedisDsn
+from pydantic_settings import BaseSettings
+from pydantic import PostgresDsn, validator
 import secrets
 from pathlib import Path
+from app.core.roles import UserRole
 
 class Settings(BaseSettings):
     # API Settings
@@ -18,9 +20,16 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     API_KEY: str = secrets.token_urlsafe(32)
     MAX_REQUEST_SIZE: int = 10 * 1024 * 1024  # 10MB
+    SESSION_TTL: int = 3600  # 1 hour
+    PASSWORD_MIN_LENGTH: int = 8
+    PASSWORD_MAX_LENGTH: int = 64
+    PASSWORD_REQUIRE_SPECIAL: bool = True
+    PASSWORD_REQUIRE_NUMBERS: bool = True
+    PASSWORD_REQUIRE_UPPERCASE: bool = True
+    PASSWORD_REQUIRE_LOWERCASE: bool = True
     
     # Database
-    DATABASE_URL: PostgresDsn
+    DATABASE_URL: str = "sqlite:///./test.db"
     SQL_ECHO: bool = False
     
     # Redis
@@ -55,6 +64,8 @@ class Settings(BaseSettings):
     # Rate Limiting
     RATE_LIMIT_WINDOW: int = 60  # 1 minute
     RATE_LIMIT_MAX_REQUESTS: int = 100
+    RATE_LIMIT_BY_IP: bool = True
+    RATE_LIMIT_BY_USER: bool = True
 
     # Trading settings
     DEFAULT_TIMEFRAME: str = "1d"
@@ -98,6 +109,27 @@ class Settings(BaseSettings):
             "take_profit_atr": 4.0
         }
     }
+
+    # Security validators
+    @validator("BACKEND_CORS_ORIGINS", pre=True)
+    def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
+        if isinstance(v, str) and not v.startswith("["):
+            return [i.strip() for i in v.split(",")]
+        elif isinstance(v, (list, str)):
+            return v
+        raise ValueError(v)
+
+    @validator("DATABASE_URL", pre=True)
+    def validate_database_url(cls, v: Optional[str]) -> Optional[str]:
+        if not v:
+            return v
+        return v
+
+    @validator("REDIS_PASSWORD", pre=True)
+    def validate_redis_password(cls, v: Optional[str]) -> Optional[str]:
+        if not v:
+            return v
+        return v
 
     class Config:
         case_sensitive = True

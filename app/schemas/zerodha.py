@@ -3,10 +3,10 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 class HistoricalDataRequest(BaseModel):
-    instrument_token: int
-    from_date: datetime
-    to_date: datetime
-    interval: str = Field(default="day", regex="^(minute|5minute|15minute|30minute|60minute|day)$")
+    symbol: str
+    from_date: str
+    to_date: str
+    interval: str = Field(default="day", pattern="^(minute|5minute|15minute|30minute|60minute|day)$")
 
 class HistoricalDataResponse(BaseModel):
     date: datetime
@@ -18,7 +18,7 @@ class HistoricalDataResponse(BaseModel):
 
 class PaperTradeCreate(BaseModel):
     symbol: str
-    action: str = Field(..., regex="^(buy|sell)$")
+    action: str = Field(..., pattern="^(buy|sell)$")
     quantity: int = Field(..., gt=0)
     price: float = Field(..., gt=0)
 
