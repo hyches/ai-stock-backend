@@ -9,11 +9,13 @@ from app.db.session import SessionLocal
 from app.models.zerodha import ZerodhaToken, PaperTrade
 from app.core.cache import redis_cache
 from app.services.market_data_service import MarketDataService
+from app.services.broker_base import BrokerBase
 
 logger = logging.getLogger(__name__)
 
-class ZerodhaService:
+class ZerodhaService(BrokerBase):
     def __init__(self):
+        super().__init__()
         self.api_key = settings.ZERODHA_API_KEY
         self.api_secret = settings.ZERODHA_API_SECRET
         self.ws_url = "wss://ws.kite.trade"

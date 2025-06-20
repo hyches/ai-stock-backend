@@ -6,6 +6,11 @@ import { Box, Container } from '@mui/material';
 import Navbar from './components/Navbar';
 import TradingDashboard from './components/TradingDashboard';
 import Login from './components/Login';
+import MLDashboard from './components/MLDashboard';
+import Portfolio from './components/Portfolio';
+import Watchlist from './components/Watchlist';
+import Settings from './components/Settings';
+import MarketOverview from './components/MarketOverview';
 
 const theme = createTheme({
   palette: {
@@ -46,6 +51,11 @@ const App: React.FC = () => {
             <Routes>
               <Route path="/" element={<TradingDashboard />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/ml-dashboard" element={<MLDashboard />} />
+              <Route path="/portfolio" element={<Portfolio />} />
+              <Route path="/watchlist" element={<Watchlist />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/market-overview" element={<MarketOverview />} />
             </Routes>
           </Container>
         </Box>

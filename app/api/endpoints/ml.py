@@ -1,72 +1,67 @@
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Body
 from app.core.security import get_current_user
 from app.services.ml_service import (
+    predict,
     get_predictions,
     get_model_performance,
     retrain_model,
     get_feature_importance
 )
 from app.schemas.ml import (
+    PredictionRequest,
     PredictionResponse,
     ModelPerformance,
     FeatureImportance
 )
-from typing import List
+from typing import List, Dict, Any
 
 router = APIRouter()
 
-@router.get("/predictions/{symbol}", response_model=PredictionResponse)
-async def predictions(
-    symbol: str,
+@router.post("/predict", response_model=Dict[str, Any])
+async def predict_endpoint(
+    data: Dict[str, float] = Body(...),
     current_user = Depends(get_current_user)
 ):
     try:
-        predictions = await get_predictions(symbol)
-        return predictions
+        return predict(data)
     except Exception as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Error getting predictions: {str(e)}"
-        )
+        raise HTTPException(status_code=400, detail=f"Error predicting: {str(e)}")
+
+@router.post("/batch_predict", response_model=Dict[str, Any])
+async def batch_predict_endpoint(
+    data: List[Dict[str, float]] = Body(...),
+    current_user = Depends(get_current_user)
+):
+    try:
+        return get_predictions(data)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error batch predicting: {str(e)}")
 
 @router.get("/performance", response_model=ModelPerformance)
 async def performance(
     current_user = Depends(get_current_user)
 ):
     try:
-        performance = await get_model_performance()
-        return performance
+        return get_model_performance()
     except Exception as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Error getting model performance: {str(e)}"
-        )
+        raise HTTPException(status_code=400, detail=f"Error getting model performance: {str(e)}")
 
-@router.post("/retrain/{symbol}")
+@router.post("/retrain", response_model=Dict[str, str])
 async def retrain(
-    symbol: str,
-    background_tasks: BackgroundTasks,
+    X: List[List[float]] = Body(...),
+    y: List[int] = Body(...),
     current_user = Depends(get_current_user)
 ):
     try:
-        background_tasks.add_task(retrain_model, symbol)
-        return {"message": "Model retraining started"}
+        return retrain_model(X, y)
     except Exception as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Error starting model retraining: {str(e)}"
-        )
+        raise HTTPException(status_code=400, detail=f"Error retraining model: {str(e)}")
 
-@router.get("/features/{symbol}", response_model=List[FeatureImportance])
+@router.get("/features", response_model=FeatureImportance)
 async def features(
-    symbol: str,
     current_user = Depends(get_current_user)
 ):
     try:
-        features = await get_feature_importance(symbol)
-        return features
+        return get_feature_importance()
     except Exception as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Error getting feature importance: {str(e)}"
-        ) 
+        raise HTTPException(status_code=400, detail=f"Error getting feature importance: {str(e)}") 

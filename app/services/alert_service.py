@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 
 class AlertService:
     def __init__(self):
+        self.alerts = []
         self.alert_levels = {
             "info": "INFO",
             "warning": "WARNING",
@@ -17,7 +18,29 @@ class AlertService:
             "critical": "CRITICAL"
         }
 
-    async def create_alert(
+    def create_alert(self, user_id: int, message: str, level: str = 'info'):
+        alert = {
+            'id': len(self.alerts) + 1,
+            'user_id': user_id,
+            'message': message,
+            'level': level,
+            'read': False,
+            'timestamp': datetime.utcnow().isoformat()
+        }
+        self.alerts.append(alert)
+        return alert
+
+    def get_alerts(self, user_id: int) -> List[Dict]:
+        return [a for a in self.alerts if a['user_id'] == user_id]
+
+    def mark_as_read(self, alert_id: int):
+        for alert in self.alerts:
+            if alert['id'] == alert_id:
+                alert['read'] = True
+                return alert
+        return None
+
+    async def create_alert_db(
         self,
         message: str,
         level: str = "info",
@@ -46,7 +69,7 @@ class AlertService:
         finally:
             db.close()
 
-    async def get_alerts(
+    async def get_alerts_db(
         self,
         level: Optional[str] = None,
         source: Optional[str] = None,

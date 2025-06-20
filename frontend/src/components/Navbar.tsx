@@ -41,6 +41,13 @@ const Navbar: React.FC = () => {
           Trading System
         </Typography>
 
+        <Button color="inherit" onClick={() => navigate('/')}>Dashboard</Button>
+        <Button color="inherit" onClick={() => navigate('/ml-dashboard')}>ML Dashboard</Button>
+        <Button color="inherit" onClick={() => navigate('/portfolio')}>Portfolio</Button>
+        <Button color="inherit" onClick={() => navigate('/watchlist')}>Watchlist</Button>
+        <Button color="inherit" onClick={() => navigate('/market-overview')}>Market Overview</Button>
+        <Button color="inherit" onClick={() => navigate('/settings')}>Settings</Button>
+
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <IconButton color="inherit">
             <NotificationsIcon />

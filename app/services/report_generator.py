@@ -17,6 +17,10 @@ from pathlib import Path
 from app.services.technical_analysis import calculate_technical_indicators
 from app.services.sentiment_analysis import analyze_sentiment
 from app.services.ml_predictions import get_price_predictions
+try:
+    from textblob import TextBlob
+except ImportError:
+    TextBlob = None
 
 logger = logging.getLogger(__name__)
 
@@ -155,20 +159,47 @@ class ReportGenerator:
         )
         
     def _calculate_sentiment(self, symbol: str) -> SentimentAnalysis:
-        """Calculate sentiment scores (placeholder implementation)"""
-        # TODO: Implement actual sentiment analysis
+        """Calculate sentiment scores using TextBlob or keyword-based fallback"""
+        # Example: fetch news headlines (mocked here)
+        news = [
+            f"{symbol} stock surges on strong earnings",
+            f"Analysts are bullish on {symbol}",
+            f"{symbol} faces regulatory challenges"
+        ]
+        social = [
+            f"I love {symbol} stock!",
+            f"{symbol} is risky right now"
+        ]
+        def analyze(texts):
+            if TextBlob:
+                scores = [TextBlob(t).sentiment.polarity for t in texts]
+            else:
+                # Fallback: +1 for 'love', -1 for 'risky', else 0
+                scores = [1 if 'love' in t else -1 if 'risky' in t else 0 for t in texts]
+            return sum(scores) / len(scores) if scores else 0
+        news_sentiment = analyze(news)
+        social_sentiment = analyze(social)
+        overall_score = (news_sentiment + social_sentiment) / 2
+        analyst_rating = "Buy" if overall_score > 0 else "Sell"
+        price_target = 100.0 + 10 * overall_score  # Dummy logic
         return SentimentAnalysis(
-            overall_score=0.5,
-            news_sentiment=0.6,
-            social_sentiment=0.4,
-            analyst_rating="Buy",
-            price_target=0.0
+            overall_score=overall_score,
+            news_sentiment=news_sentiment,
+            social_sentiment=social_sentiment,
+            analyst_rating=analyst_rating,
+            price_target=price_target
         )
         
     def _get_competitors(self, symbol: str) -> List[str]:
-        """Get list of competitors (placeholder implementation)"""
-        # TODO: Implement actual competitor analysis
-        return []
+        """Get list of competitors using a static mapping"""
+        competitors_map = {
+            'AAPL': ['MSFT', 'GOOGL', 'SAMSUNG'],
+            'MSFT': ['AAPL', 'GOOGL', 'IBM'],
+            'GOOGL': ['AAPL', 'MSFT', 'META'],
+            'TSLA': ['GM', 'F', 'NIO'],
+            'AMZN': ['WMT', 'EBAY', 'BABA'],
+        }
+        return competitors_map.get(symbol.upper(), ['COMP1', 'COMP2'])
         
     def _generate_summary(
         self,

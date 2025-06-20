@@ -24,6 +24,16 @@ from app.core.middleware import (
 import logging
 import time
 from prometheus_client import Counter, Histogram, generate_latest
+from app.api.endpoints import (
+    forecasting,
+    explainability,
+    anomaly_detection,
+    automl,
+    regime_detection,
+    event_impact,
+    alert,
+    live_data
+)
 
 # Configure logging
 logging.basicConfig(
@@ -99,6 +109,47 @@ app.include_router(
     zerodha.router,
     prefix="/api/v1/zerodha",
     tags=["zerodha"]
+)
+
+app.include_router(
+    forecasting.router,
+    prefix="/api/v1",
+    tags=["forecasting"]
+)
+app.include_router(
+    explainability.router,
+    prefix="/api/v1",
+    tags=["explainability"]
+)
+app.include_router(
+    anomaly_detection.router,
+    prefix="/api/v1",
+    tags=["anomaly_detection"]
+)
+app.include_router(
+    automl.router,
+    prefix="/api/v1",
+    tags=["automl"]
+)
+app.include_router(
+    regime_detection.router,
+    prefix="/api/v1",
+    tags=["regime_detection"]
+)
+app.include_router(
+    event_impact.router,
+    prefix="/api/v1",
+    tags=["event_impact"]
+)
+app.include_router(
+    alert.router,
+    prefix="/api/v1",
+    tags=["alert"]
+)
+app.include_router(
+    live_data.router,
+    prefix="/api/v1",
+    tags=["live_data"]
 )
 
 # Add custom middleware
