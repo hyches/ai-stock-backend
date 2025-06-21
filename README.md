@@ -10,6 +10,10 @@ A modern web-based trading system built with Python (FastAPI) and React (TypeScr
 - Backtesting capabilities
 - Performance analytics and reporting
 - User authentication and authorization
+- Automated Machine Learning (AutoML)
+- Anomaly detection and explainability
+- Regime detection and event impact analysis
+- Market data integration (including Zerodha)
 - Modern, responsive UI
 
 ## Tech Stack
@@ -22,6 +26,7 @@ A modern web-based trading system built with Python (FastAPI) and React (TypeScr
 - Pandas
 - NumPy
 - TA-Lib
+- Alembic (migrations)
 
 ### Frontend
 - React 18
@@ -89,49 +94,92 @@ npm start
 trading-system/
 ├── app/
 │   ├── api/
-│   │   └── v1/
-│   │       └── endpoints/
-│   ├── core/
-│   ├── db/
-│   ├── models/
-│   ├── schemas/
-│   └── services/
+│   │   ├── endpoints/           # Main API endpoints (alert, anomaly_detection, automl, etc.)
+│   │   ├── v1/
+│   │   │   └── endpoints/       # v1 API endpoints (strategies, trading)
+│   │   ├── ml/                  # ML-specific API logic
+│   │   └── deps.py, api.py
+│   ├── core/                    # Core modules (config, logging, security, etc.)
+│   ├── db/                      # Database base, session, etc.
+│   ├── models/                  # SQLAlchemy models (user, trading, alert, etc.)
+│   ├── schemas/                 # Pydantic schemas
+│   ├── services/                # Business logic (ml_service, trading, optimizer, etc.)
+│   ├── strategies/              # Trading strategy implementations
+│   ├── utils/                   # Utility modules (backtesting, data_loader, etc.)
+│   ├── middleware/              # Middleware (error handler, etc.)
+│   ├── config/                  # Environment-specific configs
+│   ├── frontend/                # (Optional) Embedded frontend
+│   ├── main.py                  # FastAPI entrypoint
+│   └── database.py, config.py
 ├── frontend/
 │   ├── public/
 │   └── src/
-│       ├── components/
-│       ├── hooks/
-│       └── utils/
+│       ├── components/          # React components (Dashboard, Portfolio, etc.)
+│       │   └── charts/          # Chart components (EquityCurveChart, etc.)
+│       ├── hooks/               # Custom React hooks (useMLPredictions, usePortfolio, etc.)
+│       ├── types/, styles/, ...
+│       └── App.tsx, index.tsx
 ├── tests/
-├── alembic/
-├── .env.example
+│   ├── api/                     # API endpoint tests
+│   ├── integration/             # Integration tests
+│   ├── benchmarks/              # Performance/benchmark tests
+│   ├── load/                    # Load tests
+│   ├── core/, db/, security/    # Core, DB, and security tests
+│   └── ...
+├── alembic/                     # DB migrations
+├── scripts/                     # Utility scripts
+├── docs/                        # Documentation
 ├── requirements.txt
-└── README.md
+├── requirements-test.txt
+├── Dockerfile
+├── README.md
+└── ...
 ```
 
-## Development
+## Backend Overview
 
-### Backend Development
+- **API Endpoints:**
+  - `app/api/endpoints/`: alert, anomaly_detection, automl, backup, event_impact, explainability, forecasting, live_data, market, ml, optimizer, regime_detection, research, screener, settings, zerodha, auth
+  - `app/api/v1/endpoints/`: strategies, trading
+- **Business Logic:**
+  - `app/services/`: alert_service, anomaly_detection, automl, backtest, competitor, event_impact, explainability, forecasting, fundamental_analysis, instrument_service, live_data, market_data_service, ml_predictions, ml_service, optimizer, regime_detection, report_generator, risk_management, screener, sentiment_analysis, strategy, technical_analysis, token_refresh, trade_constraints, trading, zerodha_service, etc.
+- **Strategies:**
+  - `app/strategies/`: base, trend_following
+- **Utilities:**
+  - `app/utils/`: backtesting, data_fetcher, data_loader, pagination, portfolio_management, risk_management, technical_analysis
+- **Core & Middleware:**
+  - `app/core/`: config, logging, security, roles, cache, middleware, monitoring, backup
+  - `app/middleware/`: error_handler
+- **Models & Schemas:**
+  - `app/models/`: user, trading, alert, zerodha, database, competitor, sentiment, report, portfolio, stock
+  - `app/schemas/`: user, zerodha, settings, ml, token, strategy, trading, market
 
-- API endpoints are defined in `app/api/v1/endpoints/`
-- Database models are in `app/models/`
-- Pydantic schemas are in `app/schemas/`
-- Business logic is in `app/services/`
+## Frontend Overview
 
-### Frontend Development
-
-- React components are in `frontend/src/components/`
-- Custom hooks are in `frontend/src/hooks/`
-- API integration is handled in `frontend/src/hooks/useApi.ts`
+- **Components:**
+  - Dashboard, Portfolio, PortfolioOverview, BacktestResults, TradingDashboard, MarketOverview, Watchlist, NotificationsPanel, Settings, Navbar, Sidebar, Login, SignalList, StrategyList, TradeHistory, MLDashboard, charts/EquityCurveChart
+- **Hooks:**
+  - useMLPredictions, usePortfolio, useWatchlist, useTechnicalIndicators, useAuth, useNotifications, useWebSocket, useApi
 
 ## Testing
 
-### Backend Tests
+- **Backend:**
+  - Unit tests: `tests/core/`, `tests/db/`, `tests/security/`, etc.
+  - API tests: `tests/api/`
+  - Integration tests: `tests/integration/`
+  - Benchmark tests: `tests/benchmarks/`
+  - Load tests: `tests/load/`
+- **Frontend:**
+  - Run with `npm test` in `frontend/`
+
+### Running Tests
+
+#### Backend
 ```bash
 pytest
 ```
 
-### Frontend Tests
+#### Frontend
 ```bash
 cd frontend
 npm test
