@@ -1,3 +1,9 @@
+"""
+Database configuration and session management for the AI Stock Portfolio Platform Backend.
+
+This module sets up the SQLAlchemy engine, session factory, and base class for models.
+It provides utility functions for obtaining a database session and initializing the database schema.
+"""
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker

@@ -1,3 +1,10 @@
+"""
+Main entry point for the AI Stock Portfolio Platform Backend.
+
+This module initializes the FastAPI application, configures middleware, error handlers,
+API routers, and exposes health, metrics, and root endpoints. It integrates Prometheus
+metrics, CORS, and security middleware, and includes routers for all major API modules.
+"""
 from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response

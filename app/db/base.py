@@ -1,3 +1,8 @@
+"""
+SQLAlchemy engine, session, and custom query class for the AI Stock Portfolio Platform Backend.
+
+This module configures the engine and session factory with performance optimizations and provides a custom Query class for advanced ORM operations.
+"""
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -34,22 +39,53 @@ Base = declarative_base()
 
 # Custom query class with optimizations
 class Query(BaseQuery):
+    """
+    Custom query class with advanced ORM optimizations and convenience methods.
+    """
     def get_or_404(self, ident):
-        """Get object by id or raise 404"""
+        """
+        Get object by id or raise 404 if not found.
+
+        Args:
+            ident: Primary key identifier.
+        Returns:
+            ORM object.
+        Raises:
+            HTTPException: If object is not found.
+        """
         rv = self.get(ident)
         if rv is None:
             raise HTTPException(status_code=404, detail="Object not found")
         return rv
 
     def first_or_404(self):
-        """Get first object or raise 404"""
+        """
+        Get first object or raise 404 if not found.
+
+        Returns:
+            ORM object.
+        Raises:
+            HTTPException: If object is not found.
+        """
         rv = self.first()
         if rv is None:
             raise HTTPException(status_code=404, detail="Object not found")
         return rv
 
     def paginate(self, page=None, per_page=None, error_out=True, max_per_page=None):
-        """Return paginated results"""
+        """
+        Return paginated results for a query.
+
+        Args:
+            page (int, optional): Page number.
+            per_page (int, optional): Results per page.
+            error_out (bool, optional): Raise error if page not found.
+            max_per_page (int, optional): Maximum results per page.
+        Returns:
+            dict: Pagination metadata and items.
+        Raises:
+            HTTPException: If page is not found.
+        """
         if page is None:
             page = 1
         if per_page is None:

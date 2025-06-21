@@ -10,12 +10,12 @@ websockets==10.0
 aiohttp==3.8.1
 
 # Data processing and analysis
-pandas==1.3.3
-numpy==1.21.2
-scipy==1.7.1
+#pandas==1.3.3
+#numpy==1.21.2
+#scipy
 ta-lib==0.4.24
 yfinance==0.1.70
-ccxt==1.60.0
+ccxt
 
 # Testing
 pytest==6.2.5
@@ -48,7 +48,7 @@ opentelemetry-instrumentation-fastapi==0.30b1
 python-jose==3.3.0
 passlib==1.7.4
 bcrypt==3.2.0
-python-multipart==0.0.5
+#python-multipart==0.0.5
 cryptography==3.4.7
 itsdangerous==2.0.1
 python-jose[cryptography]==3.3.0

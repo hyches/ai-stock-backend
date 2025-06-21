@@ -1,3 +1,9 @@
+"""
+Centralized configuration for the AI Stock Portfolio Platform Backend.
+
+Defines the Settings class for all environment variables, API, security, database, cache, and trading settings.
+Includes Pydantic validators for environment variable parsing and validation.
+"""
 from typing import Any, Dict, List, Optional, Union
 from pydantic_settings import BaseSettings
 from pydantic import PostgresDsn, validator
@@ -6,6 +12,11 @@ from pathlib import Path
 from app.core.roles import UserRole
 
 class Settings(BaseSettings):
+    """
+    Application settings for the backend, loaded from environment variables or defaults.
+
+    Includes API, security, database, Redis, CORS, logging, monitoring, trading, cache, rate limiting, and strategy settings.
+    """
     # API Settings
     API_V1_STR: str = "/api/v1"
     SERVER_NAME: str = "AI Trading System"
@@ -113,6 +124,14 @@ class Settings(BaseSettings):
     # Security validators
     @validator("BACKEND_CORS_ORIGINS", pre=True)
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
+        """
+        Parse and validate CORS origins from environment variable.
+
+        Args:
+            v (Union[str, List[str]]): CORS origins as a string or list.
+        Returns:
+            Union[List[str], str]: Parsed list of origins or original value.
+        """
         if isinstance(v, str) and not v.startswith("["):
             return [i.strip() for i in v.split(",")]
         elif isinstance(v, (list, str)):
@@ -121,12 +140,28 @@ class Settings(BaseSettings):
 
     @validator("DATABASE_URL", pre=True)
     def validate_database_url(cls, v: Optional[str]) -> Optional[str]:
+        """
+        Validate the database URL.
+
+        Args:
+            v (Optional[str]): Database URL.
+        Returns:
+            Optional[str]: Validated database URL or None.
+        """
         if not v:
             return v
         return v
 
     @validator("REDIS_PASSWORD", pre=True)
     def validate_redis_password(cls, v: Optional[str]) -> Optional[str]:
+        """
+        Validate the Redis password.
+
+        Args:
+            v (Optional[str]): Redis password.
+        Returns:
+            Optional[str]: Validated Redis password or None.
+        """
         if not v:
             return v
         return v

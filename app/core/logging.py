@@ -1,3 +1,8 @@
+"""
+Logging configuration for the AI Stock Portfolio Platform Backend.
+
+This module sets up application-wide logging with both console and rotating file handlers.
+"""
 import logging
 import sys
 from logging.handlers import RotatingFileHandler
@@ -5,6 +10,15 @@ from app.core.config import settings
 import os
 
 def setup_logging():
+    """
+    Set up logging for the application.
+
+    Ensures the logs directory exists, configures a logger with both console and rotating file handlers,
+    and applies the log format and level from settings.
+
+    Returns:
+        logging.Logger: Configured logger instance.
+    """
     # Ensure logs directory exists
     os.makedirs("logs", exist_ok=True)
 

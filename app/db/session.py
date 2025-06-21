@@ -1,3 +1,8 @@
+"""
+Database session and engine management for the AI Stock Portfolio Platform Backend.
+
+This module configures the SQLAlchemy engine, session factory, and provides utilities for session management, health checks, and query optimization.
+"""
 from typing import Generator
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
@@ -27,7 +32,12 @@ SessionLocal = sessionmaker(
 )
 
 def get_db() -> Generator[Session, None, None]:
-    """Get database session with automatic cleanup"""
+    """
+    Get a database session with automatic cleanup.
+
+    Yields:
+        Session: SQLAlchemy session object.
+    """
     db = SessionLocal()
     try:
         yield db
@@ -36,7 +46,12 @@ def get_db() -> Generator[Session, None, None]:
 
 # Database health check
 def check_db_health() -> bool:
-    """Check database connection health"""
+    """
+    Check database connection health.
+
+    Returns:
+        bool: True if the database connection is healthy, False otherwise.
+    """
     try:
         db = SessionLocal()
         db.execute("SELECT 1")
@@ -48,7 +63,14 @@ def check_db_health() -> bool:
 
 # Query optimization settings
 def optimize_query(query):
-    """Apply query optimizations"""
+    """
+    Apply query optimizations for large result sets.
+
+    Args:
+        query: SQLAlchemy query object.
+    Returns:
+        Query: Optimized SQLAlchemy query object.
+    """
     return query.execution_options(
         stream_results=True,  # Stream large result sets
         max_row_buffer=1000,  # Buffer size for streaming

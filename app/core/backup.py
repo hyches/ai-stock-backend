@@ -1,3 +1,8 @@
+"""
+Backup management utilities for the AI Stock Portfolio Platform Backend.
+
+This module provides the BackupManager class for creating, restoring, listing, and cleaning up database and report backups.
+"""
 import os
 import shutil
 import datetime
@@ -9,12 +14,25 @@ logger = logging.getLogger("ai_stock_analysis")
 settings = Settings()
 
 class BackupManager:
+    """
+    Manages creation, restoration, listing, and cleanup of database and report backups.
+    """
     def __init__(self):
+        """
+        Initialize the BackupManager and ensure the backup directory exists.
+        """
         self.backup_dir = Path("backups")
         self.backup_dir.mkdir(exist_ok=True)
         
     def create_backup(self):
-        """Create a backup of the database and important files."""
+        """
+        Create a backup of the database and important files.
+
+        Returns:
+            str: Path to the created backup directory.
+        Raises:
+            Exception: If backup creation fails.
+        """
         try:
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             backup_path = self.backup_dir / f"backup_{timestamp}"
@@ -42,7 +60,14 @@ class BackupManager:
             raise
     
     def restore_backup(self, backup_path: str):
-        """Restore from a backup."""
+        """
+        Restore from a backup directory.
+
+        Args:
+            backup_path (str): Path to the backup directory.
+        Raises:
+            Exception: If restore fails or backup directory does not exist.
+        """
         try:
             backup_dir = Path(backup_path)
             if not backup_dir.exists():
@@ -65,7 +90,14 @@ class BackupManager:
             raise
     
     def list_backups(self):
-        """List all available backups."""
+        """
+        List all available backups.
+
+        Returns:
+            list: List of backup metadata dictionaries.
+        Raises:
+            Exception: If listing fails.
+        """
         try:
             backups = []
             for backup_dir in self.backup_dir.glob("backup_*"):
@@ -83,7 +115,14 @@ class BackupManager:
             raise
     
     def cleanup_old_backups(self, keep_last_n: int = 5):
-        """Remove old backups, keeping only the last N backups."""
+        """
+        Remove old backups, keeping only the last N backups.
+
+        Args:
+            keep_last_n (int): Number of recent backups to keep. Defaults to 5.
+        Raises:
+            Exception: If cleanup fails.
+        """
         try:
             backups = self.list_backups()
             if len(backups) > keep_last_n:

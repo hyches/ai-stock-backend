@@ -1,3 +1,8 @@
+"""
+Custom middleware for the AI Stock Portfolio Platform Backend.
+
+This module provides middleware for request logging, error handling, and Prometheus metrics collection.
+"""
 import time
 import logging
 from typing import Callable
@@ -29,7 +34,20 @@ REQUEST_LATENCY = Histogram(
 )
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
+    """
+    Middleware for logging incoming requests and responses, including timing and status.
+    Records Prometheus metrics for request count and latency.
+    """
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
+        """
+        Process the incoming request, log details, and record metrics.
+
+        Args:
+            request (Request): Incoming FastAPI request.
+            call_next (Callable): Next middleware or route handler.
+        Returns:
+            Response: FastAPI response object.
+        """
         start_time = time.time()
         
         # Log request
@@ -64,7 +82,20 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             raise
 
 class ErrorHandlingMiddleware(BaseHTTPMiddleware):
+    """
+    Middleware for catching and logging unhandled exceptions during request processing.
+    Returns a JSON error response and records error metrics.
+    """
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
+        """
+        Process the incoming request and handle exceptions.
+
+        Args:
+            request (Request): Incoming FastAPI request.
+            call_next (Callable): Next middleware or route handler.
+        Returns:
+            Response: FastAPI response object or error response.
+        """
         try:
             return await call_next(request)
         except Exception as e:
@@ -87,7 +118,19 @@ class ErrorHandlingMiddleware(BaseHTTPMiddleware):
             )
 
 class MetricsMiddleware(BaseHTTPMiddleware):
+    """
+    Middleware for collecting Prometheus metrics on request latency and errors.
+    """
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
+        """
+        Process the incoming request and record metrics.
+
+        Args:
+            request (Request): Incoming FastAPI request.
+            call_next (Callable): Next middleware or route handler.
+        Returns:
+            Response: FastAPI response object.
+        """
         start_time = time.time()
         
         try:
@@ -113,7 +156,14 @@ class MetricsMiddleware(BaseHTTPMiddleware):
 
     @staticmethod
     async def metrics_endpoint(request: Request) -> Response:
-        """Metrics endpoint for Prometheus"""
+        """
+        Metrics endpoint for Prometheus scraping.
+
+        Args:
+            request (Request): Incoming FastAPI request.
+        Returns:
+            Response: Prometheus metrics as plain text.
+        """
         return Response(
             content=generate_latest(),
             media_type="text/plain"

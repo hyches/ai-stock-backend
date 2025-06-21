@@ -1,3 +1,8 @@
+"""
+Monitoring and metrics for the AI Stock Portfolio Platform Backend.
+
+This module provides Prometheus metrics, health check endpoints, system monitoring, and middleware for tracking requests, cache, and system health.
+"""
 from prometheus_client import Counter, Histogram, Gauge, start_http_server
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
@@ -54,12 +59,24 @@ router = APIRouter()
 
 @router.get("/health")
 async def health_check():
-    """Basic health check endpoint"""
+    """
+    Basic health check endpoint.
+
+    Returns:
+        dict: Health status.
+    """
     return {"status": "healthy"}
 
 @router.get("/health/db")
 async def db_health_check(db: Session = Depends(get_db)):
-    """Database health check"""
+    """
+    Database health check endpoint.
+
+    Args:
+        db (Session): SQLAlchemy database session.
+    Returns:
+        dict: Database health status.
+    """
     try:
         # Try to execute a simple query
         db.execute("SELECT 1")
@@ -70,7 +87,12 @@ async def db_health_check(db: Session = Depends(get_db)):
 
 @router.get("/health/cache")
 async def cache_health_check():
-    """Cache health check"""
+    """
+    Cache health check endpoint.
+
+    Returns:
+        dict: Cache health status.
+    """
     try:
         redis = redis_cache
         redis.ping()
@@ -81,7 +103,12 @@ async def cache_health_check():
 
 @router.get("/metrics")
 async def metrics():
-    """System metrics endpoint"""
+    """
+    System metrics endpoint.
+
+    Returns:
+        dict: System memory, CPU, and disk usage.
+    """
     # Update system metrics
     MEMORY_USAGE.set(psutil.Process().memory_info().rss)
     CPU_USAGE.set(psutil.cpu_percent())
@@ -93,12 +120,27 @@ async def metrics():
     }
 
 class MetricsMiddleware:
-    """Middleware to collect request metrics"""
-    
+    """
+    ASGI middleware to collect request metrics for Prometheus.
+    """
     def __init__(self, app):
+        """
+        Initialize the middleware.
+
+        Args:
+            app: ASGI application instance.
+        """
         self.app = app
     
     async def __call__(self, scope, receive, send):
+        """
+        Process incoming HTTP requests and record metrics.
+
+        Args:
+            scope: ASGI scope.
+            receive: ASGI receive callable.
+            send: ASGI send callable.
+        """
         if scope["type"] != "http":
             return await self.app(scope, receive, send)
         
@@ -124,12 +166,27 @@ class MetricsMiddleware:
         await self.app(scope, receive, send_wrapper)
 
 class CacheMetrics:
-    """Decorator to collect cache metrics"""
-    
+    """
+    Decorator to collect cache hit/miss metrics for async functions.
+    """
     def __init__(self, func):
+        """
+        Initialize the decorator.
+
+        Args:
+            func: Async function to wrap.
+        """
         self.func = func
     
     async def __call__(self, *args, **kwargs):
+        """
+        Call the wrapped function and record cache metrics.
+
+        Returns:
+            Any: Result of the wrapped function.
+        Raises:
+            KeyError: If the wrapped function raises KeyError (cache miss).
+        """
         try:
             result = await self.func(*args, **kwargs)
             CACHE_HITS.inc()
@@ -139,7 +196,10 @@ class CacheMetrics:
             raise
 
 def monitor_db_connections():
-    """Monitor database connections"""
+    """
+    Monitor and update the number of active database connections.
+    Runs in a loop, updating the Prometheus gauge every minute.
+    """
     while True:
         try:
             db = next(get_db())
@@ -149,5 +209,8 @@ def monitor_db_connections():
         time.sleep(60)  # Check every minute
 
 def setup_monitoring():
+    """
+    Set up Prometheus metrics server if enabled in settings.
+    """
     if settings.ENABLE_METRICS:
         start_http_server(settings.METRICS_PORT) 

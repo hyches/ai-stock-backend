@@ -1,3 +1,9 @@
+"""
+Application configuration for the AI Stock Portfolio Platform Backend.
+
+Defines the Settings class for environment variables, API keys, database, security, CORS, and Redis settings.
+Provides a cached global settings instance for use throughout the application.
+"""
 from pydantic_settings import BaseSettings
 from functools import lru_cache
 from typing import Optional
