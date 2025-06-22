@@ -4,6 +4,7 @@ import AppLayout from '@/components/layout/AppLayout';
 import CustomCard from '@/components/ui/custom-card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
+import ApiTest from '@/components/ApiTest';
 import {
   ChartContainer,
   ChartTooltip,
@@ -245,6 +246,11 @@ const Dashboard = () => {
           )}
         </div>
       </CustomCard>
+      
+      {/* Backend Connection Test */}
+      <div className="mt-6">
+        <ApiTest />
+      </div>
     </AppLayout>
   );
 };
