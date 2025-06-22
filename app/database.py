@@ -7,18 +7,19 @@ It provides utility functions for obtaining a database session and initializing 
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from app.config import Settings
+from app.core.config import Settings
 import logging
 
 logger = logging.getLogger(__name__)
 
 # Create database engine
 settings = Settings()
+SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
+
 engine = create_engine(
-    settings.DATABASE_URL,
-    pool_pre_ping=True,
-    pool_size=5,
-    max_overflow=10
+    SQLALCHEMY_DATABASE_URL, 
+    connect_args={"check_same_thread": False}, 
+    echo=settings.SQL_ECHO
 )
 
 # Create session factory

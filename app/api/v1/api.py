@@ -7,7 +7,8 @@ from app.api.v1.endpoints import (
     trades,
     signals,
     backtests,
-    market_data
+    market_data,
+    user
 )
 
 api_router = APIRouter()
@@ -66,4 +67,11 @@ api_router.include_router(
     market_data.router,
     prefix="/market-data",
     tags=["market-data"]
+)
+
+# User endpoints
+api_router.include_router(
+    user.router,
+    prefix="/users",
+    tags=["users"]
 ) 

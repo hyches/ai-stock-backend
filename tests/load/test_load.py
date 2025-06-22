@@ -4,7 +4,8 @@ import aiohttp
 import time
 from typing import List, Dict
 import statistics
-from app.config import Settings
+from app.core.config import Settings
+from app.main import app
 
 # Test configuration
 BASE_URL = "http://localhost:8000"

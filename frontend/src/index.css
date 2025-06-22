@@ -1,0 +1,122 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 100% 10%;
+    --foreground: 210 40% 98%;
+
+    --card: 210 100% 12%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 210 100% 8%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 175 65% 53%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 20%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 210 40% 20%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 0 78% 71%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 210 40% 20%;
+    --input: 210 40% 20%;
+    --ring: 175 65% 53%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 210 100% 12%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 175 65% 53%;
+    --sidebar-primary-foreground: 210 100% 8%;
+    --sidebar-accent: 210 40% 16%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 210 40% 16%;
+    --sidebar-ring: 175 65% 53%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-navy text-foreground antialiased;
+  }
+  
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-secondary/50 rounded-full;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-secondary;
+  }
+}
+
+@layer utilities {
+  .card-glass {
+    @apply bg-card/80 backdrop-blur-sm border border-white/10 shadow-lg;
+  }
+  
+  .scrollbar-hidden {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hidden::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out forwards;
+  }
+  
+  .animate-slide-in {
+    animation: slideIn 0.3s ease-out forwards;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}

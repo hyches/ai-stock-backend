@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     ENVIRONMENT: str = "development"
     
+    # Stock Data API Keys
+    ALPHA_VANTAGE_API_KEY: Optional[str] = None
+    YAHOO_FINANCE_API_KEY: Optional[str] = None
+    
     # Security
     SECRET_KEY: str = secrets.token_urlsafe(32)
     ALGORITHM: str = "HS256"

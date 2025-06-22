@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 from app.main import app
 import jwt
 from datetime import datetime, timedelta
-from app.config import Settings
+from app.core.config import Settings
 import re
 import asyncio
 

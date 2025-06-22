@@ -17,6 +17,40 @@ from typing import List, Dict, Any
 
 router = APIRouter()
 
+@router.get("/predictions/{symbol}", response_model=Dict[str, Any])
+async def get_ml_predictions(symbol: str):
+    """
+    Endpoint to get ML predictions for a given stock symbol.
+    Returns placeholder data.
+    """
+    # In a real application, you would call a service to get actual predictions.
+    # e.g., from app.services.ml_predictions import get_predictions_for_symbol
+    # predictions = await get_predictions_for_symbol(symbol)
+    
+    # Placeholder data
+    placeholder_prediction = {
+        "predictions": {
+            "random_forest": 150.75,
+            "gradient_boosting": 152.10,
+            "ensemble": 151.43
+        },
+        "confidence": 0.85,
+        "time_horizon": "1d",
+        "feature_importance": {
+            "RSI": 0.3,
+            "MACD": 0.25,
+            "BollingerBands": 0.2,
+            "Volume": 0.15,
+            "SMA": 0.1
+        }
+    }
+    
+    return {
+        "price": placeholder_prediction,
+        "volatility": {**placeholder_prediction, "confidence": 0.78},
+        "trend": {**placeholder_prediction, "confidence": 0.91}
+    }
+
 @router.post("/predict", response_model=Dict[str, Any])
 async def predict_endpoint(
     data: Dict[str, float] = Body(...),

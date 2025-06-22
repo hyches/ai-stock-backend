@@ -1,67 +1,52 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
-import { Box, Container } from '@mui/material';
-import Navbar from './components/Navbar';
-import TradingDashboard from './components/TradingDashboard';
-import Login from './components/Login';
-import MLDashboard from './components/MLDashboard';
-import Portfolio from './components/Portfolio';
-import Watchlist from './components/Watchlist';
-import Settings from './components/Settings';
-import MarketOverview from './components/MarketOverview';
+import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/context/AuthContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import Dashboard from "./pages/Dashboard";
+import NotFound from "./pages/NotFound";
+import Screener from "./pages/Screener";
+import Research from "./pages/Research";
+import Optimizer from "./pages/Optimizer";
+import Trading from "./pages/Trading";
+import Policy from "./pages/Policy";
+import Reports from "./pages/Reports";
+import Settings from "./pages/Settings";
+import Login from "./pages/Login";
 
-const theme = createTheme({
-  palette: {
-    mode: 'dark',
-    primary: {
-      main: '#90caf9',
-    },
-    secondary: {
-      main: '#f48fb1',
-    },
-    background: {
-      default: '#121212',
-      paper: '#1e1e1e',
-    },
-  },
-  typography: {
-    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
-  },
-  components: {
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          textTransform: 'none',
-        },
-      },
-    },
-  },
-});
+const queryClient = new QueryClient();
 
-const App: React.FC = () => {
-  return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Router>
-        <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-          <Navbar />
-          <Container component="main" sx={{ mt: 4, mb: 4, flex: 1 }}>
-            <Routes>
-              <Route path="/" element={<TradingDashboard />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/ml-dashboard" element={<MLDashboard />} />
-              <Route path="/portfolio" element={<Portfolio />} />
-              <Route path="/watchlist" element={<Watchlist />} />
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <BrowserRouter>
+          <Routes>
+            {/* Public route */}
+            <Route path="/login" element={<Login />} />
+            
+            {/* Protected routes */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/screener" element={<Screener />} />
+              <Route path="/research" element={<Research />} />
+              <Route path="/optimizer" element={<Optimizer />} />
+              <Route path="/trading" element={<Trading />} />
+              <Route path="/policy" element={<Policy />} />
+              <Route path="/reports" element={<Reports />} />
               <Route path="/settings" element={<Settings />} />
-              <Route path="/market-overview" element={<MarketOverview />} />
-            </Routes>
-          </Container>
-        </Box>
-      </Router>
-    </ThemeProvider>
-  );
-};
+            </Route>
+            
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
+  </QueryClientProvider>
+);
 
-export default App; 
+export default App;

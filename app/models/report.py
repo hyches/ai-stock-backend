@@ -2,6 +2,12 @@ from pydantic import BaseModel, Field
 from typing import List, Optional, Dict
 from datetime import datetime
 
+class Report(BaseModel):
+    id: int
+    name: str
+    createdAt: datetime
+    url: str
+
 class FinancialMetrics(BaseModel):
     """Model for financial metrics"""
     revenue: float = Field(..., description="Annual revenue in millions")

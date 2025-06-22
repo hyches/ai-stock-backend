@@ -6,8 +6,9 @@ This module provides Prometheus metrics, health check endpoints, system monitori
 from prometheus_client import Counter, Histogram, Gauge, start_http_server
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from app.core.database import get_db
+from app.db.session import get_db
 from app.core.cache import redis_cache
+from app.core.config import settings
 import time
 import psutil
 import logging
@@ -208,9 +209,12 @@ def monitor_db_connections():
             logger.error(f"Failed to monitor DB connections: {str(e)}")
         time.sleep(60)  # Check every minute
 
-def setup_monitoring():
+def setup_monitoring(app):
     """
     Set up Prometheus metrics server if enabled in settings.
     """
     if settings.ENABLE_METRICS:
-        start_http_server(settings.METRICS_PORT) 
+        # This is a placeholder for a real implementation
+        # For example, you might use a library like starlette-prometheus
+        logger.info("Prometheus metrics enabled, but server not started in this example.")
+        # start_http_server(settings.METRICS_PORT) 

@@ -163,4 +163,19 @@ class BacktestResult(BacktestResultBase):
     created_at: datetime
 
     class Config:
-        from_attributes = True 
+        from_attributes = True
+
+class MLPrediction(BaseModel):
+    direction: str
+    confidence: float
+    prediction: float
+
+class PortfolioItem(BaseModel):
+    symbol: str
+    shares: int
+    avgPrice: float
+    currentPrice: float
+    value: float
+    change: float
+    changePercent: float
+    mlPrediction: MLPrediction 

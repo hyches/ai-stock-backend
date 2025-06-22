@@ -52,4 +52,12 @@ async def get_research_report(symbol: str):
         report = generate_research_report(symbol)
         return report
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) 
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/screener")
+def run_screener(filters: dict):
+    # Mock data
+    return [
+        {"symbol": "MSFT", "price": 410.0, "pe_ratio": 35.0, "market_cap": 3.1e12},
+        {"symbol": "NVDA", "price": 950.0, "pe_ratio": 75.0, "market_cap": 2.3e12},
+    ] 

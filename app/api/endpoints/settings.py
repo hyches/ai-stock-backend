@@ -1,39 +1,49 @@
 from fastapi import APIRouter, Depends, HTTPException
-from app.core.security import get_current_user
-from app.schemas.settings import UserSettings, UserSettingsUpdate
-from app.models.database import User
 from sqlalchemy.orm import Session
-from app.database import get_db
+from app.api import deps
+from app.schemas.settings import Settings, SettingsUpdate
 
 router = APIRouter()
 
-@router.get("/", response_model=UserSettings)
-async def get_settings(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+@router.get("/", response_model=Settings)
+def read_settings(
+    db: Session = Depends(deps.get_db),
+    current_user = Depends(deps.get_current_active_user),
 ):
-    try:
-        return current_user.settings
-    except Exception as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Error getting settings: {str(e)}"
-        )
+    """
+    Retrieve user settings.
+    """
+    # This is a mock response.
+    return {
+        "modelType": "lstm",
+        "predictionHorizon": 10,
+        "confidenceThreshold": 0.8,
+        "featureImportance": True,
+        "autoRetrain": False,
+        "retrainInterval": 7,
+        "dataSource": "yahoo_finance",
+        "apiKey": "mock_api_key_for_testing"
+    }
 
-@router.patch("/", response_model=UserSettings)
-async def update_settings(
-    settings: UserSettingsUpdate,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+
+@router.patch("/", response_model=Settings)
+def update_settings(
+    *,
+    db: Session = Depends(deps.get_db),
+    settings_in: SettingsUpdate,
+    current_user = Depends(deps.get_current_active_user),
 ):
-    try:
-        for key, value in settings.dict(exclude_unset=True).items():
-            setattr(current_user.settings, key, value)
-        db.commit()
-        db.refresh(current_user)
-        return current_user.settings
-    except Exception as e:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Error updating settings: {str(e)}"
-        ) 
+    """
+    Update user settings.
+    """
+    # This is a mock response.
+    return {
+        "modelType": "lstm",
+        "predictionHorizon": 10,
+        "confidenceThreshold": 0.8,
+        "featureImportance": True,
+        "autoRetrain": False,
+        "retrainInterval": 7,
+        "dataSource": "yahoo_finance",
+        "apiKey": "mock_api_key_for_testing"
+    } 

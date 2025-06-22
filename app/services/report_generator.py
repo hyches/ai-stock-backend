@@ -14,8 +14,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 import logging
 import os
 from pathlib import Path
-from app.services.technical_analysis import calculate_technical_indicators
-from app.services.sentiment_analysis import analyze_sentiment
+from app.services.sentiment_analysis import SentimentAnalysis
 from app.services.ml_predictions import get_price_predictions
 try:
     from textblob import TextBlob
@@ -464,12 +463,12 @@ class ResearchReport:
         }
     
     def _analyze_sentiment(self) -> Dict[str, Any]:
-        sentiment = analyze_sentiment(self.symbol)
+        sentiment = SentimentAnalysis(self.symbol)
         return {
-            "overall_sentiment": sentiment.get("overall", "Neutral"),
-            "news_sentiment": sentiment.get("news", 0),
-            "social_sentiment": sentiment.get("social", 0),
-            "analyst_ratings": sentiment.get("analyst_ratings", {})
+            "overall_sentiment": sentiment.overall,
+            "news_sentiment": sentiment.news,
+            "social_sentiment": sentiment.social,
+            "analyst_ratings": sentiment.analyst_ratings
         }
     
     def _assess_risk(self) -> Dict[str, Any]:

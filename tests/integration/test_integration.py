@@ -8,7 +8,7 @@ from app.models.stock import Stock
 from app.database import get_db
 import jwt
 from datetime import datetime, timedelta
-from app.config import Settings
+from app.core.config import Settings
 
 client = TestClient(app)
 settings = Settings()

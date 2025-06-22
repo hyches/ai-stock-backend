@@ -31,6 +31,28 @@ class ZerodhaService(BrokerBase):
         if not self.use_alternative_data:
             self._setup_websocket()
 
+    async def login(self, *args, **kwargs):
+        """Placeholder for login functionality."""
+        logger.info("Login method called, but not implemented.")
+        return {"status": "login required", "login_url": await self.get_login_url()}
+
+    async def place_order(self, *args, **kwargs):
+        """Placeholder for order placement."""
+        logger.info("Place order method called, but not implemented.")
+        # This would be replaced with actual order placement logic
+        # For now, we simulate a paper trade
+        return await self.place_paper_trade(*args, **kwargs)
+
+    async def get_portfolio(self, *args, **kwargs):
+        """Placeholder for fetching the portfolio."""
+        logger.info("Get portfolio method called, using paper portfolio.")
+        return await self.get_paper_portfolio()
+
+    async def get_quote(self, *args, **kwargs):
+        """Placeholder for fetching a quote."""
+        logger.info("Get quote method called, using live quote implementation.")
+        return await self.get_live_quote(*args, **kwargs)
+
     async def _setup_websocket(self):
         """Setup WebSocket connection for MCP"""
         while self.reconnect_attempts < self.max_reconnect_attempts:
@@ -90,11 +112,10 @@ class ZerodhaService(BrokerBase):
     async def _handle_quote(self, quote: Dict):
         """Handle quote updates"""
         try:
-            # Cache the latest quote
             await redis_cache.set(
                 f"quote:{quote['instrument_token']}",
                 quote,
-                expire=60  # 1 minute
+                expire=60
             )
         except Exception as e:
             logger.error(f"Error handling quote: {str(e)}")
@@ -123,8 +144,8 @@ class ZerodhaService(BrokerBase):
         subscribe_message = {
             "type": "subscribe",
             "instruments": [
-                {"instrument_token": 256265, "type": "quote"},  # NIFTY 50
-                {"instrument_token": 260105, "type": "quote"}   # BANK NIFTY
+                {"instrument_token": 256265, "type": "quote"},
+                {"instrument_token": 260105, "type": "quote"}
             ]
         }
         await self.ws.send(json.dumps(subscribe_message))
@@ -151,7 +172,6 @@ class ZerodhaService(BrokerBase):
     async def generate_session(self, request_token: str) -> Dict:
         """Generate session using request token"""
         try:
-            # MCP uses a different authentication flow
             auth_message = {
                 "type": "auth",
                 "api_key": self.api_key,
@@ -165,7 +185,6 @@ class ZerodhaService(BrokerBase):
             if session_data.get("status") != "success":
                 raise Exception("Session generation failed")
 
-            # Store token in database
             db = SessionLocal()
             try:
                 token = ZerodhaToken(
@@ -192,7 +211,6 @@ class ZerodhaService(BrokerBase):
         """Get historical OHLC data"""
         try:
             if self.use_alternative_data:
-                # Get symbol from instrument token
                 symbol = await self._get_symbol_from_token(instrument_token)
                 return await self.market_data_service.get_historical_data(
                     symbol,
@@ -217,12 +235,9 @@ class ZerodhaService(BrokerBase):
 
     async def _get_symbol_from_token(self, instrument_token: int) -> str:
         """Get symbol from instrument token"""
-        # This is a simplified mapping. In production, you'd want to maintain
-        # a proper mapping of tokens to symbols
         token_to_symbol = {
             256265: "NIFTY 50",
             260105: "BANK NIFTY",
-            # Add more mappings as needed
         }
         return token_to_symbol.get(instrument_token, "NIFTY 50")
 
@@ -232,18 +247,15 @@ class ZerodhaService(BrokerBase):
             if self.use_alternative_data:
                 return await self.market_data_service.get_live_quote(symbol)
             else:
-                # Get instrument token
                 instrument_token = await self._get_instrument_token(symbol)
                 if not instrument_token:
                     raise Exception(f"Invalid symbol: {symbol}")
 
-                # Get from cache first
                 cache_key = f"quote:{instrument_token}"
                 cached_quote = await redis_cache.get(cache_key)
                 if cached_quote:
                     return cached_quote
 
-                # Subscribe to quote
                 subscribe_message = {
                     "type": "subscribe",
                     "instruments": [
@@ -252,39 +264,22 @@ class ZerodhaService(BrokerBase):
                 }
                 await self.ws.send(json.dumps(subscribe_message))
 
-                # Wait for quote
-                while True:
-                    message = await self.ws.recv()
-                    data = json.loads(message)
-                    if data.get("type") == "quote" and data.get("instrument_token") == instrument_token:
-                        quote = {
-                            "symbol": symbol,
-                            "last_price": data["last_price"],
-                            "change": data["change"],
-                            "change_percent": data["change_percent"],
-                            "volume": data["volume"],
-                            "high": data["high"],
-                            "low": data["low"],
-                            "open": data["open"],
-                            "previous_close": data["previous_close"],
-                            "timestamp": datetime.utcnow().isoformat()
-                        }
-                        await redis_cache.set(cache_key, quote, 60)  # Cache for 1 minute
-                        return quote
+                response = await asyncio.wait_for(self.ws.recv(), timeout=5)
+                quote_data = json.loads(response)
+                await redis_cache.set(cache_key, quote_data, expire=60)
+                return quote_data
         except Exception as e:
-            logger.error(f"Error getting live quote: {str(e)}")
+            logger.error(f"Error getting live quote for {symbol}: {str(e)}")
             raise
 
     async def _get_instrument_token(self, symbol: str) -> Optional[int]:
-        """Get instrument token for symbol"""
-        # This is a simplified mapping. In production, you'd want to maintain
-        # a proper mapping of symbols to tokens
+        """Get instrument token from symbol"""
+        # This is a placeholder
         symbol_to_token = {
             "NIFTY 50": 256265,
             "BANK NIFTY": 260105,
-            # Add more mappings as needed
         }
-        return symbol_to_token.get(symbol)
+        return symbol_to_token.get(symbol.upper())
 
     async def place_paper_trade(
         self,
@@ -293,23 +288,18 @@ class ZerodhaService(BrokerBase):
         quantity: int,
         price: float
     ) -> Dict:
-        """Place a paper trade"""
+        """Place a paper trade and store it in the database"""
         db = SessionLocal()
         try:
             trade = PaperTrade(
                 symbol=symbol,
                 action=action,
                 quantity=quantity,
-                price=price,
-                status="executed"
+                price=price
             )
             db.add(trade)
             db.commit()
-            return trade.to_dict()
-        except Exception as e:
-            db.rollback()
-            logger.error(f"Error placing paper trade: {str(e)}")
-            raise
+            return {"status": "success", "trade_id": trade.id}
         finally:
             db.close()
 
@@ -318,21 +308,30 @@ class ZerodhaService(BrokerBase):
         db = SessionLocal()
         try:
             trades = db.query(PaperTrade).all()
-            return [trade.to_dict() for trade in trades]
+            return [
+                {
+                    "symbol": t.symbol,
+                    "action": t.action,
+                    "quantity": t.quantity,
+                    "price": t.price,
+                    "timestamp": t.timestamp
+                }
+                for t in trades
+            ]
         finally:
             db.close()
 
     async def calculate_pnl(self) -> Dict:
-        """Calculate paper trading PnL"""
-        db = SessionLocal()
-        try:
-            trades = db.query(PaperTrade).all()
-            total_pnl = 0
-            for trade in trades:
-                if trade.action == "buy":
-                    total_pnl -= trade.price * trade.quantity
-                else:
-                    total_pnl += trade.price * trade.quantity
-            return {"total_pnl": total_pnl}
-        finally:
-            db.close() 
+        """Calculate PnL for paper trades"""
+        portfolio = await self.get_paper_portfolio()
+        total_pnl = 0
+        
+        for trade in portfolio:
+            current_price = (await self.get_live_quote(trade["symbol"]))["price"]
+            if trade["action"] == "buy":
+                pnl = (current_price - trade["price"]) * trade["quantity"]
+            else:
+                pnl = (trade["price"] - current_price) * trade["quantity"]
+            total_pnl += pnl
+            
+        return {"total_pnl": total_pnl, "portfolio": portfolio} 

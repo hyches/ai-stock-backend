@@ -7,8 +7,9 @@ import os
 import shutil
 import datetime
 import logging
+import subprocess
 from pathlib import Path
-from app.config import Settings
+from app.core.config import Settings
 
 logger = logging.getLogger("ai_stock_analysis")
 settings = Settings()
@@ -132,4 +133,19 @@ class BackupManager:
                     
         except Exception as e:
             logger.error(f"Cleanup failed: {str(e)}")
-            raise 
+            raise
+
+def backup_database():
+    """
+    Creates a backup of the SQLite database.
+    """
+    db_path = settings.DATABASE_URL.split("///")[1]
+    backup_path = f"backups/backup_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.db"
+    
+    try:
+        subprocess.run(["sqlite3", db_path, f".backup '{backup_path}'"], check=True)
+        logging.info(f"Database backup successful: {backup_path}")
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Database backup failed: {e}")
+    except Exception as e:
+        logging.error(f"An unexpected error occurred during backup: {e}") 

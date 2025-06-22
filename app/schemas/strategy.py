@@ -3,6 +3,12 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 # Shared properties
+class Report(BaseModel):
+    id: int
+    name: str
+    createdAt: datetime
+    url: str
+
 class StrategyBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     type: str = Field(..., min_length=1, max_length=50)
