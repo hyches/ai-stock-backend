@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
+/*import {
   portfolioApi,
   marketApi,
   mlApi,
@@ -10,7 +10,7 @@ import {
   type PortfolioData,
   type MarketData,
   type MLPrediction,
-} from '@/lib/api-services';
+} from '@/lib/api-services';*/
 
 // Portfolio hooks
 export const usePortfolio = () => {
