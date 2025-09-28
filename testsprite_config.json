@@ -1,0 +1,111 @@
+{
+  "project_name": "AI Stock Backend",
+  "project_type": "FastAPI",
+  "base_url": "http://localhost:8000",
+  "test_scenarios": [
+    {
+      "name": "Authentication Flow",
+      "description": "Test user registration, login, and token validation",
+      "endpoints": [
+        "POST /api/v1/auth/register",
+        "POST /api/v1/auth/login",
+        "GET /api/v1/auth/me"
+      ]
+    },
+    {
+      "name": "Trading Operations",
+      "description": "Test trading strategies, trades, and portfolio management",
+      "endpoints": [
+        "POST /api/v1/trading/strategies/",
+        "GET /api/v1/trading/strategies/",
+        "POST /api/v1/trading/trades/",
+        "GET /api/v1/trading/trades/",
+        "POST /api/v1/trading/portfolios/",
+        "GET /api/v1/trading/portfolios/",
+        "POST /api/v1/trading/backtest/"
+      ]
+    },
+    {
+      "name": "ML Services",
+      "description": "Test machine learning predictions and model management",
+      "endpoints": [
+        "POST /api/v1/ml/predict",
+        "POST /api/v1/ml/batch_predict",
+        "GET /api/v1/ml/performance",
+        "GET /api/v1/ml/feature_importance",
+        "POST /api/v1/ml/retrain"
+      ]
+    },
+    {
+      "name": "Market Data",
+      "description": "Test market data fetching and technical analysis",
+      "endpoints": [
+        "GET /api/v1/market/data/{symbol}",
+        "GET /api/v1/market/historical",
+        "GET /api/v1/market/indicators",
+        "GET /api/v1/market/screener"
+      ]
+    },
+    {
+      "name": "Portfolio Management",
+      "description": "Test portfolio operations and analysis",
+      "endpoints": [
+        "POST /api/v1/portfolio/",
+        "GET /api/v1/portfolio/",
+        "GET /api/v1/portfolio/analysis",
+        "GET /api/v1/portfolio/performance"
+      ]
+    },
+    {
+      "name": "Alerts and Notifications",
+      "description": "Test alert creation and management",
+      "endpoints": [
+        "POST /api/v1/alerts/",
+        "GET /api/v1/alerts/",
+        "PUT /api/v1/alerts/{id}",
+        "DELETE /api/v1/alerts/{id}"
+      ]
+    },
+    {
+      "name": "Settings and Configuration",
+      "description": "Test user settings and system configuration",
+      "endpoints": [
+        "GET /api/v1/settings/",
+        "PUT /api/v1/settings/",
+        "GET /api/v1/backup/list",
+        "POST /api/v1/backup/create"
+      ]
+    }
+  ],
+  "test_data": {
+    "users": [
+      {
+        "email": "test@example.com",
+        "password": "testpassword123",
+        "full_name": "Test User"
+      }
+    ],
+    "trading_data": {
+      "symbol": "AAPL",
+      "price": 150.0,
+      "quantity": 100,
+      "strategy_type": "trend_following"
+    },
+    "ml_data": {
+      "features": {
+        "f0": 0.1, "f1": 0.2, "f2": 0.3, "f3": 0.4, "f4": 0.5,
+        "f5": 0.6, "f6": 0.7, "f7": 0.8, "f8": 0.9, "f9": 1.0
+      }
+    }
+  },
+  "authentication": {
+    "type": "bearer_token",
+    "login_endpoint": "/api/v1/auth/login",
+    "token_field": "access_token"
+  },
+  "performance_requirements": {
+    "max_response_time": 200,
+    "max_concurrent_users": 100,
+    "success_rate_threshold": 99.5
+  }
+}

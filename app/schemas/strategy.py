@@ -37,7 +37,7 @@ class StrategyInDBBase(StrategyBase):
     updated_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # Properties to return to client
 class Strategy(StrategyInDBBase):
@@ -69,4 +69,4 @@ class StrategyPerformance(BaseModel):
     signals: int
 
     class Config:
-        orm_mode = True 
+        from_attributes = True 

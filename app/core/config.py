@@ -54,7 +54,14 @@ class Settings(BaseSettings):
     REDIS_PASSWORD: Optional[str] = None
     
     # CORS
-    BACKEND_CORS_ORIGINS: List[str] = ["*"]
+    BACKEND_CORS_ORIGINS: List[str] = [
+        "http://localhost:3000",
+        "http://localhost:8080", 
+        "http://localhost:8081",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:8080",
+        "http://127.0.0.1:8081"
+    ]
     
     # Logging
     LOG_LEVEL: str = "INFO"
@@ -173,5 +180,6 @@ class Settings(BaseSettings):
     class Config:
         case_sensitive = True
         env_file = ".env"
+        extra = "allow"
 
 settings = Settings() 

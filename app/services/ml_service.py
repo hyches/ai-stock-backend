@@ -1,6 +1,7 @@
 # Placeholder ML service for testing and import resolution
 
 import os
+import asyncio
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.datasets import make_classification
@@ -23,11 +24,17 @@ class MLModel:
             self.X = X
             self.y = y
 
-    def predict(self, data):
+    async def predict(self, data):
+        return await asyncio.to_thread(self._predict_sync, data)
+
+    def _predict_sync(self, data):
         X = np.array([data[f] for f in FEATURES]).reshape(1, -1)
         return int(self.model.predict(X)[0])
 
-    def batch_predict(self, data_list):
+    async def batch_predict(self, data_list):
+        return await asyncio.to_thread(self._batch_predict_sync, data_list)
+
+    def _batch_predict_sync(self, data_list):
         X = np.array([[d[f] for f in FEATURES] for d in data_list])
         return self.model.predict(X).tolist()
 

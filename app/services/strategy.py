@@ -1,5 +1,6 @@
 from typing import List, Optional, Dict, Any
 from datetime import datetime
+import numpy as np
 from sqlalchemy.orm import Session
 from app.models.trading import Strategy, Signal, Trade, Position
 from app.schemas.strategy import StrategyCreate, StrategyUpdate

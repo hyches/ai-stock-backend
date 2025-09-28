@@ -7,7 +7,8 @@ import jwt
 from datetime import datetime, timedelta
 from app.core.config import Settings
 from app.main import app
-from app.database import Base, get_db
+from app.db.base_class import Base
+from app.db.session import get_db
 
 # Test database setup
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"

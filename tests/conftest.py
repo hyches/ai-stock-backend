@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 import redis
 from app.main import app
-from app.db.base import Base
+from app.db.base_class import Base
 from app.core.config import settings
 from app.db.session import get_db
 from app.models.user import User

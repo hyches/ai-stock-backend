@@ -17,7 +17,7 @@ class BacktestService:
             # Add more strategies here
         }
 
-    def run_backtest(
+    async def run_backtest(
         self,
         strategy_id: int,
         start_date: datetime,
@@ -32,7 +32,7 @@ class BacktestService:
             raise ValueError(f"Strategy with ID {strategy_id} not found")
 
         # Get historical data
-        data = self._get_historical_data(
+        data = await self._get_historical_data(
             strategy.symbols,
             start_date,
             end_date,
@@ -78,7 +78,7 @@ class BacktestService:
 
         return results
 
-    def _get_historical_data(
+    async def _get_historical_data(
         self,
         symbols: List[str],
         start_date: datetime,
@@ -86,6 +86,16 @@ class BacktestService:
         timeframe: str
     ) -> pd.DataFrame:
         """Get historical data for symbols"""
+        return await asyncio.to_thread(self._get_historical_data_sync, symbols, start_date, end_date, timeframe)
+    
+    def _get_historical_data_sync(
+        self,
+        symbols: List[str],
+        start_date: datetime,
+        end_date: datetime,
+        timeframe: str
+    ) -> pd.DataFrame:
+        """Get historical data for symbols (sync version)"""
         # This is a placeholder - implement actual data fetching logic
         # You might want to fetch from a database or external API
         data = []

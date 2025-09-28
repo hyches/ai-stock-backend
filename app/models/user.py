@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, Integer, String, DateTime, ARRAY
+from sqlalchemy import Boolean, Column, Integer, String, DateTime, JSON
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.db.base_class import Base
@@ -12,16 +12,14 @@ class User(Base):
     full_name = Column(String)
     is_active = Column(Boolean(), default=True)
     is_superuser = Column(Boolean(), default=False)
-    permissions = Column(ARRAY(String), default=[])
+    permissions = Column(JSON, default=list)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # Relationships
-    portfolios = relationship("Portfolio", back_populates="owner")
-    strategies = relationship("Strategy", back_populates="owner")
-    trades = relationship("Trade", back_populates="user")
-    positions = relationship("Position", back_populates="user")
-    backtest_results = relationship("BacktestResult", back_populates="user")
+    # Relationships - using string references to avoid circular imports
+    portfolios = relationship("Portfolio", back_populates="user", lazy="select")
+    strategies = relationship("Strategy", back_populates="user", lazy="select")
+    reports = relationship("Report", back_populates="user", lazy="select")
 
     def __repr__(self):
         return f"<User {self.email}>"

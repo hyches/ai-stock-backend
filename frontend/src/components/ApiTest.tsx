@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { apiClient } from '@/utils/api';
 
 const ApiTest = () => {
   const [testResults, setTestResults] = useState<{
@@ -19,27 +20,16 @@ const ApiTest = () => {
     }));
 
     try {
-      // Test direct backend connection
-      const response = await fetch('http://localhost:8000/docs');
-      if (response.ok) {
-        setTestResults(prev => ({
-          ...prev,
-          backend: { 
-            status: 'success', 
-            message: `Backend is running! Status: ${response.status}`, 
-            timestamp: new Date().toLocaleTimeString() 
-          }
-        }));
-      } else {
-        setTestResults(prev => ({
-          ...prev,
-          backend: { 
-            status: 'error', 
-            message: `Backend responded with status: ${response.status}`, 
-            timestamp: new Date().toLocaleTimeString() 
-          }
-        }));
-      }
+      // Test API health endpoint
+      const response = await apiClient.get('/health');
+      setTestResults(prev => ({
+        ...prev,
+        backend: { 
+          status: 'success', 
+          message: `Backend is running! API Version: ${response.version || 'Unknown'}`, 
+          timestamp: new Date().toLocaleTimeString() 
+        }
+      }));
     } catch (error) {
       setTestResults(prev => ({
         ...prev,
@@ -59,33 +49,27 @@ const ApiTest = () => {
     }));
 
     try {
-      // Test API proxy (this should go through Vite proxy)
-      const response = await fetch('/api/v1/portfolio');
-      if (response.ok) {
-        setTestResults(prev => ({
-          ...prev,
-          api: { 
-            status: 'success', 
-            message: `API proxy working! Status: ${response.status}`, 
-            timestamp: new Date().toLocaleTimeString() 
-          }
-        }));
-      } else {
-        setTestResults(prev => ({
-          ...prev,
-          api: { 
-            status: 'error', 
-            message: `API proxy responded with status: ${response.status}`, 
-            timestamp: new Date().toLocaleTimeString() 
-          }
-        }));
-      }
+      // Test API endpoints using the API client
+      const [strategies, portfolios, marketData] = await Promise.all([
+        apiClient.getStrategies().catch(() => []),
+        apiClient.getPortfolios().catch(() => []),
+        apiClient.getMarketData('AAPL').catch(() => null)
+      ]);
+
+      setTestResults(prev => ({
+        ...prev,
+        api: { 
+          status: 'success', 
+          message: `API is working! Strategies: ${strategies.length}, Portfolios: ${portfolios.length}, Market Data: ${marketData ? 'Available' : 'N/A'}`, 
+          timestamp: new Date().toLocaleTimeString() 
+        }
+      }));
     } catch (error) {
       setTestResults(prev => ({
         ...prev,
         api: { 
           status: 'error', 
-          message: `API proxy failed: ${error instanceof Error ? error.message : 'Unknown error'}`, 
+          message: `Failed to connect to API: ${error instanceof Error ? error.message : 'Unknown error'}`, 
           timestamp: new Date().toLocaleTimeString() 
         }
       }));
@@ -155,9 +139,9 @@ const ApiTest = () => {
         <div className="mt-6 p-4 bg-muted rounded-lg">
           <h4 className="font-semibold mb-2">Connection Info:</h4>
           <ul className="text-sm space-y-1">
-            <li>• <strong>Backend URL:</strong> http://localhost:8000</li>
+                            <li>• <strong>Backend URL:</strong> http://localhost:8008</li>
             <li>• <strong>Frontend URL:</strong> http://localhost:8083</li>
-            <li>• <strong>API Proxy:</strong> /api → http://localhost:8000</li>
+            <li>• <strong>API Proxy:</strong> /api → http://localhost:8008</li>
             <li>• <strong>Status:</strong> {testResults.backend.status === 'success' ? '✅ Connected' : '❌ Not Connected'}</li>
           </ul>
         </div>

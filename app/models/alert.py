@@ -9,7 +9,7 @@ class Alert(Base):
     message = Column(String)
     level = Column(String)  # info, warning, error, critical
     source = Column(String)  # system, trade, websocket, etc.
-    metadata = Column(JSON)
+    alert_metadata = Column(JSON)
     created_at = Column(DateTime, default=datetime.utcnow)
     resolved_at = Column(DateTime, nullable=True)
 
@@ -19,7 +19,7 @@ class Alert(Base):
             "message": self.message,
             "level": self.level,
             "source": self.source,
-            "metadata": self.metadata,
+            "metadata": self.alert_metadata,
             "created_at": self.created_at.isoformat(),
             "resolved_at": self.resolved_at.isoformat() if self.resolved_at else None
         } 

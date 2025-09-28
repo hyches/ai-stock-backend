@@ -4,40 +4,9 @@ from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, St
 from sqlalchemy.orm import relationship
 from app.db.base_class import Base
 
-class User(Base):
-    __tablename__ = "users"
+# User model moved to app.models.user - import it from there
 
-    id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, unique=True, index=True)
-    hashed_password = Column(String, nullable=False)
-    is_active = Column(Boolean, default=True, nullable=False)
-    is_superuser = Column(Boolean, default=False, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
-
-    portfolios = relationship("Portfolio", back_populates="user", cascade="all, delete-orphan")
-    strategies = relationship("Strategy", back_populates="user", cascade="all, delete-orphan")
-
-class Portfolio(Base):
-    __tablename__ = "portfolios"
-
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    name = Column(String, nullable=False)
-    description = Column(String, nullable=True)
-    initial_balance = Column(Float, nullable=False)
-    current_balance = Column(Float, nullable=False)
-    risk_level = Column(String, nullable=False)  # low, medium, high
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
-
-    user = relationship("User", back_populates="portfolios")
-    positions = relationship("Position", back_populates="portfolio", cascade="all, delete-orphan")
-    trades = relationship("Trade", back_populates="portfolio", cascade="all, delete-orphan")
-
-    __table_args__ = (
-        Index('idx_portfolio_user_created', 'user_id', 'created_at'),
-    )
+# Portfolio model moved to app.models.database - import it from there
 
 class Strategy(Base):
     __tablename__ = "strategies"

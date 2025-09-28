@@ -1,36 +1,38 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.api import api_router
 from app.core.config import settings
-from app.core.middleware import ErrorHandlingMiddleware, RequestLoggingMiddleware
-from app.db.base import Base, engine
+from app.api.api import api_router
 
+# Import all models to ensure they are registered with SQLAlchemy
+from app.models import *  # noqa
 
-def get_application():
-    _app = FastAPI(
-        title=settings.SERVER_NAME,
-        openapi_url=f"{settings.API_V1_STR}/openapi.json",
-    )
+app = FastAPI(
+    title=settings.SERVER_NAME,
+    version="0.1.0",
+    openapi_url=f"{settings.API_V1_STR}/openapi.json"
+)
 
-    _app.add_middleware(
+# Set up CORS
+if settings.BACKEND_CORS_ORIGINS:
+    app.add_middleware(
         CORSMiddleware,
         allow_origins=[str(origin) for origin in settings.BACKEND_CORS_ORIGINS],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    
-    _app.add_middleware(ErrorHandlingMiddleware)
-    _app.add_middleware(RequestLoggingMiddleware)
 
+# Include API router
+app.include_router(api_router, prefix=settings.API_V1_STR)
 
-    _app.include_router(api_router, prefix=settings.API_V1_STR)
+@app.get("/")
+def read_root():
+    return {"message": "AI Trading System API is running"}
 
-    return _app
+@app.get("/health")
+def health_check():
+    return {"status": "healthy", "service": "ai-trading-backend"}
 
-
-app = get_application()
-
-@app.on_event("startup")
-def startup_event():
-    Base.metadata.create_all(bind=engine) 
+@app.get("/test")
+def test_endpoint():
+    return {"message": "Test endpoint working"} 

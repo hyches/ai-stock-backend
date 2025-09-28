@@ -4,7 +4,7 @@ import sys
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 from app.core.config import Settings
-from app.db.base import Base
+from app.db.base_class import Base
 
 # Add the parent directory to sys.path
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))

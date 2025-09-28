@@ -45,6 +45,42 @@ def get_default_watchlist():
     # Mock data
     return ["AAPL", "GOOGL", "MSFT", "TSLA"]
 
+@router.get("/watchlist")
+def get_watchlist(current_user = Depends(get_current_user)):
+    """
+    Retrieve watchlist with detailed stock data.
+    """
+    # Mock data
+    return [
+        {
+            "symbol": "AAPL",
+            "name": "Apple Inc.",
+            "price": 179.50,
+            "change": 2.50,
+            "changePercent": 1.41,
+            "volume": 50000000,
+            "marketCap": 3000000000000
+        },
+        {
+            "symbol": "MSFT", 
+            "name": "Microsoft Corporation",
+            "price": 408.75,
+            "change": -1.25,
+            "changePercent": -0.30,
+            "volume": 25000000,
+            "marketCap": 2800000000000
+        },
+        {
+            "symbol": "GOOGL",
+            "name": "Alphabet Inc.",
+            "price": 176.45,
+            "change": 3.20,
+            "changePercent": 1.85,
+            "volume": 30000000,
+            "marketCap": 1800000000000
+        }
+    ]
+
 @router.get("/stock/{symbol}", response_model=StockData)
 async def get_stock(
     symbol: str,

@@ -81,9 +81,9 @@ async def fetch_stock_data(symbol: str, max_retries: int = 3) -> Optional[Dict]:
                 # Apply rate limiting
                 await rate_limited_request()
                 
-                # Fetch stock info
+                # Fetch stock info (run in threadpool)
                 stock = yf.Ticker(symbol)
-                info = stock.info
+                info = await asyncio.to_thread(lambda: stock.info)
                 
                 if not info:
                     logger.error(f"No info found for {symbol}")

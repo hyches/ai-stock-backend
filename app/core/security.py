@@ -7,6 +7,10 @@ from passlib.context import CryptContext
 from pydantic import BaseModel, validator
 from app.core.config import Settings
 settings = Settings() 
+
+# JWT Algorithm
+ALGORITHM = "HS256"
+
 import time
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -179,19 +183,8 @@ class TokenData(BaseModel):
     username: Optional[str] = None
     role: Optional[UserRole] = None
 
-class User(BaseModel):
-    username: str
-    role: UserRole
-    disabled: Optional[bool] = None
-
-    @validator('username')
-    def username_alphanumeric(cls, v):
-        if not v.isalnum():
-            raise ValueError('Username must be alphanumeric')
-        return v
-
-class UserInDB(User):
-    hashed_password: str
+# User models moved to app.schemas.user to avoid conflicts
+# Use app.schemas.user.User and app.schemas.user.UserInDB instead
 
 # Security functions
 def verify_password(plain_password: str, hashed_password: str) -> bool:

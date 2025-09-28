@@ -4,7 +4,6 @@ import AppLayout from '@/components/layout/AppLayout';
 import CustomCard from '@/components/ui/custom-card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import ApiTest from '@/components/ApiTest';
 import {
   ChartContainer,
   ChartTooltip,
@@ -29,37 +28,7 @@ import {
 } from "recharts";
 import { usePortfolio, useWatchlist, useModelPerformance } from '@/hooks/use-api';
 
-// Fallback data for when API is not available
-const fallbackPortfolioData = [
-  { name: 'Apple', value: 35 },
-  { name: 'Microsoft', value: 25 },
-  { name: 'Amazon', value: 15 },
-  { name: 'Google', value: 10 },
-  { name: 'Tesla', value: 15 },
-];
-
-const fallbackPerformanceData = [
-  { date: 'Jan', value: 3200 },
-  { date: 'Feb', value: 3500 },
-  { date: 'Mar', value: 3300 },
-  { date: 'Apr', value: 3700 },
-  { date: 'May', value: 4000 },
-  { date: 'Jun', value: 4200 },
-  { date: 'Jul', value: 4500 },
-  { date: 'Aug', value: 4800 },
-  { date: 'Sep', value: 5000 },
-  { date: 'Oct', value: 5200 },
-  { date: 'Nov', value: 5500 },
-  { date: 'Dec', value: 5800 },
-];
-
-const fallbackStockData = [
-  { name: 'AAPL', price: 179.50, change: +2.5 },
-  { name: 'MSFT', price: 408.75, change: +1.2 },
-  { name: 'AMZN', price: 182.30, change: -0.5 },
-  { name: 'GOOGL', price: 176.45, change: +0.3 },
-  { name: 'TSLA', price: 178.80, change: -1.7 },
-];
+// No fallback data - show loading states instead
 
 const COLORS = ['#4ECDC4', '#0077E6', '#F97316', '#D946EF', '#8B5CF6'];
 
@@ -69,28 +38,28 @@ const Dashboard = () => {
   const { data: watchlistData, isLoading: watchlistLoading, error: watchlistError } = useWatchlist();
   const { data: modelPerformance, isLoading: modelLoading } = useModelPerformance();
 
-  // Use fallback data if API calls fail
-  const effectivePortfolioData = portfolioError ? null : portfolioData;
-  const effectiveWatchlistData = watchlistError ? null : watchlistData;
-  const effectiveModelPerformance = modelLoading ? null : modelPerformance;
+  // Use API data only - no fallback data
+  const effectivePortfolioData = portfolioData;
+  const effectiveWatchlistData = watchlistData;
+  const effectiveModelPerformance = modelPerformance;
 
   // Transform portfolio data for charts
   const portfolioChartData = effectivePortfolioData?.items?.map(item => ({
     name: item.symbol,
     value: item.totalValue
-  })) || fallbackPortfolioData;
+  })) || [];
 
   // Calculate total portfolio value
-  const totalValue = effectivePortfolioData?.totalValue || 124560.78;
-  const totalChange = effectivePortfolioData?.totalChange || 12456;
-  const totalChangePercent = effectivePortfolioData?.totalChangePercent || 11.2;
+  const totalValue = effectivePortfolioData?.totalValue || 0;
+  const totalChange = effectivePortfolioData?.totalChange || 0;
+  const totalChangePercent = effectivePortfolioData?.totalChangePercent || 0;
 
   // Transform watchlist data
   const stockData = effectiveWatchlistData?.map(item => ({
     name: item.symbol,
     price: item.price,
     change: item.changePercent
-  })) || fallbackStockData;
+  })) || [];
 
   return (
     <AppLayout title="Dashboard">
@@ -108,7 +77,7 @@ const Dashboard = () => {
               <div className="flex items-center justify-center h-full">
                 <div className="text-muted-foreground">Loading portfolio data...</div>
               </div>
-            ) : (
+            ) : effectivePortfolioData ? (
               <ChartContainer 
                 config={{
                   performance: {
@@ -120,7 +89,7 @@ const Dashboard = () => {
                   },
                 }}
               >
-                <RechartsLineChart data={fallbackPerformanceData}>
+                <RechartsLineChart data={effectivePortfolioData.performanceData || []}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
                   <XAxis dataKey="date" stroke="rgba(255,255,255,0.5)" />
                   <YAxis stroke="rgba(255,255,255,0.5)" />
@@ -136,6 +105,10 @@ const Dashboard = () => {
                   />
                 </RechartsLineChart>
               </ChartContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-muted-foreground">No portfolio data available</div>
+              </div>
             )}
           </div>
         </CustomCard>
@@ -146,15 +119,12 @@ const Dashboard = () => {
               <div className="flex items-center justify-center h-full">
                 <div className="text-muted-foreground">Loading allocation...</div>
               </div>
-            ) : (
+            ) : portfolioChartData.length > 0 ? (
               <ChartContainer 
-                config={{
-                  Apple: { color: COLORS[0] },
-                  Microsoft: { color: COLORS[1] },
-                  Amazon: { color: COLORS[2] },
-                  Google: { color: COLORS[3] },
-                  Tesla: { color: COLORS[4] },
-                }}
+                config={portfolioChartData.reduce((acc, item, index) => ({
+                  ...acc,
+                  [item.name]: { color: COLORS[index % COLORS.length] }
+                }), {})}
               >
                 <RechartsPieChart>
                   <Pie
@@ -175,6 +145,10 @@ const Dashboard = () => {
                   <Legend />
                 </RechartsPieChart>
               </ChartContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-muted-foreground">No portfolio allocation data</div>
+              </div>
             )}
           </div>
         </CustomCard>
@@ -182,31 +156,43 @@ const Dashboard = () => {
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <CustomCard title="Total Assets" description="All accounts">
-          <div className="text-3xl font-bold text-teal mt-2">
-            ${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </div>
-          <div className="text-sm text-teal/60 mt-1">
-            +${totalChange.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({totalChangePercent.toFixed(1)}%)
-          </div>
-          <Progress value={85} className="mt-4 h-2" />
+          {portfolioLoading ? (
+            <div className="text-muted-foreground">Loading...</div>
+          ) : (
+            <>
+              <div className="text-3xl font-bold text-teal mt-2">
+                ${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </div>
+              <div className="text-sm text-teal/60 mt-1">
+                {totalChange >= 0 ? '+' : ''}${totalChange.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({totalChangePercent.toFixed(1)}%)
+              </div>
+              <Progress value={totalValue > 0 ? 85 : 0} className="mt-4 h-2" />
+            </>
+          )}
         </CustomCard>
         
         <CustomCard title="Investments" description="Stocks, ETFs, Mutual Funds">
-          <div className="text-3xl font-bold text-teal mt-2">$98,450.32</div>
-          <div className="text-sm text-teal/60 mt-1">+$8,450 (9.4%)</div>
-          <Progress value={75} className="mt-4 h-2" />
+          {portfolioLoading ? (
+            <div className="text-muted-foreground">Loading...</div>
+          ) : (
+            <div className="text-muted-foreground">No data available</div>
+          )}
         </CustomCard>
         
         <CustomCard title="Cash" description="Available for trading">
-          <div className="text-3xl font-bold text-teal mt-2">$26,110.46</div>
-          <div className="text-sm text-muted-foreground mt-1">21% of portfolio</div>
-          <Progress value={21} className="mt-4 h-2" />
+          {portfolioLoading ? (
+            <div className="text-muted-foreground">Loading...</div>
+          ) : (
+            <div className="text-muted-foreground">No data available</div>
+          )}
         </CustomCard>
         
         <CustomCard title="Day's P&L" description="Today's performance">
-          <div className="text-3xl font-bold text-stockup mt-2">+$1,245.32</div>
-          <div className="text-sm text-stockup/80 mt-1">+1.01% today</div>
-          <Progress value={65} className="mt-4 h-2 bg-secondary [&>div]:bg-stockup" />
+          {portfolioLoading ? (
+            <div className="text-muted-foreground">Loading...</div>
+          ) : (
+            <div className="text-muted-foreground">No data available</div>
+          )}
         </CustomCard>
       </div>
       
@@ -216,7 +202,7 @@ const Dashboard = () => {
             <div className="flex items-center justify-center py-8">
               <div className="text-muted-foreground">Loading watchlist...</div>
             </div>
-          ) : (
+          ) : stockData.length > 0 ? (
             <table className="w-full">
               <thead>
                 <tr className="border-b border-white/10">
@@ -243,14 +229,14 @@ const Dashboard = () => {
                 ))}
               </tbody>
             </table>
+          ) : (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-muted-foreground">No watchlist data available</div>
+            </div>
           )}
         </div>
       </CustomCard>
       
-      {/* Backend Connection Test */}
-      <div className="mt-6">
-        <ApiTest />
-      </div>
     </AppLayout>
   );
 };

@@ -7,7 +7,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, r2_score
 import yfinance as yf
-import pandas_ta as ta
+import ta
 from app.services.fundamental_analysis import fundamental_analysis
 from app.services.technical_analysis import technical_analysis
 from app.services.sentiment_analysis import sentiment_analysis

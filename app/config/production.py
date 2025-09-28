@@ -31,8 +31,8 @@ class Settings(BaseSettings):
     RATE_LIMIT_PER_MINUTE: int = 60
     
     # API Keys
-    ALPHA_VANTAGE_API_KEY: str = ""
-    NEWS_API_KEY: str = ""
+    ALPHA_VANTAGE_API_KEY: str = "7XA85INCTINU5XMT"
+    NEWS_API_KEY: str = "3d037655056b4eb7bacde041d1c5bd12"
     
     # Logging
     LOG_LEVEL: str = "INFO"

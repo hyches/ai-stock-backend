@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-/*import {
+import {
   portfolioApi,
   marketApi,
   mlApi,
@@ -10,7 +10,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
   type PortfolioData,
   type MarketData,
   type MLPrediction,
-} from '@/lib/api-services';*/
+} from '@/lib/api-services';
 
 // Portfolio hooks
 export const usePortfolio = () => {
@@ -18,6 +18,8 @@ export const usePortfolio = () => {
     queryKey: ['portfolio'],
     queryFn: () => portfolioApi.getPortfolio().then(res => res.data),
     staleTime: 30000, // 30 seconds
+    retry: 3,
+    retryDelay: 1000,
   });
 };
 
@@ -48,6 +50,8 @@ export const useMarketData = (symbol: string) => {
     queryFn: () => marketApi.getMarketData(symbol).then(res => res.data),
     enabled: !!symbol,
     staleTime: 10000, // 10 seconds
+    retry: 3,
+    retryDelay: 1000,
   });
 };
 
@@ -56,6 +60,8 @@ export const useWatchlist = () => {
     queryKey: ['watchlist'],
     queryFn: () => marketApi.getWatchlist().then(res => res.data),
     staleTime: 30000,
+    retry: 3,
+    retryDelay: 1000,
   });
 };
 
@@ -86,6 +92,8 @@ export const useMLPredictions = (symbol: string) => {
     queryFn: () => mlApi.getPredictions(symbol).then(res => res.data),
     enabled: !!symbol,
     staleTime: 60000, // 1 minute
+    retry: 3,
+    retryDelay: 1000,
   });
 };
 
@@ -94,6 +102,8 @@ export const useModelPerformance = () => {
     queryKey: ['model-performance'],
     queryFn: () => mlApi.getModelPerformance().then(res => res.data),
     staleTime: 300000, // 5 minutes
+    retry: 3,
+    retryDelay: 1000,
   });
 };
 
@@ -102,6 +112,8 @@ export const useAnomalyDetection = () => {
     queryKey: ['anomaly-detection'],
     queryFn: () => mlApi.getAnomalyDetection().then(res => res.data),
     staleTime: 60000,
+    retry: 3,
+    retryDelay: 1000,
   });
 };
 
@@ -111,6 +123,8 @@ export const useOrders = () => {
     queryKey: ['orders'],
     queryFn: () => tradingApi.getOrders().then(res => res.data),
     staleTime: 15000,
+    retry: 3,
+    retryDelay: 1000,
   });
 };
 
@@ -142,6 +156,8 @@ export const useScreener = (filters: any) => {
     queryFn: () => researchApi.getScreener(filters).then(res => res.data),
     enabled: !!filters,
     staleTime: 60000,
+    retry: 3,
+    retryDelay: 1000,
   });
 };
 
@@ -151,6 +167,8 @@ export const useFundamentalAnalysis = (symbol: string) => {
     queryFn: () => researchApi.getFundamentalAnalysis(symbol).then(res => res.data),
     enabled: !!symbol,
     staleTime: 300000,
+    retry: 3,
+    retryDelay: 1000,
   });
 };
 
@@ -160,6 +178,8 @@ export const useTechnicalAnalysis = (symbol: string) => {
     queryFn: () => researchApi.getTechnicalAnalysis(symbol).then(res => res.data),
     enabled: !!symbol,
     staleTime: 60000,
+    retry: 3,
+    retryDelay: 1000,
   });
 };
 
@@ -169,6 +189,8 @@ export const useReports = () => {
     queryKey: ['reports'],
     queryFn: () => reportsApi.getReports().then(res => res.data),
     staleTime: 300000,
+    retry: 3,
+    retryDelay: 1000,
   });
 };
 
@@ -189,6 +211,8 @@ export const useSettings = () => {
     queryKey: ['settings'],
     queryFn: () => settingsApi.getSettings().then(res => res.data),
     staleTime: 300000,
+    retry: 3,
+    retryDelay: 1000,
   });
 };
 
@@ -207,6 +231,8 @@ export const useApiKeys = () => {
     queryKey: ['api-keys'],
     queryFn: () => settingsApi.getApiKeys().then(res => res.data),
     staleTime: 300000,
+    retry: 3,
+    retryDelay: 1000,
   });
 };
 

@@ -1,0 +1,52 @@
+[
+  {
+    "id": "TC001",
+    "title": "register new user with valid and invalid data",
+    "description": "Test the user registration endpoint /api/v1/auth/register to ensure it returns 201 status for valid input data and 400 status for invalid input data."
+  },
+  {
+    "id": "TC002",
+    "title": "user login with valid and invalid credentials",
+    "description": "Test the user login endpoint /api/v1/auth/login to verify it returns 200 status for valid credentials and 401 status for invalid credentials."
+  },
+  {
+    "id": "TC003",
+    "title": "get current user information with and without authentication",
+    "description": "Test the endpoint /api/v1/auth/me to confirm it returns 200 status with user information when authenticated and 401 status when unauthorized."
+  },
+  {
+    "id": "TC004",
+    "title": "create trading strategy with valid and invalid inputs",
+    "description": "Test the endpoint /api/v1/trading/strategies/ POST method to ensure it creates a trading strategy with valid inputs returning 201 status and returns 400 status for invalid inputs."
+  },
+  {
+    "id": "TC005",
+    "title": "list all trading strategies",
+    "description": "Test the endpoint /api/v1/trading/strategies/ GET method to verify it returns a 200 status with a list of trading strategies."
+  },
+  {
+    "id": "TC006",
+    "title": "execute trade with valid and invalid trade data",
+    "description": "Test the endpoint /api/v1/trading/trades/ POST method to ensure it executes a trade with valid data returning 201 status and returns 400 status for invalid trade data."
+  },
+  {
+    "id": "TC007",
+    "title": "get machine learning prediction with valid and invalid inputs",
+    "description": "Test the endpoint /api/v1/ml/predict POST method to verify it returns 200 status with prediction results for valid inputs and 400 status for invalid inputs."
+  },
+  {
+    "id": "TC008",
+    "title": "get machine learning model performance metrics",
+    "description": "Test the endpoint /api/v1/ml/performance GET method to confirm it returns 200 status with ML model performance metrics."
+  },
+  {
+    "id": "TC009",
+    "title": "get market data for existing and non-existing symbol",
+    "description": "Test the endpoint /api/v1/market/data/{symbol} GET method to ensure it returns 200 status with market data for existing symbols and 404 status for non-existing symbols."
+  },
+  {
+    "id": "TC010",
+    "title": "get historical market data with valid symbol and period",
+    "description": "Test the endpoint /api/v1/market/historical GET method to verify it returns 200 status with historical market data for valid symbol and optional period parameter."
+  }
+]

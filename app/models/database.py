@@ -1,9 +1,7 @@
 from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Table, Boolean, Index
 from sqlalchemy.orm import relationship
-from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
-
-Base = declarative_base()
+from app.db.base_class import Base
 
 # Association tables
 stock_portfolio = Table(
@@ -15,22 +13,7 @@ stock_portfolio = Table(
     Index('ix_stock_portfolio_portfolio_id', 'portfolio_id')
 )
 
-class User(Base):
-    __tablename__ = 'users'
-    
-    id = Column(Integer, primary_key=True)
-    username = Column(String, unique=True, index=True)
-    email = Column(String, unique=True, index=True)
-    hashed_password = Column(String)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    
-    portfolios = relationship("Portfolio", back_populates="user")
-    reports = relationship("Report", back_populates="user")
-    
-    __table_args__ = (
-        Index('ix_users_created_at', 'created_at'),
-    )
+# User model moved to app.models.user - import it from there
 
 class Stock(Base):
     __tablename__ = 'stocks'
@@ -44,7 +27,7 @@ class Stock(Base):
     last_price = Column(Float)
     last_updated = Column(DateTime, default=datetime.utcnow)
     
-    portfolios = relationship("Portfolio", secondary=stock_portfolio, back_populates="stocks")
+    portfolios = relationship("Portfolio", secondary=stock_portfolio)
     reports = relationship("Report", back_populates="stock")
     
     __table_args__ = (
@@ -62,8 +45,10 @@ class Portfolio(Base):
     last_updated = Column(DateTime, default=datetime.utcnow)
     
     user = relationship("User", back_populates="portfolios")
-    stocks = relationship("Stock", secondary=stock_portfolio, back_populates="portfolios")
+    stocks = relationship("Stock", secondary=stock_portfolio)
     weights = relationship("PortfolioWeight", back_populates="portfolio")
+    positions = relationship("Position", back_populates="portfolio", cascade="all, delete-orphan")
+    trades = relationship("Trade", back_populates="portfolio", cascade="all, delete-orphan")
     
     __table_args__ = (
         Index('ix_portfolios_user_created', 'user_id', 'created_at'),

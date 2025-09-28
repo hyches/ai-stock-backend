@@ -8,7 +8,7 @@ from app.api.v1.endpoints import (
     signals,
     backtests,
     market_data,
-    user
+    ml
 )
 
 api_router = APIRouter()
@@ -69,9 +69,9 @@ api_router.include_router(
     tags=["market-data"]
 )
 
-# User endpoints
+# ML endpoints
 api_router.include_router(
-    user.router,
-    prefix="/users",
-    tags=["users"]
-) 
+    ml.router,
+    prefix="/ml",
+    tags=["ml"]
+)

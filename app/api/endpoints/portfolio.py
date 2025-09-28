@@ -1,9 +1,12 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException, status
+from app.core.security import get_current_user
+from app.models.user import User
+from typing import Dict, Any
 
 router = APIRouter()
 
 @router.get("/")
-def get_portfolio():
+def get_portfolio(current_user: User = Depends(get_current_user)):
     # Mock data
     return {
         "items": [

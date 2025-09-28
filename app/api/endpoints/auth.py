@@ -2,34 +2,40 @@ from datetime import timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from app.core.security import (
-    Token, User, UserInDB, verify_password, create_access_token,
+    Token, verify_password, create_access_token,
     get_current_user, get_password_hash
 )
+from app.schemas.user import UserInDB
 from app.schemas.user import UserCreate, UserResponse
-from app.models.database import User
+from app.models.user import User
 from sqlalchemy.orm import Session
-from app.database import get_db
+from app.db.session import get_db
 from typing import Optional
 
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
-# Mock user database - Replace with actual database in production
-fake_users_db = {
-    "admin": {
-        "username": "admin",
-        "hashed_password": get_password_hash("admin123"),
-        "disabled": False,
-    }
-}
+# Database user functions
+def get_user(db: Session, username: str):
+    """Get user from database by username/email"""
+    user = db.query(User).filter(
+        (User.email == username) | (User.full_name == username)
+    ).first()
+    if user:
+        return UserInDB(
+            id=user.id,
+            email=user.email,
+            full_name=user.full_name,
+            hashed_password=user.hashed_password,
+            is_active=user.is_active,
+            is_superuser=user.is_superuser,
+            permissions=user.permissions or []
+        )
+    return None
 
-def get_user(db, username: str):
-    if username in db:
-        user_dict = db[username]
-        return UserInDB(**user_dict)
-
-def authenticate_user(fake_db, username: str, password: str):
-    user = get_user(fake_db, username)
+def authenticate_user(db: Session, username: str, password: str):
+    """Authenticate user with database"""
+    user = get_user(db, username)
     if not user:
         return False
     if not verify_password(password, user.hashed_password):
@@ -49,10 +55,10 @@ async def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    access_token = create_access_token(data={"sub": user.email})
-    return {"access_token": access_token, "token_type": "bearer"}
+    access_token = create_access_token(data={"sub": user.email, "role": "admin"})
+    return {"access_token": access_token, "token_type": "bearer", "session_id": str(user.id)}
 
-@router.post("/register", response_model=UserResponse)
+@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def register(user: UserCreate, db: Session = Depends(get_db)):
     db_user = db.query(User).filter(User.email == user.email).first()
     if db_user:
@@ -65,7 +71,7 @@ async def register(user: UserCreate, db: Session = Depends(get_db)):
     db_user = User(
         email=user.email,
         hashed_password=hashed_password,
-        full_name=user.name
+        full_name=user.full_name
     )
     db.add(db_user)
     db.commit()
@@ -78,19 +84,5 @@ async def logout():
     return {"message": "Successfully logged out"}
 
 @router.get("/me", response_model=UserResponse)
-async def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    db: Session = Depends(get_db)
-):
-    user = db.query(User).filter(User.email == token).first()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    return UserResponse.from_orm(user)
-
-@router.get("/users/me", response_model=UserResponse)
-async def read_users_me(current_user: User = Depends(get_current_user)):
-    return UserResponse.from_orm(current_user) 
+async def get_current_user_info(current_user: User = Depends(get_current_user)):
+    return UserResponse.from_orm(current_user)
