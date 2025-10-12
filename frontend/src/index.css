@@ -5,23 +5,23 @@
 
 @layer base {
   :root {
-    --background: 210 100% 10%;
-    --foreground: 210 40% 98%;
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
 
-    --card: 210 100% 12%;
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
 
-    --popover: 210 100% 8%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
 
     --primary: 175 65% 53%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 210 40% 20%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
 
-    --muted: 210 40% 20%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
 
     --accent: 0 78% 71%;
     --accent-foreground: 210 40% 98%;
@@ -29,19 +29,19 @@
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 210 40% 20%;
-    --input: 210 40% 20%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
     --ring: 175 65% 53%;
 
     --radius: 0.75rem;
 
-    --sidebar-background: 210 100% 12%;
-    --sidebar-foreground: 210 40% 98%;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 222.2 84% 4.9%;
     --sidebar-primary: 175 65% 53%;
-    --sidebar-primary-foreground: 210 100% 8%;
-    --sidebar-accent: 210 40% 16%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 210 40% 16%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 210 40% 96%;
+    --sidebar-accent-foreground: 222.2 84% 4.9%;
+    --sidebar-border: 214.3 31.8% 91.4%;
     --sidebar-ring: 175 65% 53%;
   }
 }
@@ -52,7 +52,26 @@
   }
 
   body {
-    @apply bg-navy text-foreground antialiased;
+    @apply bg-background text-foreground antialiased;
+  }
+
+  /* Ensure proper contrast for all text elements */
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-foreground;
+  }
+
+  p, span, div {
+    @apply text-foreground;
+  }
+
+  /* Fix input and form elements */
+  input, textarea, select {
+    @apply text-foreground bg-background;
+  }
+
+  /* Fix card backgrounds */
+  .card {
+    @apply bg-card text-card-foreground;
   }
   
   /* Scrollbar styling */

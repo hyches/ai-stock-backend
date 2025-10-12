@@ -76,6 +76,22 @@ def create_sample_users(db: Session):
         db.add(demo_user)
         users.append(demo_user)
     
+    # Check if xxx test user exists (for frontend testing)
+    xxx_user = db.query(User).filter(User.email == "xxx").first()
+    if not xxx_user:
+        xxx_user = User(
+            email="xxx",
+            hashed_password=get_password_hash("xxx"),
+            full_name="Test User",
+            is_active=True,
+            is_superuser=True,
+            permissions=["admin", "trader", "analyst"],
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
+        )
+        db.add(xxx_user)
+        users.append(xxx_user)
+    
     if users:
         db.commit()
         print(f"Created {len(users)} new sample users")
@@ -337,6 +353,7 @@ def main():
         print("  Admin: admin@trading.com / admin123")
         print("  User: user@trading.com / user123")
         print("  Demo: demo@trading.com / demo123")
+        print("  Test: xxx / xxx")
         
     except Exception as e:
         print(f"❌ Error during seeding: {e}")

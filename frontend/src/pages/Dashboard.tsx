@@ -1,9 +1,13 @@
-import React from 'react';
-import { BarChart, LineChart, PieChart } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { BarChart, LineChart, PieChart, Search } from 'lucide-react';
 import AppLayout from '@/components/layout/AppLayout';
 import CustomCard from '@/components/ui/custom-card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { useNavigate } from 'react-router-dom';
+import { searchStocks } from '@/lib/api-services';
 import {
   ChartContainer,
   ChartTooltip,
@@ -33,6 +37,14 @@ import { usePortfolio, useWatchlist, useModelPerformance } from '@/hooks/use-api
 const COLORS = ['#4ECDC4', '#0077E6', '#F97316', '#D946EF', '#8B5CF6'];
 
 const Dashboard = () => {
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+
   // Fetch data from API
   const { data: portfolioData, isLoading: portfolioLoading, error: portfolioError } = usePortfolio();
   const { data: watchlistData, isLoading: watchlistLoading, error: watchlistError } = useWatchlist();
@@ -42,6 +54,53 @@ const Dashboard = () => {
   const effectivePortfolioData = portfolioData;
   const effectiveWatchlistData = watchlistData;
   const effectiveModelPerformance = modelPerformance;
+
+  // Search functionality
+  const handleSearchChange = async (value: string) => {
+    setSearchQuery(value);
+    
+    if (value.length >= 2) {
+      setIsSearching(true);
+      try {
+        const results = await searchStocks(value);
+        setSuggestions(results);
+        setShowSuggestions(true);
+      } catch (error) {
+        console.error('Search error:', error);
+        setSuggestions([]);
+      } finally {
+        setIsSearching(false);
+      }
+    } else {
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+  };
+
+  const handleStockSelect = (stock: any) => {
+    setSearchQuery(stock.symbol);
+    setShowSuggestions(false);
+    navigate(`/stock/${stock.symbol}`);
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/stock/${searchQuery.trim().toUpperCase()}`);
+    }
+  };
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Transform portfolio data for charts
   const portfolioChartData = effectivePortfolioData?.items?.map(item => ({
@@ -63,6 +122,67 @@ const Dashboard = () => {
 
   return (
     <AppLayout title="Dashboard">
+      {/* Search Section */}
+      <div className="mb-6">
+        <div className="relative" ref={searchRef}>
+          <form onSubmit={handleSearchSubmit} className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
+            <Input
+              type="text"
+              placeholder="Search for stocks (e.g., AAPL, Microsoft, Tesla)..."
+              value={searchQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              className="pl-10 pr-4 py-3 text-lg h-12 border-2 focus:border-primary"
+            />
+            <Button
+              type="submit"
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 px-4"
+            >
+              Search
+            </Button>
+          </form>
+
+          {/* Search Suggestions */}
+          {showSuggestions && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
+              {isSearching ? (
+                <div className="p-4 text-center text-muted-foreground">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto mb-2"></div>
+                  Searching...
+                </div>
+              ) : suggestions.length > 0 ? (
+                suggestions.map((stock, index) => (
+                  <div
+                    key={index}
+                    className="p-3 hover:bg-muted cursor-pointer border-b border-border last:border-b-0"
+                    onClick={() => handleStockSelect(stock)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-semibold text-foreground">{stock.symbol}</div>
+                        <div className="text-sm text-muted-foreground">{stock.name}</div>
+                      </div>
+                      <div className="text-right">
+                        <Badge variant="secondary" className="text-xs">
+                          {stock.exchange}
+                        </Badge>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {stock.type}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : searchQuery.length >= 2 ? (
+                <div className="p-4 text-center text-muted-foreground">
+                  No stocks found for "{searchQuery}"
+                </div>
+              ) : null}
+            </div>
+          )}
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <CustomCard 
           className="md:col-span-2" 

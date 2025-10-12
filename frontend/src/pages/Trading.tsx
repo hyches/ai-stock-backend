@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,27 +45,71 @@ import {
 } from '@/utils/icons';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+// Trading API functions (placeholder for future implementation)
+const tradingApi = {
+  getOrders: () => Promise.resolve({ data: [] }),
+  placeOrder: () => Promise.resolve({ data: { id: 1, status: 'pending' } }),
+  cancelOrder: () => Promise.resolve({ data: { success: true } }),
+};
 
-const mockSignals = [
-  { id: 1, stock: 'NIFTY', strike: '21500 CE', signal: 'Buy', price: '145.2', target: '180.5', sl: '125.0', date: '2025-05-19' },
-  { id: 2, stock: 'BANKNIFTY', strike: '48000 PE', signal: 'Sell', price: '320.8', target: '250.0', sl: '350.0', date: '2025-05-19' },
-  { id: 3, stock: 'RELIANCE', strike: '3200 CE', signal: 'Buy', price: '89.5', target: '120.0', sl: '75.0', date: '2025-05-18' },
-  { id: 4, stock: 'INFY', strike: '1600 PE', signal: 'Buy', price: '45.3', target: '65.0', sl: '35.0', date: '2025-05-18' },
-  { id: 5, stock: 'HDFCBANK', strike: '1750 CE', signal: 'Sell', price: '52.1', target: '30.0', sl: '65.0', date: '2025-05-17' },
-];
-
-const mockPaperTrades = [
-  { id: 1, strategy: 'Bull Call Spread', underlying: 'NIFTY', entryDate: '2025-05-15', status: 'Open', pnl: '+₹8,500', roi: '+15.2%' },
-  { id: 2, strategy: 'Iron Condor', underlying: 'BANKNIFTY', entryDate: '2025-05-10', status: 'Closed', pnl: '+₹3,200', roi: '+4.8%' },
-  { id: 3, strategy: 'Protective Put', underlying: 'RELIANCE', entryDate: '2025-05-05', status: 'Closed', pnl: '-₹1,200', roi: '-2.6%' },
-  { id: 4, strategy: 'Covered Call', underlying: 'INFY', entryDate: '2025-04-25', status: 'Closed', pnl: '+₹4,100', roi: '+8.5%' },
-];
 
 const Trading = () => {
   const [selectedStrategy, setSelectedStrategy] = useState('bullish');
   const [isRunningBacktest, setIsRunningBacktest] = useState(false);
   const [tabValue, setTabValue] = useState('signals');
   const { toast } = useToast();
+
+  // State for API data
+  const [strategies, setStrategies] = useState([]);
+  const [trades, setTrades] = useState([]);
+  const [positions, setPositions] = useState([]);
+  const [strategiesLoading, setStrategiesLoading] = useState(false);
+  const [tradesLoading, setTradesLoading] = useState(false);
+  const [positionsLoading, setPositionsLoading] = useState(false);
+
+  // Fetch data from APIs
+  useEffect(() => {
+    const fetchData = async () => {
+      console.log('🔄 Fetching trading data...');
+      try {
+        setStrategiesLoading(true);
+        console.log('📡 Calling tradingApi.getStrategies()...');
+        const strategiesResponse = await tradingApi.getStrategies();
+        console.log('✅ Strategies response:', strategiesResponse.data);
+        setStrategies(strategiesResponse.data);
+      } catch (error) {
+        console.error('❌ Failed to fetch strategies:', error);
+      } finally {
+        setStrategiesLoading(false);
+      }
+
+      try {
+        setTradesLoading(true);
+        console.log('📡 Calling tradingApi.getTrades()...');
+        const tradesResponse = await tradingApi.getTrades();
+        console.log('✅ Trades response:', tradesResponse.data);
+        setTrades(tradesResponse.data);
+      } catch (error) {
+        console.error('❌ Failed to fetch trades:', error);
+      } finally {
+        setTradesLoading(false);
+      }
+
+      try {
+        setPositionsLoading(true);
+        console.log('📡 Calling tradingApi.getPositions()...');
+        const positionsResponse = await tradingApi.getPositions();
+        console.log('✅ Positions response:', positionsResponse.data);
+        setPositions(positionsResponse.data);
+      } catch (error) {
+        console.error('❌ Failed to fetch positions:', error);
+      } finally {
+        setPositionsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const handleRunBacktest = () => {
     setIsRunningBacktest(true);
@@ -88,7 +132,7 @@ const Trading = () => {
 
   return (
     <AppLayout 
-      title="F&O Trading Terminal" 
+      title="F&O Trading" 
       description="Get AI-powered options trading signals and execute paper trades"
     >
       <div className="flex flex-col gap-6">
@@ -108,44 +152,55 @@ const Trading = () => {
                     <CardTitle className="text-sm font-medium text-muted-foreground">Total Signals</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">23</div>
-                    <p className="text-xs text-muted-foreground">+5 from yesterday</p>
+                    <div className="text-2xl font-bold">{strategies?.length || 0}</div>
+                    <p className="text-xs text-muted-foreground">
+                      {strategiesLoading ? 'Loading...' : 'Active strategies'}
+                    </p>
+                    <p className="text-xs text-blue-500">Debug: {JSON.stringify(strategies?.slice(0, 2))}</p>
                   </CardContent>
                 </CustomCard>
                 
                 <CustomCard variant="glass">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">Buy Signals</CardTitle>
+                    <CardTitle className="text-sm font-medium text-muted-foreground">Active Strategies</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold text-stockup flex items-center">
-                      15
+                      {strategies?.filter(s => s.is_active).length || 0}
                       <TrendingUp className="ml-2 h-4 w-4" />
                     </div>
-                    <p className="text-xs text-muted-foreground">65% of total</p>
+                    <p className="text-xs text-muted-foreground">
+                      {strategiesLoading ? 'Loading...' : `${Math.round((strategies?.filter(s => s.is_active).length / strategies?.length) * 100) || 0}% of total`}
+                    </p>
                   </CardContent>
                 </CustomCard>
                 
                 <CustomCard variant="glass">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">Sell Signals</CardTitle>
+                    <CardTitle className="text-sm font-medium text-muted-foreground">Inactive Strategies</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold text-stockdown flex items-center">
-                      8
+                      {strategies?.filter(s => !s.is_active).length || 0}
                       <TrendingDown className="ml-2 h-4 w-4" />
                     </div>
-                    <p className="text-xs text-muted-foreground">35% of total</p>
+                    <p className="text-xs text-muted-foreground">
+                      {strategiesLoading ? 'Loading...' : `${Math.round((strategies?.filter(s => !s.is_active).length / strategies?.length) * 100) || 0}% of total`}
+                    </p>
                   </CardContent>
                 </CustomCard>
                 
                 <CustomCard variant="glass">
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">Success Rate</CardTitle>
+                    <CardTitle className="text-sm font-medium text-muted-foreground">Avg Return</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">78%</div>
-                    <p className="text-xs text-muted-foreground">Last 30 days</p>
+                    <div className="text-2xl font-bold">
+                      {strategiesLoading ? '...' : `${Math.round(strategies?.reduce((sum, s) => sum + (s.performance?.total_return || 0), 0) / strategies?.length) || 0}%`}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {strategiesLoading ? 'Loading...' : 'Average performance'}
+                    </p>
                   </CardContent>
                 </CustomCard>
               </div>
@@ -163,41 +218,45 @@ const Trading = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Stock/Index</TableHead>
-                        <TableHead>Strike</TableHead>
-                        <TableHead>Signal</TableHead>
-                        <TableHead>Price</TableHead>
-                        <TableHead>Target</TableHead>
-                        <TableHead>SL</TableHead>
-                        <TableHead>Date</TableHead>
+                        <TableHead>Strategy</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Return</TableHead>
+                        <TableHead>Sharpe</TableHead>
+                        <TableHead>Drawdown</TableHead>
+                        <TableHead>Created</TableHead>
                         <TableHead>Action</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {mockSignals.map(signal => (
-                        <TableRow key={signal.id}>
-                          <TableCell className="font-medium">{signal.stock}</TableCell>
-                          <TableCell>{signal.strike}</TableCell>
+                      {strategiesLoading ? (
+                        <TableRow>
+                          <TableCell colSpan={8} className="text-center">Loading signals...</TableCell>
+                        </TableRow>
+                      ) : strategies?.map(strategy => (
+                        <TableRow key={strategy.id}>
+                          <TableCell className="font-medium">{strategy.name}</TableCell>
+                          <TableCell>{strategy.type}</TableCell>
                           <TableCell>
-                            <Badge variant={signal.signal === 'Buy' ? 'success' : 'destructive'}>
-                              {signal.signal}
+                            <Badge variant={strategy.is_active ? 'success' : 'secondary'}>
+                              {strategy.is_active ? 'Active' : 'Inactive'}
                             </Badge>
                           </TableCell>
-                          <TableCell>{signal.price}</TableCell>
-                          <TableCell>{signal.target}</TableCell>
-                          <TableCell>{signal.sl}</TableCell>
-                          <TableCell>{signal.date}</TableCell>
+                          <TableCell>{strategy.performance?.total_return || 0}%</TableCell>
+                          <TableCell>{strategy.performance?.sharpe_ratio || 0}</TableCell>
+                          <TableCell>{strategy.performance?.max_drawdown || 0}%</TableCell>
+                          <TableCell>{new Date(strategy.created_at || Date.now()).toLocaleDateString()}</TableCell>
                           <TableCell>
                             <Button 
                               variant="outline" 
                               size="sm"
-                              onClick={() => handleTradeAction(signal.id)}
+                              onClick={() => handleTradeAction(strategy.id)}
                             >
-                              Trade
+                              {strategy.is_active ? 'Deactivate' : 'Activate'}
                             </Button>
                           </TableCell>
                         </TableRow>
-                      ))}
+                      )) || []}
                     </TableBody>
                   </Table>
                 </div>
@@ -269,7 +328,42 @@ const Trading = () => {
                 <div className="lg:col-span-2">
                   <CustomCard>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-xl font-semibold">Bull Call Spread</CardTitle>
+                      <CardTitle className="text-xl font-semibold">Existing Strategies</CardTitle>
+                      <BarChart2 className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      {strategiesLoading ? (
+                        <div className="text-center py-8">Loading strategies...</div>
+                      ) : (
+                        <div className="space-y-4">
+                          {strategies?.map(strategy => (
+                            <div key={strategy.id} className="border rounded-lg p-4">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <h3 className="font-semibold">{strategy.name}</h3>
+                                  <p className="text-sm text-muted-foreground">{strategy.description}</p>
+                                  <div className="flex gap-4 mt-2 text-sm">
+                                    <span>Type: {strategy.type}</span>
+                                    <span>Return: {strategy.performance?.total_return || 0}%</span>
+                                    <span>Sharpe: {strategy.performance?.sharpe_ratio || 0}</span>
+                                  </div>
+                                </div>
+                                <Badge variant={strategy.is_active ? 'success' : 'secondary'}>
+                                  {strategy.is_active ? 'Active' : 'Inactive'}
+                                </Badge>
+                              </div>
+                            </div>
+                          )) || []}
+                        </div>
+                      )}
+                    </CardContent>
+                  </CustomCard>
+                </div>
+                
+                <div className="lg:col-span-2">
+                  <CustomCard>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-xl font-semibold">Strategy Details</CardTitle>
                       <BarChart2 className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
@@ -439,31 +533,35 @@ const Trading = () => {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {mockPaperTrades.map(trade => (
+                          {tradesLoading ? (
+                            <TableRow>
+                              <TableCell colSpan={7} className="text-center">Loading trades...</TableCell>
+                            </TableRow>
+                          ) : trades?.map(trade => (
                             <TableRow key={trade.id}>
-                              <TableCell className="font-medium">{trade.strategy}</TableCell>
-                              <TableCell>{trade.underlying}</TableCell>
-                              <TableCell>{trade.entryDate}</TableCell>
+                              <TableCell className="font-medium">{trade.strategy || 'N/A'}</TableCell>
+                              <TableCell>{trade.symbol}</TableCell>
+                              <TableCell>{new Date(trade.created_at).toLocaleDateString()}</TableCell>
                               <TableCell>
-                                <Badge variant={trade.status === 'Open' ? 'info' : 'secondary'}>
+                                <Badge variant={trade.status === 'executed' ? 'info' : 'secondary'}>
                                   {trade.status}
                                 </Badge>
                               </TableCell>
-                              <TableCell className={trade.pnl.startsWith('+') ? 'text-stockup' : 'text-stockdown'}>
-                                {trade.pnl}
+                              <TableCell className={trade.pnl > 0 ? 'text-stockup' : 'text-stockdown'}>
+                                {trade.pnl > 0 ? '+' : ''}₹{trade.pnl?.toLocaleString() || '0'}
                               </TableCell>
-                              <TableCell className={trade.roi.startsWith('+') ? 'text-stockup' : 'text-stockdown'}>
-                                {trade.roi}
+                              <TableCell className={trade.pnl > 0 ? 'text-stockup' : 'text-stockdown'}>
+                                {trade.pnl > 0 ? '+' : ''}{((trade.pnl / (trade.price * trade.quantity)) * 100).toFixed(1)}%
                               </TableCell>
                               <TableCell>
-                                {trade.status === 'Open' ? (
-                                  <Button variant="outline" size="sm">Close</Button>
-                                ) : (
+                                {trade.status === 'executed' ? (
                                   <Button variant="outline" size="sm">Details</Button>
+                                ) : (
+                                  <Button variant="outline" size="sm">Cancel</Button>
                                 )}
                               </TableCell>
                             </TableRow>
-                          ))}
+                          )) || []}
                         </TableBody>
                       </Table>
                     </div>

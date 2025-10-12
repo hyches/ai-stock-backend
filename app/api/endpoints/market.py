@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from app.core.security import get_current_user
 from app.services.market_data import get_stock_data, search_symbols
-from app.schemas.market import StockData, SymbolSearch
+from app.schemas.market import StockDetails, StockSuggestion
 from app.schemas.trading import PortfolioItem
 from typing import List
 import yfinance as yf
@@ -81,7 +81,7 @@ def get_watchlist(current_user = Depends(get_current_user)):
         }
     ]
 
-@router.get("/stock/{symbol}", response_model=StockData)
+@router.get("/stock/{symbol}", response_model=StockDetails)
 async def get_stock(
     symbol: str,
     interval: str = Query("1d", regex="^(1m|5m|15m|30m|1h|1d|1wk|1mo)$"),
@@ -96,7 +96,7 @@ async def get_stock(
             detail=f"Error fetching stock data: {str(e)}"
         )
 
-@router.get("/search", response_model=List[SymbolSearch])
+@router.get("/search", response_model=List[StockSuggestion])
 async def search(
     query: str = Query(..., min_length=1),
     current_user = Depends(get_current_user)

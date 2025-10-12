@@ -1,18 +1,16 @@
 import axios from 'axios';
-
-// API Configuration
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8008/api';
+import { API_CONFIG, API_ENDPOINTS } from '@/utils/api';
 
 // Create axios instance with default config
 const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 10000,
+  baseURL: API_CONFIG.BASE_URL,
+  timeout: API_CONFIG.TIMEOUT,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Add request interceptor to include auth token
+// Add request interceptor for authentication
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('access_token');
@@ -31,7 +29,7 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid, redirect to login
+      // Handle unauthorized - redirect to login
       localStorage.removeItem('access_token');
       window.location.href = '/login';
     }
@@ -39,146 +37,105 @@ apiClient.interceptors.response.use(
   }
 );
 
-// Portfolio API
-export const portfolioApi = {
-  getPortfolio: () => apiClient.get('/portfolio/'),
-  getPortfolioById: (id: number) => apiClient.get(`/portfolio/${id}`),
-  createPortfolio: (data: any) => apiClient.post('/portfolio/', data),
-  updatePortfolio: (id: number, data: any) => apiClient.put(`/portfolio/${id}`, data),
-  deletePortfolio: (id: number) => apiClient.delete(`/portfolio/${id}`),
-  addPosition: (portfolioId: number, data: any) => apiClient.post(`/portfolio/${portfolioId}/positions`, data),
-  removePosition: (portfolioId: number, positionId: number) => apiClient.delete(`/portfolio/${portfolioId}/positions/${positionId}`),
+// Stock search and autocomplete
+export const searchStocks = async (query: string) => {
+  try {
+    const response = await apiClient.get(`/market/search?q=${encodeURIComponent(query)}`);
+    return response.data;
+  } catch (error) {
+    console.error('Search stocks error:', error);
+    throw new Error(`Failed to search stocks: ${error.response?.data?.detail || error.message}`);
+  }
 };
 
-// Market Data API
-export const marketApi = {
-  getMarketData: (symbol: string) => apiClient.get(`/market/stock/${symbol}`),
-  getWatchlist: () => apiClient.get('/market/watchlist'),
-  addToWatchlist: (symbol: string) => apiClient.post('/market/watchlist', { symbol }),
-  removeFromWatchlist: (symbol: string) => apiClient.delete(`/market/watchlist/${symbol}`),
-  getHistoricalData: (symbol: string, startDate: string, endDate: string) => 
-    apiClient.get(`/market/stock/${symbol}?start=${startDate}&end=${endDate}`),
+// Get stock details
+export const getStockDetails = async (symbol: string) => {
+  try {
+    const response = await apiClient.get(`/market/data/${symbol}`);
+    return response.data;
+  } catch (error) {
+    console.error('Get stock details error:', error);
+    throw new Error(`Failed to get stock details: ${error.response?.data?.detail || error.message}`);
+  }
 };
 
-// ML API
-export const mlApi = {
-  getPredictions: (symbol: string) => apiClient.get(`/ml/predictions/${symbol}`),
-  getModelPerformance: () => apiClient.get('/ml/performance'),
-  getAnomalyDetection: () => apiClient.get('/ml/anomaly-detection'),
-  trainModel: (data: any) => apiClient.post('/ml/train', data),
+// Get historical data
+export const getStockHistoricalData = async (symbol: string, timeframe: string) => {
+  try {
+    const response = await apiClient.get(`/market/data/${symbol}/historical?period=${timeframe}`);
+    return response.data;
+  } catch (error) {
+    console.error('Get historical data error:', error);
+    throw new Error(`Failed to get historical data: ${error.response?.data?.detail || error.message}`);
+  }
 };
 
-// Trading API
-export const tradingApi = {
-  getOrders: () => apiClient.get('/trading/orders'),
-  placeOrder: (data: any) => apiClient.post('/trading/orders', data),
-  cancelOrder: (orderId: string) => apiClient.delete(`/trading/orders/${orderId}`),
-  getPositions: () => apiClient.get('/trading/positions'),
-  getTrades: () => apiClient.get('/trading/trades'),
-  getStrategies: () => apiClient.get('/trading/strategies'),
-  createStrategy: (data: any) => apiClient.post('/trading/strategies', data),
-  updateStrategy: (id: number, data: any) => apiClient.put(`/trading/strategies/${id}`, data),
-  deleteStrategy: (id: number) => apiClient.delete(`/trading/strategies/${id}`),
+// Get market overview
+export const getMarketOverview = async () => {
+  try {
+    const response = await apiClient.get('/market/overview');
+    return response.data;
+  } catch (error) {
+    console.error('Get market overview error:', error);
+    throw new Error(`Failed to get market overview: ${error.response?.data?.detail || error.message}`);
+  }
 };
 
-// Research API
-export const researchApi = {
-  getScreener: (filters: any) => apiClient.post('/research/screener', filters),
-  getFundamentalAnalysis: (symbol: string) => apiClient.get(`/research/fundamental/${symbol}`),
-  getTechnicalAnalysis: (symbol: string) => apiClient.get(`/research/technical/${symbol}`),
-  getSentimentAnalysis: (symbol: string) => apiClient.get(`/research/sentiment/${symbol}`),
+// Get popular stocks
+export const getPopularStocks = async () => {
+  try {
+    const response = await apiClient.get('/market/popular');
+    return response.data;
+  } catch (error) {
+    console.error('Get popular stocks error:', error);
+    throw new Error(`Failed to get popular stocks: ${error.response?.data?.detail || error.message}`);
+  }
 };
 
-// Reports API
-export const reportsApi = {
-  getReports: () => apiClient.get('/reports/'),
-  generateReport: (type: string, params: any) => apiClient.post('/reports/generate', { type, params }),
-  getReportById: (id: number) => apiClient.get(`/reports/${id}`),
-  deleteReport: (id: number) => apiClient.delete(`/reports/${id}`),
+// Get stock news
+export const getStockNews = async (symbol: string) => {
+  try {
+    const response = await apiClient.get(`/market/news/${symbol}`);
+    return response.data;
+  } catch (error) {
+    console.error('Get stock news error:', error);
+    throw new Error(`Failed to get stock news: ${error.response?.data?.detail || error.message}`);
+  }
 };
 
-// Settings API
-export const settingsApi = {
-  getSettings: () => apiClient.get('/settings/'),
-  updateSettings: (data: any) => apiClient.put('/settings/', data),
-  getApiKeys: () => apiClient.get('/settings/api-keys'),
-  generateApiKey: () => apiClient.post('/settings/api-keys'),
-  deleteApiKey: (id: number) => apiClient.delete(`/settings/api-keys/${id}`),
+// Get stock analysis
+export const getStockAnalysis = async (symbol: string) => {
+  try {
+    const response = await apiClient.get(`/ml/analysis/${symbol}`);
+    return response.data;
+  } catch (error) {
+    console.error('Get stock analysis error:', error);
+    throw new Error(`Failed to get stock analysis: ${error.response?.data?.detail || error.message}`);
+  }
 };
 
-// Auth API
-export const authApi = {
-  login: (email: string, password: string) => 
-    apiClient.post('/auth/login', { username: email, password }),
-  register: (data: any) => apiClient.post('/auth/register', data),
-  logout: () => apiClient.post('/auth/logout'),
-  refreshToken: () => apiClient.post('/auth/refresh'),
-  getCurrentUser: () => apiClient.get('/auth/me'),
+// Get stock financials
+export const getStockFinancials = async (symbol: string) => {
+  try {
+    const response = await apiClient.get(`/market/financials/${symbol}`);
+    return response.data;
+  } catch (error) {
+    console.error('Get stock financials error:', error);
+    throw new Error(`Failed to get stock financials: ${error.response?.data?.detail || error.message}`);
+  }
 };
 
-// Export types for TypeScript
-export interface PortfolioData {
-  id: number;
-  name: string;
-  totalValue: number;
-  totalChange: number;
-  totalChangePercent: number;
-  items: PortfolioItem[];
-  performanceData: PerformanceDataPoint[];
-}
+// Get stock peers
+export const getStockPeers = async (symbol: string) => {
+  try {
+    const response = await apiClient.get(`/market/peers/${symbol}`);
+    return response.data;
+  } catch (error) {
+    console.error('Get stock peers error:', error);
+    throw new Error(`Failed to get stock peers: ${error.response?.data?.detail || error.message}`);
+  }
+};
 
-export interface PortfolioItem {
-  symbol: string;
-  quantity: number;
-  price: number;
-  value: number;
-  change: number;
-  changePercent: number;
-}
 
-export interface PerformanceDataPoint {
-  date: string;
-  value: number;
-}
-
-export interface MarketData {
-  symbol: string;
-  price: number;
-  change: number;
-  changePercent: number;
-  volume: number;
-  high: number;
-  low: number;
-  open: number;
-  previousClose: number;
-}
-
-export interface MLPrediction {
-  symbol: string;
-  prediction: number;
-  confidence: number;
-  direction: 'up' | 'down' | 'neutral';
-  timeframe: string;
-}
-
-export interface TradingOrder {
-  id: string;
-  symbol: string;
-  side: 'buy' | 'sell';
-  quantity: number;
-  price: number;
-  status: 'pending' | 'filled' | 'cancelled';
-  createdAt: string;
-}
-
-export interface TradingStrategy {
-  id: number;
-  name: string;
-  type: string;
-  description: string;
-  parameters: any;
-  isActive: boolean;
-  performance: any;
-}
 
 export default apiClient;

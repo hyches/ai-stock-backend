@@ -1,91 +1,97 @@
+# AI Stock Trading Platform - Architecture Documentation
 
-# AI Stock Portfolio Platform — Backend Architecture
+## Project Overview
+A full-stack AI-powered trading platform with FastAPI backend and React frontend, featuring real-time market data, ML predictions, portfolio optimization, and paper trading capabilities.
 
-## 📁 Folder & File Structure
+## Current Status: 60% Complete - Needs Critical Fixes
+
+## Architecture Overview
 
 ```
-/backend
-│
-├── app/                          # Main application package
-│   ├── __init__.py
-│   ├── main.py                   # Entry point (FastAPI app)
-│   ├── config.py                 # Environment/config management
-│   ├── models/                   # Pydantic models for data validation
-│   │   └── stock.py
-│   │   └── portfolio.py
-│   ├── services/                 # Core logic (ML, Screener, Optimizer)
-│   │   └── screener.py
-│   │   └── optimizer.py
-│   │   └── report_generator.py
-│   ├── api/                      # API route handlers
-│   │   └── endpoints/
-│   │       └── screener.py
-│   │       └── optimizer.py
-│   │       └── research.py
-│   └── utils/                    # Helper functions
-│       └── data_loader.py
-│       └── finance_metrics.py
-│
-├── tests/                        # Unit tests for all components
-│   └── test_screener.py
-│   └── test_optimizer.py
-│
-├── requirements.txt              # Python package dependencies
-├── Dockerfile                    # Docker setup for deployment
-├── .env                          # Environment variables (API keys, etc.)
-└── README.md
+┌─────────────────────────────────────────────────────────────┐
+│                    FRONTEND (React + TypeScript)            │
+├─────────────────────────────────────────────────────────────┤
+│  Pages: Dashboard, Trading, Screener, Research, Optimizer   │
+│  Components: 63 React components with shadcn/ui            │
+│  State: React Query + Context API                          │
+│  Routing: React Router v6                                  │
+└─────────────────────────────────────────────────────────────┘
+                                │
+                                │ HTTP/WebSocket
+                                ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    BACKEND (FastAPI)                        │
+├─────────────────────────────────────────────────────────────┤
+│  API Layer: 21 endpoint files + 8 v1 endpoints             │
+│  Services: 30 business logic services                      │
+│  Models: 11 database models (WITH DUPLICATES)              │
+│  Core: Config, Security, Logging, Middleware               │
+└─────────────────────────────────────────────────────────────┘
+                                │
+                                │ SQLAlchemy ORM
+                                ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    DATABASE LAYER                           │
+├─────────────────────────────────────────────────────────────┤
+│  Primary: SQLite (default) / PostgreSQL (production)       │
+│  Cache: Redis (for real-time data)                         │
+│  Migrations: Alembic (1 migration file)                    │
+└─────────────────────────────────────────────────────────────┘
+                                │
+                                │ External APIs
+                                ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    EXTERNAL SERVICES                        │
+├─────────────────────────────────────────────────────────────┤
+│  Market Data: yfinance, Alpha Vantage, Yahoo Finance       │
+│  Trading: Zerodha API (paper trading)                      │
+│  ML: scikit-learn, pandas, TA-Lib                          │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-## 🔧 Component Descriptions
+## Critical Issues to Fix
 
-### `main.py`
-Initializes FastAPI app, sets up middleware (CORS), mounts all routers.
+### 1. DATABASE MODEL DUPLICATION (CRITICAL)
+**Problem**: User model defined in 4 different places with conflicting schemas
+- `app/models/user.py` - Main user model
+- `app/models/trading.py` - Duplicate user model
+- `app/models/database.py` - Another duplicate
+- `app/core/security.py` - Pydantic user model
 
-### `config.py`
-Manages environment settings (API keys, mode, debug).
+**Solution**: Consolidate to single source of truth in `app/models/user.py`
 
-### `models/`
-Defines input/output schemas using **Pydantic** for:
-- Stock data
-- Screener results
-- Portfolio input/output
-- Reports
+### 2. DATABASE CONNECTION DUPLICATION (CRITICAL)
+**Problem**: get_db() function defined in 3 places
+- `app/database.py` - Old implementation
+- `app/db/session.py` - New implementation with connection pooling
+- `app/api/deps.py` - API-specific implementation
 
-### `services/`
-Contains core business logic:
-- **screener.py**: filters stocks by P/E, momentum, volume, etc.
-- **optimizer.py**: uses AI/ML (e.g., RandomForest, MPT) for optimal portfolio
-- **report_generator.py**: compiles PDF/HTML research reports
+**Solution**: Use only `app/db/session.py` and update all imports
 
-### `api/endpoints/`
-Each file defines a specific API route (e.g. `/api/screener`, `/api/optimizer`) using FastAPI routers.
+### 3. BASE CLASS DUPLICATION (CRITICAL)
+**Problem**: Base = declarative_base() in 3 places
+- `app/models/database.py`
+- `app/db/base.py`
+- `app/database.py`
 
-### `utils/`
-Helpers to fetch data (e.g., from Yahoo Finance or NSE/BSE), compute financial metrics, clean data.
+**Solution**: Use only `app/db/base_class.py` and remove others
 
-## 🧠 State Management
+### 4. MISSING API ENDPOINTS (CRITICAL)
+**Problem**: v1/api.py references 8 endpoints that don't exist
+- `app/api/v1/endpoints/users.py` - MISSING
+- `app/api/v1/endpoints/portfolios.py` - MISSING
+- `app/api/v1/endpoints/positions.py` - MISSING
+- `app/api/v1/endpoints/trades.py` - MISSING
+- `app/api/v1/endpoints/signals.py` - MISSING
+- `app/api/v1/endpoints/backtests.py` - MISSING
+- `app/api/v1/endpoints/market_data.py` - MISSING
 
-- Stateless REST API
-- All state (e.g., user session, portfolios) is passed via request or stored in:
-  - Local cache (Redis) or
-  - Filesystem (temporary) or
-  - DB (in production — SQLite/PostgreSQL)
+**Solution**: Create missing endpoints or remove v1 router
 
-## 🔌 External Services
+### 5. IMPORT CONFLICTS (CRITICAL)
+**Problem**: Mixed imports between old and new database modules
+- Some files import from `app.database`
+- Others import from `app.db.session`
+- This causes runtime errors
 
-- `yfinance`, `nsetools`, or Alpha Vantage: data fetching
-- `sklearn`: ML models for portfolio scoring
-- `pandas`, `numpy`: financial calculations
-- `reportlab` or `WeasyPrint`: for PDF generation
-
-## 🚀 Deployment
-
-Use **Render**, **Railway**, or **AWS EC2**:
-
-- Dockerfile ensures consistency
-- Can run `uvicorn app.main:app` for API start
-
-## 🧪 Testing
-
-- Each service (screener, optimizer) has unit tests
-- Endpoints tested using FastAPI test client
+**Solution**: Standardize all imports to use `app.db.session`

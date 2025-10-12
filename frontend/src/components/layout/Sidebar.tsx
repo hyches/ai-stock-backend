@@ -13,7 +13,8 @@ import {
   ChevronLeft, 
   ChevronRight,
   DollarSign,
-  Download
+  Download,
+  Search
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -55,7 +56,8 @@ const NavItem = ({
 };
 
 const navItems = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/" },
+  { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
+  { icon: Search, label: "Stock Search", path: "/search" },
   { icon: Filter, label: "Stock Screener", path: "/screener" },
   { icon: BookOpen, label: "AI Research Reports", path: "/research" },
   { icon: PieChart, label: "Portfolio Optimizer", path: "/optimizer" },

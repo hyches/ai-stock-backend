@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from typing import List, Optional
 from datetime import datetime, date
+from typing import Any
 from app.core.security import get_current_user
 from app.schemas.trading import (
     StrategyCreate, Strategy, StrategyUpdate,
@@ -20,16 +21,39 @@ def create_strategy(
     current_user: User = Depends(get_current_user)
 ):
     # Mock implementation
-    return {**strategy_in.dict(), "id": 1, "user_id": current_user.id, "created_at": datetime.utcnow()}
+    return {**strategy_in.dict(), "id": 1, "user_id": current_user.id, "created_at": datetime.now(), "updated_at": datetime.now()}
 
-@router.get("/strategies/", response_model=List[Strategy])
-def get_strategies(
-    current_user: User = Depends(get_current_user)
-):
-    # Mock implementation
+@router.get("/strategies/")
+def get_strategies():
+    # Return proper trading strategies
     return [
-        {"id": 1, "user_id": current_user.id, "name": "Momentum", "description": "Buys high, sells higher", "parameters": {}, "created_at": datetime.utcnow()},
-        {"id": 2, "user_id": current_user.id, "name": "Mean Reversion", "description": "Buys low, sells high", "parameters": {}, "created_at": datetime.utcnow()},
+        {
+            "id": 1, 
+            "name": "Momentum Strategy", 
+            "description": "Follows price trends using moving averages", 
+            "type": "trend_following",
+            "parameters": {"fast_period": 12, "slow_period": 26, "signal_period": 9},
+            "is_active": True,
+            "performance": {"total_return": 15.2, "sharpe_ratio": 1.8, "max_drawdown": -5.1}
+        },
+        {
+            "id": 2, 
+            "name": "Mean Reversion Strategy", 
+            "description": "Trades against price extremes", 
+            "type": "mean_reversion",
+            "parameters": {"lookback_period": 20, "entry_std": 2.0, "exit_std": 0.5},
+            "is_active": True,
+            "performance": {"total_return": 8.7, "sharpe_ratio": 1.2, "max_drawdown": -3.2}
+        },
+        {
+            "id": 3, 
+            "name": "Breakout Strategy", 
+            "description": "Captures price breakouts", 
+            "type": "breakout",
+            "parameters": {"lookback_period": 20, "breakout_threshold": 0.02},
+            "is_active": False,
+            "performance": {"total_return": 12.1, "sharpe_ratio": 1.5, "max_drawdown": -7.8}
+        }
     ]
 
 # Trade endpoints
@@ -41,14 +65,43 @@ def create_trade(
     # Mock implementation
     return {**trade_in.dict(), "id": 1, "user_id": current_user.id, "created_at": datetime.utcnow()}
 
-@router.get("/trades/", response_model=List[Trade])
-def get_trades(
-    current_user: User = Depends(get_current_user)
-):
-    # Mock implementation
+@router.get("/trades/")
+def get_trades():
+    # Return proper trade history
     return [
-        {"id": 1, "user_id": current_user.id, "symbol": "AAPL", "type": "buy", "quantity": 10, "price": 175.0, "created_at": datetime.utcnow()},
-        {"id": 2, "user_id": current_user.id, "symbol": "GOOGL", "type": "sell", "quantity": 5, "price": 2850.0, "created_at": datetime.utcnow()},
+        {
+            "id": 1, 
+            "symbol": "AAPL", 
+            "action": "buy", 
+            "quantity": 100, 
+            "price": 175.50, 
+            "status": "executed",
+            "pnl": 250.0,
+            "created_at": "2024-01-15T10:30:00Z",
+            "strategy": "Momentum Strategy"
+        },
+        {
+            "id": 2, 
+            "symbol": "GOOGL", 
+            "action": "sell", 
+            "quantity": 50, 
+            "price": 2850.0, 
+            "status": "executed",
+            "pnl": -150.0,
+            "created_at": "2024-01-14T14:20:00Z",
+            "strategy": "Mean Reversion Strategy"
+        },
+        {
+            "id": 3, 
+            "symbol": "MSFT", 
+            "action": "buy", 
+            "quantity": 75, 
+            "price": 408.25, 
+            "status": "pending",
+            "pnl": 0.0,
+            "created_at": "2024-01-16T09:15:00Z",
+            "strategy": "Breakout Strategy"
+        }
     ]
 
 # Portfolio endpoints
@@ -79,14 +132,46 @@ def create_position(
     # Mock implementation
     return {**position_in.dict(), "id": 1, "user_id": current_user.id, "created_at": datetime.utcnow()}
 
-@router.get("/positions/", response_model=List[Position])
-def get_positions(
-    current_user: User = Depends(get_current_user)
-):
-    # Mock implementation
+@router.get("/positions/")
+def get_positions():
+    # Return proper current positions
     return [
-        {"id": 1, "user_id": current_user.id, "portfolio_id": 1, "symbol": "AAPL", "quantity": 10, "avg_price": 170.0, "current_price": 175.0, "created_at": datetime.utcnow()},
-        {"id": 2, "user_id": current_user.id, "portfolio_id": 1, "symbol": "GOOGL", "quantity": 5, "avg_price": 2800.0, "current_price": 2850.0, "created_at": datetime.utcnow()},
+        {
+            "id": 1, 
+            "symbol": "AAPL", 
+            "quantity": 100, 
+            "avg_price": 170.0, 
+            "current_price": 175.50, 
+            "unrealized_pnl": 550.0,
+            "realized_pnl": 250.0,
+            "status": "open",
+            "created_at": "2024-01-10T09:00:00Z",
+            "strategy": "Momentum Strategy"
+        },
+        {
+            "id": 2, 
+            "symbol": "MSFT", 
+            "quantity": 75, 
+            "avg_price": 400.0, 
+            "current_price": 408.25, 
+            "unrealized_pnl": 618.75,
+            "realized_pnl": 0.0,
+            "status": "open",
+            "created_at": "2024-01-12T11:30:00Z",
+            "strategy": "Breakout Strategy"
+        },
+        {
+            "id": 3, 
+            "symbol": "TSLA", 
+            "quantity": 25, 
+            "avg_price": 180.0, 
+            "current_price": 178.80, 
+            "unrealized_pnl": -30.0,
+            "realized_pnl": 0.0,
+            "status": "open",
+            "created_at": "2024-01-13T14:45:00Z",
+            "strategy": "Mean Reversion Strategy"
+        }
     ]
 
 # Backtest endpoints

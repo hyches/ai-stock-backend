@@ -11,16 +11,17 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, loading } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email === "xxx" && password === "xxx") {
-      setError("");
-      login();
+    setError("");
+    
+    const success = await login(email, password);
+    if (success) {
       navigate("/dashboard");
     } else {
-      setError("Invalid credentials. Use xxx for both email and password.");
+      setError("Invalid credentials. Please check your email and password.");
     }
   };
 
@@ -44,11 +45,15 @@ export default function LoginPage() {
               <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required />
             </div>
             {error && <div className="text-red-500 text-sm">{error}</div>}
-            <Button type="submit" className="w-full">Sign in</Button>
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Signing in..." : "Sign in"}
+            </Button>
           </form>
         </CardContent>
         <CardFooter>
-          <span className="text-xs text-gray-500">Use <b>xxx</b> for both email and password.</span>
+          <span className="text-xs text-gray-500">
+            Test credentials: <b>xxx / xxx</b> or <b>admin@trading.com / admin123</b>
+          </span>
         </CardFooter>
       </Card>
     </div>
