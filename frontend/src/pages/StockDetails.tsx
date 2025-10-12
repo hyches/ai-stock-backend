@@ -18,6 +18,7 @@ import {
   Share2,
   Bookmark
 } from 'lucide-react';
+import TradingActions from '@/components/TradingActions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -412,6 +413,15 @@ const StockDetails = () => {
                     </CardContent>
                   </Card>
                 )}
+
+                {/* Trading Actions */}
+                <TradingActions
+                  symbol={stockDetails.symbol}
+                  name={stockDetails.name}
+                  currentPrice={stockDetails.price}
+                  change={stockDetails.change}
+                  changePercent={stockDetails.changePercent}
+                />
 
                 {/* Key Stats */}
                 <Card>

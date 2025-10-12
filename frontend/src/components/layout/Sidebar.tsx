@@ -14,7 +14,8 @@ import {
   ChevronRight,
   DollarSign,
   Download,
-  Search
+  Search,
+  History
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -62,6 +63,7 @@ const navItems = [
   { icon: BookOpen, label: "AI Research Reports", path: "/research" },
   { icon: PieChart, label: "Portfolio Optimizer", path: "/optimizer" },
   { icon: TrendingUp, label: "F&O Trading Terminal", path: "/trading" },
+  { icon: History, label: "Transactions", path: "/transactions" },
   { icon: FileSearch, label: "Policy Opportunity", path: "/policy" },
   { icon: FileText, label: "Reports & Downloads", path: "/reports" },
   { icon: Settings, label: "Settings", path: "/settings" },

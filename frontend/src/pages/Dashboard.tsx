@@ -31,6 +31,7 @@ import {
   YAxis,
 } from "recharts";
 import { usePortfolio, useWatchlist, useModelPerformance } from '@/hooks/use-api';
+import { useTrading } from '@/context/TradingContext';
 
 // No fallback data - show loading states instead
 
@@ -49,10 +50,31 @@ const Dashboard = () => {
   const { data: portfolioData, isLoading: portfolioLoading, error: portfolioError } = usePortfolio();
   const { data: watchlistData, isLoading: watchlistLoading, error: watchlistError } = useWatchlist();
   const { data: modelPerformance, isLoading: modelLoading } = useModelPerformance();
+  
+  // Get real trading data
+  const { watchlist: realWatchlist, portfolio: realPortfolio, virtualCash } = useTrading();
 
-  // Use API data only - no fallback data
-  const effectivePortfolioData = portfolioData;
-  const effectiveWatchlistData = watchlistData;
+  // Use real trading data instead of API data
+  const effectivePortfolioData = realPortfolio.length > 0 ? {
+    performanceData: realPortfolio.map((item, index) => ({
+      date: new Date(Date.now() - (realPortfolio.length - index) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      value: item.totalValue
+    })),
+    items: realPortfolio.map(item => ({
+      symbol: item.symbol,
+      totalValue: item.totalValue,
+      quantity: item.quantity
+    }))
+  } : portfolioData;
+  
+  const effectiveWatchlistData = realWatchlist.length > 0 ? {
+    items: realWatchlist.map(item => ({
+      symbol: item.symbol,
+      price: item.price,
+      changePercent: item.changePercent
+    }))
+  } : watchlistData;
+  
   const effectiveModelPerformance = modelPerformance;
 
   // Search functionality

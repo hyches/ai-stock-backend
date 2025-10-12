@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
+import { TradingProvider } from "@/context/TradingContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import Home from "./pages/Home";
@@ -19,17 +20,19 @@ import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import Login from "./pages/Login";
 import Search from "./pages/Search";
+import Transactions from "./pages/Transactions";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <ErrorBoundary>
     <ThemeProvider>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <TooltipProvider>
-            <Toaster />
-            <BrowserRouter>
+      <TradingProvider>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <TooltipProvider>
+              <Toaster />
+              <BrowserRouter>
             <Routes>
               {/* Public routes */}
               <Route path="/" element={<Home />} />
@@ -43,19 +46,21 @@ const App = () => (
                 <Route path="/screener" element={<Screener />} />
                 <Route path="/research" element={<Research />} />
                 <Route path="/optimizer" element={<Optimizer />} />
-                <Route path="/trading" element={<Trading />} />
-                <Route path="/policy" element={<Policy />} />
-                <Route path="/reports" element={<Reports />} />
-                <Route path="/settings" element={<Settings />} />
+                        <Route path="/trading" element={<Trading />} />
+                        <Route path="/transactions" element={<Transactions />} />
+                        <Route path="/policy" element={<Policy />} />
+                        <Route path="/reports" element={<Reports />} />
+                        <Route path="/settings" element={<Settings />} />
               </Route>
 
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
-        </AuthProvider>
-      </QueryClientProvider>
+              </BrowserRouter>
+            </TooltipProvider>
+          </AuthProvider>
+        </QueryClientProvider>
+      </TradingProvider>
     </ThemeProvider>
   </ErrorBoundary>
 );
