@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Bell, Search, User, Sun, Moon } from 'lucide-react';
+import React, { useState } from 'react';
+import { Bell, Search, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -13,32 +13,15 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from '@/hooks/use-toast';
-import { Toggle } from '@/components/ui/toggle';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import ThemeToggle from '@/components/ThemeToggle';
 
 const AppHeader = () => {
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [notificationCount, setNotificationCount] = useState(3);
   const { toast } = useToast();
   const { logout } = useAuth();
   const navigate = useNavigate();
-
-  // Theme detection on initial load
-  useEffect(() => {
-    const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    setTheme(prefersDarkMode ? 'dark' : 'light');
-  }, []);
-
-  const toggleTheme = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
-    toast({
-      title: `${newTheme.charAt(0).toUpperCase() + newTheme.slice(1)} mode enabled`,
-      duration: 1500,
-    });
-    // In a real implementation, this would also update the actual theme in the DOM
-  };
 
   const handleNotificationClick = () => {
     if (notificationCount > 0) {
@@ -72,14 +55,7 @@ const AppHeader = () => {
         </div>
       </div>
       <div className="flex gap-4 items-center">
-        <Toggle
-          aria-label="Toggle theme"
-          pressed={theme === 'dark'}
-          onPressedChange={toggleTheme}
-          className="data-[state=on]:bg-teal/20 data-[state=on]:text-teal"
-        >
-          {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-        </Toggle>
+        <ThemeToggle />
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

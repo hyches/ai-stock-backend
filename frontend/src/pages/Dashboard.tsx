@@ -129,7 +129,7 @@ const Dashboard = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
             <Input
               type="text"
-              placeholder="Search for stocks (e.g., AAPL, Microsoft, Tesla)..."
+              placeholder="Search for stocks (e.g., RELIANCE, TCS, HDFC, AAPL)..."
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
               className="pl-10 pr-4 py-3 text-lg h-12 border-2 focus:border-primary"
