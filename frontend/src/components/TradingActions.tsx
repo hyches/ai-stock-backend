@@ -137,7 +137,7 @@ const TradingActions: React.FC<TradingActionsProps> = ({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-green-600">
+          <div className="text-2xl font-bold text-primary">
             ₹{virtualCash.toLocaleString()}
           </div>
         </CardContent>
@@ -165,7 +165,7 @@ const TradingActions: React.FC<TradingActionsProps> = ({
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">P&L:</span>
-                <span className={`font-medium ${portfolioItem.profitLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                <span className={`font-medium ${portfolioItem.profitLoss >= 0 ? 'text-green-600' : 'text-destructive'}`}>
                   ₹{portfolioItem.profitLoss.toLocaleString()} ({portfolioItem.profitLossPercent.toFixed(2)}%)
                 </span>
               </div>

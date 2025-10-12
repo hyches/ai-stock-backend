@@ -43,13 +43,13 @@ const NavItem = ({
       className={cn(
         "flex items-center w-full justify-start gap-3 px-3 py-2 my-1 rounded-md transition-all duration-200",
         active 
-          ? "bg-teal/20 text-teal hover:bg-teal/30" 
-          : "hover:bg-navy-700 text-muted-foreground hover:text-foreground",
+          ? "bg-sidebar-primary/20 text-sidebar-primary hover:bg-sidebar-primary/30" 
+          : "hover:bg-sidebar-accent text-sidebar-foreground hover:text-sidebar-foreground",
         "group"
       )}
     >
       <Link to={path} className="flex items-center w-full">
-        <Icon className={cn("h-5 w-5 shrink-0", active ? "text-teal" : "text-muted-foreground group-hover:text-foreground")} />
+        <Icon className={cn("h-5 w-5 shrink-0", active ? "text-sidebar-primary" : "text-sidebar-foreground group-hover:text-sidebar-foreground")} />
         {!collapsed && <span className="ml-3 transition-opacity duration-200">{label}</span>}
       </Link>
     </Button>
@@ -104,15 +104,15 @@ const Sidebar = () => {
   };
 
   return (
-    <aside className={cn(
-      "h-screen flex flex-col bg-navy-800 border-r border-white/10 transition-all duration-300 relative",
-      collapsed ? "w-16" : "w-64"
-    )}>
-      <div className="flex items-center justify-between p-4 border-b border-white/10">
+            <aside className={cn(
+              "h-screen flex flex-col bg-sidebar-background border-r border-sidebar-border transition-all duration-300 relative",
+              collapsed ? "w-16" : "w-64"
+            )}>
+      <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
         {!collapsed && (
           <div className="font-bold text-xl flex items-center">
-            <DollarSign className="h-6 w-6 text-teal mr-2" />
-            <span className="text-teal">StockAI</span>
+            <DollarSign className="h-6 w-6 text-sidebar-primary mr-2" />
+            <span className="text-sidebar-foreground">StockAI</span>
           </div>
         )}
         <Button 
@@ -120,7 +120,7 @@ const Sidebar = () => {
           size="icon" 
           onClick={toggleSidebar} 
           className={cn(
-            "text-muted-foreground hover:text-foreground hover:bg-navy-700 transition-all duration-200",
+            "text-sidebar-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent transition-all duration-200",
             collapsed ? "mx-auto" : ""
           )}
         >
@@ -144,15 +144,15 @@ const Sidebar = () => {
         ))}
       </nav>
       
-      <div className="p-4 border-t border-white/10">
+      <div className="p-4 border-t border-sidebar-border">
         <div className={cn(
           "flex items-center",
           collapsed ? "justify-center" : "gap-3"
         )}>
-          <div className="h-8 w-8 rounded-full bg-teal/20 flex items-center justify-center text-teal">
+          <div className="h-8 w-8 rounded-full bg-sidebar-primary/20 flex items-center justify-center text-sidebar-primary">
             U
           </div>
-          {!collapsed && <div className="text-sm font-medium">User</div>}
+          {!collapsed && <div className="text-sm font-medium text-sidebar-foreground">User</div>}
         </div>
       </div>
     </aside>

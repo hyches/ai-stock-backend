@@ -47,7 +47,7 @@ const Transactions: React.FC = () => {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">
+              <div className="text-2xl font-bold text-primary">
                 ₹{virtualCash.toLocaleString()}
               </div>
               <p className="text-xs text-muted-foreground">
@@ -92,7 +92,7 @@ const Transactions: React.FC = () => {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className={`text-2xl font-bold ${netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <div className={`text-2xl font-bold ${netProfit >= 0 ? 'text-green-600' : 'text-destructive'}`}>
                 ₹{netProfit.toLocaleString()}
               </div>
               <p className="text-xs text-muted-foreground">
