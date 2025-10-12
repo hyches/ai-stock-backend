@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, TrendingUp, TrendingDown, DollarSign, BarChart3, Globe, Star } from 'lucide-react';
+import { Search as SearchIcon, TrendingUp, TrendingDown, DollarSign, BarChart3, Globe, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -132,7 +132,7 @@ const Search = () => {
         <div className="max-w-2xl mx-auto mb-12">
           <div className="relative" ref={searchRef}>
             <form onSubmit={handleSearchSubmit} className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
+              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
               <Input
                 type="text"
                 placeholder="Search for stocks (e.g., AAPL, Microsoft, Tesla)..."
