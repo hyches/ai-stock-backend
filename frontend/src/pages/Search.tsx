@@ -34,7 +34,7 @@ interface PopularStock {
   volume: number;
 }
 
-const Search = () => {
+const SearchPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState<StockSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -336,4 +336,4 @@ const Search = () => {
   );
 };
 
-export default Search;
+export default SearchPage;
