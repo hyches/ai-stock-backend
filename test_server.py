@@ -76,3 +76,4 @@ if __name__ == "__main__":
     print("🌐 Server URL: http://127.0.0.1:8000")
     print("📊 Health Check: http://127.0.0.1:8000/health")
     uvicorn.run(app, host="127.0.0.1", port=8000, log_level="info")
+

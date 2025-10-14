@@ -257,3 +257,4 @@ export const TradingProvider: React.FC<TradingProviderProps> = ({ children }) =>
     </TradingContext.Provider>
   );
 };
+
