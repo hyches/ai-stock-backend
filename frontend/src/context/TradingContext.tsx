@@ -62,6 +62,7 @@ export const TradingProvider: React.FC<TradingProviderProps> = ({ children }) =>
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>([]);
+  
 
   // Load data from localStorage on mount
   useEffect(() => {
@@ -92,6 +93,7 @@ export const TradingProvider: React.FC<TradingProviderProps> = ({ children }) =>
   useEffect(() => {
     localStorage.setItem('portfolio', JSON.stringify(portfolio));
   }, [portfolio]);
+
 
   const buyStock = (symbol: string, name: string, quantity: number, price: number): boolean => {
     const totalCost = quantity * price;
@@ -242,7 +244,7 @@ export const TradingProvider: React.FC<TradingProviderProps> = ({ children }) =>
     virtualCash,
     transactions,
     watchlist,
-    portfolio,
+    portfolio, // Use regular portfolio data
     buyStock,
     sellStock,
     addToWatchlist,

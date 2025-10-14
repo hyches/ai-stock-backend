@@ -218,7 +218,7 @@ const StockDetails = () => {
               </Button>
               <div className="flex items-center space-x-2">
                 <BarChart3 className="h-6 w-6 text-primary" />
-                <span className="text-xl font-bold text-foreground">StockAI</span>
+                <span className="text-xl font-bold text-foreground">AlgoSentia</span>
               </div>
             </div>
             <div className="flex items-center space-x-2">

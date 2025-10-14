@@ -3,7 +3,6 @@ import { BarChart, LineChart, PieChart, ExternalLink } from 'lucide-react';
 import AppLayout from '@/components/layout/AppLayout';
 import CustomCard from '@/components/ui/custom-card';
 import { Progress } from '@/components/ui/progress';
-import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import {
   ChartContainer,
@@ -42,8 +41,23 @@ const Dashboard = () => {
   const { data: watchlistData, isLoading: watchlistLoading, error: watchlistError } = useWatchlist();
   const { data: modelPerformance, isLoading: modelLoading } = useModelPerformance();
   
-  // Get real trading data
-  const { watchlist: realWatchlist, portfolio: realPortfolio, virtualCash, transactions } = useTrading();
+  // Get real trading data with error handling
+  let realWatchlist = [];
+  let realPortfolio = [];
+  let virtualCash = 10000000; // Default 1 crore
+  let transactions = [];
+  
+  try {
+    const tradingContext = useTrading();
+    realWatchlist = tradingContext.watchlist || [];
+    realPortfolio = tradingContext.portfolio || [];
+    virtualCash = tradingContext.virtualCash || 10000000;
+    transactions = tradingContext.transactions || [];
+    console.log('Dashboard - Trading data loaded:', { realWatchlist, realPortfolio, virtualCash });
+  } catch (error) {
+    console.error('Error accessing TradingContext in Dashboard:', error);
+    // Use default values if context fails
+  }
 
   // Use real trading data instead of API data
   const effectivePortfolioData = realPortfolio.length > 0 ? {
@@ -69,10 +83,12 @@ const Dashboard = () => {
   const effectiveModelPerformance = modelPerformance;
 
   // Transform portfolio data for charts
-  const portfolioChartData = effectivePortfolioData?.items?.map(item => ({
-    name: item.symbol,
-    value: item.totalValue
-  })) || [];
+  const portfolioChartData = (effectivePortfolioData && 'items' in effectivePortfolioData) 
+    ? effectivePortfolioData.items.map(item => ({
+        name: item.symbol,
+        value: item.totalValue
+      }))
+    : [];
 
   // Calculate trading metrics
   const totalInvestments = realPortfolio.reduce((sum, item) => sum + item.totalValue, 0);
@@ -88,24 +104,26 @@ const Dashboard = () => {
   // Calculate total change percentage
   const totalChangePercent = totalValue > 0 ? (totalProfitLoss / (totalValue - totalProfitLoss)) * 100 : 0;
 
+
   // Transform watchlist data
-  const stockData = effectiveWatchlistData?.map(item => ({
-    name: item.symbol,
-    price: item.price,
-    change: item.changePercent
-  })) || [];
+  const stockData = (effectiveWatchlistData && 'items' in effectiveWatchlistData)
+    ? effectiveWatchlistData.items.map(item => ({
+        name: item.symbol,
+        price: item.price,
+        change: item.changePercent
+      }))
+    : [];
+
 
   return (
     <AppLayout title="Dashboard">
+      
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <CustomCard 
           className="md:col-span-2" 
           title="Portfolio Performance" 
           description="Last 12 months"
-          headerAction={
-            <Button variant="outline" size="sm">View Details</Button>
-          }
         >
           <div className="h-64">
             {portfolioLoading ? (
@@ -124,7 +142,7 @@ const Dashboard = () => {
                   },
                 }}
               >
-                <RechartsLineChart data={effectivePortfolioData.performanceData || []}>
+                <RechartsLineChart data={(effectivePortfolioData && 'performanceData' in effectivePortfolioData) ? effectivePortfolioData.performanceData : []}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
                   <XAxis dataKey="date" stroke="rgba(255,255,255,0.5)" />
                   <YAxis stroke="rgba(255,255,255,0.5)" />

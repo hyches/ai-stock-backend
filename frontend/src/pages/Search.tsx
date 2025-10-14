@@ -1,21 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Search as SearchIcon, TrendingUp, TrendingDown, DollarSign, BarChart3, Globe, Star } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import React from 'react';
+import { TrendingUp, TrendingDown, DollarSign, BarChart3, Globe, Star } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { searchStocks, getMarketOverview, getPopularStocks } from '@/lib/api-services';
+import { getMarketOverview, getPopularStocks } from '@/lib/api-services';
 import AppLayout from '@/components/layout/AppLayout';
-
-interface StockSuggestion {
-  symbol: string;
-  name: string;
-  exchange: string;
-  type: string;
-}
+import SearchBar from '@/components/SearchBar';
 
 interface MarketOverview {
   totalMarketCap: number;
@@ -35,13 +26,6 @@ interface PopularStock {
 }
 
 const SearchPage = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [suggestions, setSuggestions] = useState<StockSuggestion[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [isSearching, setIsSearching] = useState(false);
-  const searchRef = useRef<HTMLDivElement>(null);
-  const navigate = useNavigate();
-
   // Fetch market overview
   const { data: marketOverview, isLoading: marketLoading, error: marketError } = useQuery({
     queryKey: ['market-overview'],
@@ -60,277 +44,138 @@ const SearchPage = () => {
     retryDelay: 1000,
   });
 
-  // Handle search input
-  const handleSearchChange = async (value: string) => {
-    setSearchQuery(value);
-    
-    if (value.length >= 2) {
-      setIsSearching(true);
-      try {
-        const results = await searchStocks(value);
-        setSuggestions(results);
-        setShowSuggestions(true);
-      } catch (error) {
-        console.error('Search error:', error);
-        setSuggestions([]);
-      } finally {
-        setIsSearching(false);
-      }
-    } else {
-      setSuggestions([]);
-      setShowSuggestions(false);
-    }
-  };
-
-  // Handle stock selection
-  const handleStockSelect = (stock: StockSuggestion) => {
-    setSearchQuery(stock.symbol);
-    setShowSuggestions(false);
-    navigate(`/stock/${stock.symbol}`);
-  };
-
-  // Handle search submission
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/stock/${searchQuery.trim().toUpperCase()}`);
-    }
-  };
-
-  // Close suggestions when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
-        setShowSuggestions(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // Format market cap
-  const formatMarketCap = (value: number) => {
-    if (value >= 1e12) return `$${(value / 1e12).toFixed(2)}T`;
-    if (value >= 1e9) return `$${(value / 1e9).toFixed(2)}B`;
-    if (value >= 1e6) return `$${(value / 1e6).toFixed(2)}M`;
-    return `$${value.toLocaleString()}`;
-  };
-
-  // Format volume
-  const formatVolume = (value: number) => {
-    if (value >= 1e9) return `${(value / 1e9).toFixed(2)}B`;
-    if (value >= 1e6) return `${(value / 1e6).toFixed(2)}M`;
-    if (value >= 1e3) return `${(value / 1e3).toFixed(2)}K`;
-    return value.toLocaleString();
-  };
-
   return (
     <AppLayout title="Stock Search" description="Search for stocks, analyze market data, and make informed decisions">
-      <div className="space-y-8">
+      <div className="space-y-6">
         {/* Search Section */}
-        <div className="max-w-2xl mx-auto mb-12">
-          <div className="relative" ref={searchRef}>
-            <form onSubmit={handleSearchSubmit} className="relative">
-              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
-              <Input
-                type="text"
-                placeholder="Search for stocks (e.g., RELIANCE, TCS, HDFC, AAPL)..."
-                value={searchQuery}
-                onChange={(e) => handleSearchChange(e.target.value)}
-                className="pl-10 pr-4 py-3 text-lg h-14 border-2 focus:border-primary"
-              />
-              <Button
-                type="submit"
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 h-10 px-6"
-              >
-                Search
-              </Button>
-            </form>
-
-            {/* Search Suggestions */}
-            {showSuggestions && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
-                {isSearching ? (
-                  <div className="p-4 text-center text-muted-foreground">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto mb-2"></div>
-                    Searching...
-                  </div>
-                ) : suggestions.length > 0 ? (
-                  suggestions.map((stock, index) => (
-                    <div
-                      key={index}
-                      className="p-3 hover:bg-muted cursor-pointer border-b border-border last:border-b-0"
-                      onClick={() => handleStockSelect(stock)}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="font-semibold text-foreground">{stock.symbol}</div>
-                          <div className="text-sm text-muted-foreground">{stock.name}</div>
-                        </div>
-                        <div className="text-right">
-                          <Badge variant="secondary" className="text-xs">
-                            {stock.exchange}
-                          </Badge>
-                          <div className="text-xs text-muted-foreground mt-1">
-                            {stock.type}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                ) : searchQuery.length >= 2 ? (
-                  <div className="p-4 text-center text-muted-foreground">
-                    No stocks found for "{searchQuery}"
-                  </div>
-                ) : null}
-              </div>
-            )}
-          </div>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              Search Stocks
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <SearchBar 
+              placeholder="Search for stocks (e.g., RELIANCE, TCS, HDFC, AAPL)..."
+              showInlineDetails={true}
+              className="w-full"
+            />
+          </CardContent>
+        </Card>
 
         {/* Market Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Market Cap</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {marketLoading ? (
-                <Skeleton className="h-8 w-24" />
-              ) : marketError ? (
-                <div className="text-sm text-muted-foreground">Error loading data</div>
-              ) : (
-                <div className="text-2xl font-bold">
-                  {marketOverview ? formatMarketCap(marketOverview.totalMarketCap) : 'N/A'}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Globe className="h-5 w-5" />
+              Market Overview
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {marketLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="text-center">
+                    <Skeleton className="h-4 w-20 mx-auto mb-2" />
+                    <Skeleton className="h-6 w-16 mx-auto" />
+                  </div>
+                ))}
+              </div>
+            ) : marketOverview ? (
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div className="text-center">
+                  <div className="text-sm text-muted-foreground">Market Cap</div>
+                  <div className="text-lg font-semibold">
+                    ${(marketOverview.totalMarketCap / 1e12).toFixed(2)}T
+                  </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Volume</CardTitle>
-              <BarChart3 className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {marketLoading ? (
-                <Skeleton className="h-8 w-24" />
-              ) : marketError ? (
-                <div className="text-sm text-muted-foreground">Error loading data</div>
-              ) : (
-                <div className="text-2xl font-bold">
-                  {marketOverview ? formatVolume(marketOverview.totalVolume) : 'N/A'}
+                <div className="text-center">
+                  <div className="text-sm text-muted-foreground">Volume</div>
+                  <div className="text-lg font-semibold">
+                    {(marketOverview.totalVolume / 1e9).toFixed(2)}B
+                  </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Gainers</CardTitle>
-              <TrendingUp className="h-4 w-4 text-green-500" />
-            </CardHeader>
-            <CardContent>
-              {marketLoading ? (
-                <Skeleton className="h-8 w-24" />
-              ) : marketError ? (
-                <div className="text-sm text-muted-foreground">Error loading data</div>
-              ) : (
-                <div className="text-2xl font-bold text-green-500">
-                  {marketOverview ? marketOverview.gainers.toLocaleString() : 'N/A'}
+                <div className="text-center">
+                  <div className="text-sm text-muted-foreground text-green-600">Gainers</div>
+                  <div className="text-lg font-semibold text-green-600">
+                    {marketOverview.gainers}
+                  </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Losers</CardTitle>
-              <TrendingDown className="h-4 w-4 text-red-500" />
-            </CardHeader>
-            <CardContent>
-              {marketLoading ? (
-                <Skeleton className="h-8 w-24" />
-              ) : marketError ? (
-                <div className="text-sm text-muted-foreground">Error loading data</div>
-              ) : (
-                <div className="text-2xl font-bold text-red-500">
-                  {marketOverview ? marketOverview.losers.toLocaleString() : 'N/A'}
+                <div className="text-center">
+                  <div className="text-sm text-muted-foreground text-red-600">Losers</div>
+                  <div className="text-lg font-semibold text-red-600">
+                    {marketOverview.losers}
+                  </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+                <div className="text-center">
+                  <div className="text-sm text-muted-foreground">Unchanged</div>
+                  <div className="text-lg font-semibold">
+                    {marketOverview.unchanged}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center text-muted-foreground py-8">
+                No market data available
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Popular Stocks */}
-        <div className="mb-12">
-          <h2 className="text-2xl font-bold text-foreground mb-6">Popular Stocks</h2>
-          {popularLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[...Array(6)].map((_, i) => (
-                <Card key={i}>
-                  <CardContent className="p-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Star className="h-5 w-5" />
+              Popular Stocks
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {popularLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="p-4 border rounded-lg">
                     <Skeleton className="h-4 w-20 mb-2" />
                     <Skeleton className="h-6 w-16 mb-2" />
-                    <Skeleton className="h-4 w-24" />
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : popularError ? (
-            <div className="text-center text-muted-foreground py-8">
-              Error loading popular stocks
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {popularStocks?.map((stock, index) => (
-                <Card key={index} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`/stock/${stock.symbol}`)}>
-                  <CardContent className="p-4">
+                    <Skeleton className="h-4 w-12" />
+                  </div>
+                ))}
+              </div>
+            ) : popularStocks && popularStocks.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {popularStocks.map((stock, index) => (
+                  <div key={index} className="p-4 border rounded-lg hover:bg-muted cursor-pointer transition-colors">
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-semibold text-foreground">{stock.symbol}</h3>
-                      <Star className="h-4 w-4 text-yellow-500" />
+                      <div className="font-semibold text-foreground">{stock.symbol}</div>
+                      <Badge variant={stock.change >= 0 ? 'default' : 'destructive'}>
+                        {stock.change >= 0 ? '+' : ''}{stock.changePercent.toFixed(2)}%
+                      </Badge>
                     </div>
-                    <p className="text-sm text-muted-foreground mb-2">{stock.name}</p>
+                    <div className="text-sm text-muted-foreground mb-1">{stock.name}</div>
                     <div className="flex items-center justify-between">
-                      <span className="text-lg font-bold text-foreground">
-                        ${stock.price.toFixed(2)}
-                      </span>
-                      <div className="text-right">
-                        <div className={`text-sm font-medium ${stock.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                          {stock.change >= 0 ? '+' : ''}{stock.change.toFixed(2)}
-                        </div>
-                        <div className={`text-xs ${stock.changePercent >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                          {stock.changePercent >= 0 ? '+' : ''}{stock.changePercent.toFixed(2)}%
-                        </div>
+                      <span className="text-lg font-semibold">${stock.price.toFixed(2)}</span>
+                      <div className="flex items-center gap-1">
+                        {stock.change >= 0 ? (
+                          <TrendingUp className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <TrendingDown className="h-4 w-4 text-red-500" />
+                        )}
+                        <span className={`text-sm ${stock.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                          {stock.change >= 0 ? '+' : ''}${stock.change.toFixed(2)}
+                        </span>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Quick Actions */}
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-foreground mb-6">Quick Actions</h2>
-          <div className="flex flex-wrap justify-center gap-4">
-            <Button variant="outline" onClick={() => navigate('/dashboard')}>
-              <BarChart3 className="h-4 w-4 mr-2" />
-              View Dashboard
-            </Button>
-            <Button variant="outline" onClick={() => navigate('/screener')}>
-              <Globe className="h-4 w-4 mr-2" />
-              Stock Screener
-            </Button>
-            <Button variant="outline" onClick={() => navigate('/research')}>
-              <TrendingUp className="h-4 w-4 mr-2" />
-              Research Tools
-            </Button>
-          </div>
-        </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center text-muted-foreground py-8">
+                No popular stocks available
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </AppLayout>
   );

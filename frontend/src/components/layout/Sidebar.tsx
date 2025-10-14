@@ -20,6 +20,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import Logo from '@/components/Logo';
 
 interface NavItemProps {
   icon: React.ElementType;
@@ -37,22 +38,20 @@ const NavItem = ({
   collapsed = false
 }: NavItemProps) => {
   return (
-    <Button
-      variant="ghost"
-      asChild
+    <div
       className={cn(
-        "flex items-center w-full justify-start gap-3 px-3 py-2 my-1 rounded-md transition-all duration-200",
+        "flex items-center w-full px-[15px] py-[10px] my-1 rounded-md transition-all duration-200 text-left cursor-pointer",
         active 
-          ? "bg-sidebar-primary/20 text-sidebar-primary hover:bg-sidebar-primary/30" 
+          ? "bg-sidebar-primary/20 text-sidebar-primary hover:bg-sidebar-primary/30 font-medium" 
           : "hover:bg-sidebar-accent text-sidebar-foreground hover:text-sidebar-foreground",
         "group"
       )}
     >
-      <Link to={path} className="flex items-center w-full">
-        <Icon className={cn("h-5 w-5 shrink-0", active ? "text-sidebar-primary" : "text-sidebar-foreground group-hover:text-sidebar-foreground")} />
-        {!collapsed && <span className="ml-3 transition-opacity duration-200">{label}</span>}
+      <Link to={path} className="flex items-center gap-4">
+        <Icon className={cn("h-6 w-6 shrink-0", active ? "text-sidebar-primary" : "text-sidebar-foreground group-hover:text-sidebar-foreground")} />
+        {!collapsed && <span className="transition-opacity duration-200">{label}</span>}
       </Link>
-    </Button>
+    </div>
   );
 };
 
@@ -108,12 +107,14 @@ const Sidebar = () => {
               "h-screen flex flex-col bg-sidebar-background border-r border-sidebar-border transition-all duration-300 relative",
               collapsed ? "w-16" : "w-64"
             )}>
-      <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
+      <div className="flex items-center p-4 border-b border-sidebar-border">
         {!collapsed && (
-          <div className="font-bold text-xl flex items-center">
-            <DollarSign className="h-6 w-6 text-sidebar-primary mr-2" />
-            <span className="text-sidebar-foreground">StockAI</span>
+          <div className="flex items-center gap-3 flex-1">
+            <Logo size="md" className="text-sidebar-foreground" />
           </div>
+        )}
+        {collapsed && (
+          <Logo size="sm" showText={false} className="mx-auto" />
         )}
         <Button 
           variant="ghost" 
@@ -131,7 +132,7 @@ const Sidebar = () => {
         </Button>
       </div>
       
-      <nav className="flex-1 py-4 px-2 space-y-1 overflow-y-auto scrollbar-hidden">
+      <nav className="flex-1 py-4 pl-0 pr-2 space-y-1 overflow-y-auto scrollbar-hidden text-left">
         {navItems.map((item) => (
           <NavItem
             key={item.label}

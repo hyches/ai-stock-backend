@@ -9,7 +9,18 @@ import { useTrading } from '@/context/TradingContext';
 
 const Investments = () => {
   const navigate = useNavigate();
-  const { portfolio } = useTrading();
+  
+  // Add error handling for TradingContext
+  let portfolio = [];
+  try {
+    const tradingContext = useTrading();
+    portfolio = tradingContext.portfolio || [];
+    console.log('Investments page - Portfolio data:', portfolio);
+  } catch (error) {
+    console.error('Error accessing TradingContext in Investments:', error);
+    // Fallback to empty array if context fails
+    portfolio = [];
+  }
 
   const formatCurrency = (amount: number) => {
     return `₹${amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -25,8 +36,8 @@ const Investments = () => {
     });
   };
 
-  const totalInvestments = portfolio.reduce((sum, item) => sum + item.totalValue, 0);
-  const totalProfitLoss = portfolio.reduce((sum, item) => sum + item.profitLoss, 0);
+  const totalInvestments = portfolio.reduce((sum, item) => sum + (item.totalValue || 0), 0);
+  const totalProfitLoss = portfolio.reduce((sum, item) => sum + (item.profitLoss || 0), 0);
   const totalProfitLossPercent = totalInvestments > 0 ? (totalProfitLoss / totalInvestments) * 100 : 0;
 
   return (
@@ -67,11 +78,11 @@ const Investments = () => {
               <>
                 <div className="text-2xl font-bold text-green-500 mt-2">
                   {portfolio.reduce((best, current) => 
-                    current.profitLossPercent > best.profitLossPercent ? current : best
-                  ).symbol}
+                    (current.profitLossPercent || 0) > (best.profitLossPercent || 0) ? current : best
+                  ).symbol || 'N/A'}
                 </div>
                 <div className="text-sm text-green-500 mt-1">
-                  +{Math.max(...portfolio.map(p => p.profitLossPercent)).toFixed(2)}%
+                  +{Math.max(...portfolio.map(p => p.profitLossPercent || 0)).toFixed(2)}%
                 </div>
               </>
             ) : (
@@ -101,24 +112,24 @@ const Investments = () => {
                 <tbody>
                   {portfolio.map((holding, index) => (
                     <tr key={index} className="border-b border-border hover:bg-muted/50">
-                      <td className="py-3 px-4 font-medium">{holding.symbol}</td>
-                      <td className="py-3 px-4 text-muted-foreground">{holding.name}</td>
-                      <td className="py-3 px-4 text-right">{holding.quantity}</td>
-                      <td className="py-3 px-4 text-right">{formatCurrency(holding.buyPrice)}</td>
-                      <td className="py-3 px-4 text-right">{formatCurrency(holding.price)}</td>
-                      <td className="py-3 px-4 text-right font-medium">{formatCurrency(holding.totalValue)}</td>
-                      <td className={`py-3 px-4 text-right font-medium ${holding.profitLoss >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                        {holding.profitLoss >= 0 ? '+' : ''}{formatCurrency(holding.profitLoss)}
+                      <td className="py-3 px-4 font-medium">{holding.symbol || 'N/A'}</td>
+                      <td className="py-3 px-4 text-muted-foreground">{holding.name || 'N/A'}</td>
+                      <td className="py-3 px-4 text-right">{holding.quantity || 0}</td>
+                      <td className="py-3 px-4 text-right">{formatCurrency(holding.averagePrice || 0)}</td>
+                      <td className="py-3 px-4 text-right">{formatCurrency(holding.currentPrice || 0)}</td>
+                      <td className="py-3 px-4 text-right font-medium">{formatCurrency(holding.totalValue || 0)}</td>
+                      <td className={`py-3 px-4 text-right font-medium ${(holding.profitLoss || 0) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                        {(holding.profitLoss || 0) >= 0 ? '+' : ''}{formatCurrency(holding.profitLoss || 0)}
                       </td>
-                      <td className={`py-3 px-4 text-right ${holding.profitLossPercent >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                        {holding.profitLossPercent >= 0 ? '+' : ''}{holding.profitLossPercent.toFixed(2)}%
+                      <td className={`py-3 px-4 text-right ${(holding.profitLossPercent || 0) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                        {(holding.profitLossPercent || 0) >= 0 ? '+' : ''}{(holding.profitLossPercent || 0).toFixed(2)}%
                       </td>
                       <td className="py-3 px-4 text-center">
                         <div className="flex items-center justify-center gap-2">
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => navigate(`/stock/${holding.symbol}`)}
+                            onClick={() => navigate(`/stock/${holding.symbol || ''}`)}
                           >
                             <ExternalLink className="h-3 w-3" />
                           </Button>

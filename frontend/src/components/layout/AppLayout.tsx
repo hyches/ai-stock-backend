@@ -41,7 +41,7 @@ const AppLayout = ({ children, title, description }: AppLayoutProps) => {
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden ml-0">
         <AppHeader />
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
           {title && (
