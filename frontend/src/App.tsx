@@ -21,6 +21,7 @@ import Settings from "./pages/Settings";
 import Login from "./pages/Login";
 import Search from "./pages/Search";
 import Transactions from "./pages/Transactions";
+import Investments from "./pages/Investments";
 
 const queryClient = new QueryClient();
 
@@ -46,8 +47,9 @@ const App = () => (
                 <Route path="/screener" element={<Screener />} />
                 <Route path="/research" element={<Research />} />
                 <Route path="/optimizer" element={<Optimizer />} />
-                        <Route path="/trading" element={<Trading />} />
-                        <Route path="/transactions" element={<Transactions />} />
+                <Route path="/trading" element={<Trading />} />
+                <Route path="/investments" element={<Investments />} />
+                <Route path="/transactions" element={<Transactions />} />
                         <Route path="/policy" element={<Policy />} />
                         <Route path="/reports" element={<Reports />} />
                         <Route path="/settings" element={<Settings />} />

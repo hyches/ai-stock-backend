@@ -1,9 +1,10 @@
 import React from 'react';
-import { BarChart, LineChart, PieChart } from 'lucide-react';
+import { BarChart, LineChart, PieChart, ExternalLink } from 'lucide-react';
 import AppLayout from '@/components/layout/AppLayout';
 import CustomCard from '@/components/ui/custom-card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 import {
   ChartContainer,
   ChartTooltip,
@@ -34,6 +35,7 @@ import { useTrading } from '@/context/TradingContext';
 const COLORS = ['#4ECDC4', '#0077E6', '#F97316', '#D946EF', '#8B5CF6'];
 
 const Dashboard = () => {
+  const navigate = useNavigate();
 
   // Fetch data from API
   const { data: portfolioData, isLoading: portfolioLoading, error: portfolioError } = usePortfolio();
@@ -41,7 +43,7 @@ const Dashboard = () => {
   const { data: modelPerformance, isLoading: modelLoading } = useModelPerformance();
   
   // Get real trading data
-  const { watchlist: realWatchlist, portfolio: realPortfolio, virtualCash } = useTrading();
+  const { watchlist: realWatchlist, portfolio: realPortfolio, virtualCash, transactions } = useTrading();
 
   // Use real trading data instead of API data
   const effectivePortfolioData = realPortfolio.length > 0 ? {
@@ -72,10 +74,19 @@ const Dashboard = () => {
     value: item.totalValue
   })) || [];
 
-  // Calculate total portfolio value
-  const totalValue = effectivePortfolioData?.totalValue || 0;
-  const totalChange = effectivePortfolioData?.totalChange || 0;
-  const totalChangePercent = effectivePortfolioData?.totalChangePercent || 0;
+  // Calculate trading metrics
+  const totalInvestments = realPortfolio.reduce((sum, item) => sum + item.totalValue, 0);
+  const totalProfitLoss = realPortfolio.reduce((sum, item) => sum + item.profitLoss, 0);
+  const totalValue = virtualCash + totalInvestments;
+  
+  // Calculate today's P&L (unrealized + realized)
+  const todayProfitLoss = realPortfolio.reduce((sum, item) => {
+    const todayChange = item.change * item.quantity;
+    return sum + todayChange;
+  }, 0);
+  
+  // Calculate total change percentage
+  const totalChangePercent = totalValue > 0 ? (totalProfitLoss / (totalValue - totalProfitLoss)) * 100 : 0;
 
   // Transform watchlist data
   const stockData = effectiveWatchlistData?.map(item => ({
@@ -179,44 +190,80 @@ const Dashboard = () => {
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <CustomCard title="Total Assets" description="All accounts">
-          {portfolioLoading ? (
-            <div className="text-muted-foreground">Loading...</div>
-          ) : (
-            <>
-              <div className="text-3xl font-bold text-teal mt-2">
-                ${totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </div>
-              <div className="text-sm text-teal/60 mt-1">
-                {totalChange >= 0 ? '+' : ''}${totalChange.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({totalChangePercent.toFixed(1)}%)
-              </div>
-              <Progress value={totalValue > 0 ? 85 : 0} className="mt-4 h-2" />
-            </>
-          )}
+        <CustomCard 
+          title="Total Assets" 
+          description="All accounts"
+          className="cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => navigate('/transactions')}
+        >
+          <div className="text-3xl font-bold text-primary mt-2">
+            ₹{totalValue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </div>
+          <div className={`text-sm mt-1 ${totalProfitLoss >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+            {totalProfitLoss >= 0 ? '+' : ''}₹{totalProfitLoss.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({totalChangePercent.toFixed(1)}%)
+          </div>
+          <Progress value={totalValue > 0 ? (totalInvestments / totalValue) * 100 : 0} className="mt-4 h-2" />
+          <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
+            <span>Investment + Cash + Profit</span>
+            <ExternalLink className="h-3 w-3" />
+          </div>
         </CustomCard>
         
-        <CustomCard title="Investments" description="Stocks, ETFs, Mutual Funds">
-          {portfolioLoading ? (
-            <div className="text-muted-foreground">Loading...</div>
-          ) : (
-            <div className="text-muted-foreground">No data available</div>
-          )}
+        <CustomCard 
+          title="Investments" 
+          description="Stocks, ETFs, Mutual Funds"
+          className="cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => navigate('/investments')}
+        >
+          <div className="text-3xl font-bold text-primary mt-2">
+            ₹{totalInvestments.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </div>
+          <div className="text-sm text-muted-foreground mt-1">
+            {realPortfolio.length} holdings
+          </div>
+          <Progress value={totalValue > 0 ? (totalInvestments / totalValue) * 100 : 0} className="mt-4 h-2" />
+          <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
+            <span>View all investments</span>
+            <ExternalLink className="h-3 w-3" />
+          </div>
         </CustomCard>
         
-        <CustomCard title="Cash" description="Available for trading">
-          {portfolioLoading ? (
-            <div className="text-muted-foreground">Loading...</div>
-          ) : (
-            <div className="text-muted-foreground">No data available</div>
-          )}
+        <CustomCard 
+          title="Cash" 
+          description="Available for trading"
+          className="cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => navigate('/transactions')}
+        >
+          <div className="text-3xl font-bold text-primary mt-2">
+            ₹{virtualCash.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </div>
+          <div className="text-sm text-muted-foreground mt-1">
+            Ready to deploy
+          </div>
+          <Progress value={totalValue > 0 ? (virtualCash / totalValue) * 100 : 0} className="mt-4 h-2" />
+          <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
+            <span>View transactions</span>
+            <ExternalLink className="h-3 w-3" />
+          </div>
         </CustomCard>
         
-        <CustomCard title="Day's P&L" description="Today's performance">
-          {portfolioLoading ? (
-            <div className="text-muted-foreground">Loading...</div>
-          ) : (
-            <div className="text-muted-foreground">No data available</div>
-          )}
+        <CustomCard 
+          title="Day's P&L" 
+          description="Today's performance"
+          className="cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => navigate('/transactions')}
+        >
+          <div className={`text-3xl font-bold mt-2 ${todayProfitLoss >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+            {todayProfitLoss >= 0 ? '+' : ''}₹{todayProfitLoss.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </div>
+          <div className="text-sm text-muted-foreground mt-1">
+            Unrealized + Realized
+          </div>
+          <Progress value={Math.abs(todayProfitLoss) > 0 ? 50 : 0} className="mt-4 h-2" />
+          <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
+            <span>View detailed P&L</span>
+            <ExternalLink className="h-3 w-3" />
+          </div>
         </CustomCard>
       </div>
       

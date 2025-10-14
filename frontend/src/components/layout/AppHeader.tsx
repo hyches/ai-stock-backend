@@ -94,9 +94,9 @@ const AppHeader = () => {
   }, []);
 
   return (
-    <header className="flex items-center justify-between p-4 border-b border-white/10 bg-navy-800">
+    <header className="flex items-center justify-between p-4 border-b border-border bg-card">
       <div className="flex gap-2 items-center">
-        <div className="font-bold text-2xl text-teal hidden md:block">StockAI</div>
+        <div className="font-bold text-2xl text-primary hidden md:block">StockAI</div>
         <div className="hidden md:block ml-8 w-96">
           <div className="relative" ref={searchRef}>
             <form onSubmit={handleSearchSubmit} className="relative">
@@ -165,7 +165,7 @@ const AppHeader = () => {
             <Button
               variant="ghost"
               size="icon"
-              className="relative text-muted-foreground hover:text-foreground hover:bg-navy-700"
+              className="relative text-muted-foreground hover:text-foreground hover:bg-muted"
               onClick={handleNotificationClick}
             >
               <Bell className="h-5 w-5" />
@@ -204,11 +204,11 @@ const AppHeader = () => {
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="flex items-center gap-2 hover:bg-navy-700"
+              className="flex items-center gap-2 hover:bg-muted"
             >
               <Avatar className="h-8 w-8">
                 <AvatarImage src="https://github.com/shadcn.png" alt="User" />
-                <AvatarFallback className="bg-teal/20 text-teal">U</AvatarFallback>
+                <AvatarFallback className="bg-primary/20 text-primary">U</AvatarFallback>
               </Avatar>
               <span className="hidden md:inline">John Doe</span>
             </Button>

@@ -39,7 +39,7 @@ const AppLayout = ({ children, title, description }: AppLayoutProps) => {
   }, [title, isMobileView, toast, description]);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-navy-900">
+    <div className="flex h-screen overflow-hidden bg-background">
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         <AppHeader />
@@ -50,7 +50,7 @@ const AppLayout = ({ children, title, description }: AppLayoutProps) => {
               {description && (
                 <p className="text-muted-foreground mt-1">{description}</p>
               )}
-              <div className="mt-1 h-1 w-16 bg-teal rounded-full"></div>
+              <div className="mt-1 h-1 w-16 bg-primary rounded-full"></div>
             </div>
           )}
           {children}
