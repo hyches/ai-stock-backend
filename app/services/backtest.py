@@ -52,8 +52,7 @@ class BacktestService:
         )
 
         # Run backtest
-        results = await asyncio.to_thread(
-            strategy_instance.backtest,
+        results = strategy_instance.backtest(
             data,
             initial_capital=initial_capital,
             risk_per_trade=risk_per_trade
@@ -119,7 +118,7 @@ class BacktestService:
         
         return pd.DataFrame(data)
 
-    async def optimize_parameters(
+    def optimize_parameters(
         self,
         strategy_id: int,
         start_date: datetime,
@@ -129,27 +128,6 @@ class BacktestService:
         risk_per_trade: float = 0.02
     ) -> Dict[str, Union[float, Dict]]:
         """Optimize strategy parameters using grid search"""
-
-        return await asyncio.to_thread(
-            self._optimize_parameters_sync,
-            strategy_id,
-            start_date,
-            end_date,
-            param_grid,
-            initial_capital,
-            risk_per_trade
-        )
-
-    async def _optimize_parameters_sync(
-        self,
-        strategy_id: int,
-        start_date: datetime,
-        end_date: datetime,
-        param_grid: Dict[str, List[Union[float, int, str, bool]]],
-        initial_capital: float = 100000.0,
-        risk_per_trade: float = 0.02
-    ) -> Dict[str, Union[float, Dict]]:
-        """Optimize strategy parameters using grid search (sync version)"""
         best_sharpe = -float('inf')
         best_params = None
         best_results = None
@@ -164,7 +142,7 @@ class BacktestService:
             self.db.commit()
 
             # Run backtest
-            results = await self.run_backtest(
+            results = self.run_backtest(
                 strategy_id,
                 start_date,
                 end_date,

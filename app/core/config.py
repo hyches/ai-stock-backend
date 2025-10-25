@@ -18,7 +18,6 @@ class Settings(BaseSettings):
     Includes API, security, database, Redis, CORS, logging, monitoring, trading, cache, rate limiting, and strategy settings.
     """
     # API Settings
-    API_STR: str = "/api"
     API_V1_STR: str = "/api/v1"
     SERVER_NAME: str = "AI Trading System"
     SERVER_HOST: str = "0.0.0.0"

@@ -6,8 +6,8 @@ import { componentTagger } from "lovable-tagger";
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }: { mode: string }) => ({
   server: {
-    host: "0.0.0.0", // Use explicit IP for Windows compatibility
-    port: 3001, // Standard React port
+    host: "127.0.0.1", // Use explicit IP for Windows compatibility
+    port: 3000, // Standard React port
     strictPort: true, // Fail if port is already in use
     proxy: {
       "/api": {

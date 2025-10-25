@@ -1,8 +1,6 @@
 from typing import List, Dict
 import yfinance as yf
-from app.core.cache import cache
 
-@cache(expire=3600)
 def get_stock_data(symbol: str) -> Dict:
     """
     Get stock data using yfinance
