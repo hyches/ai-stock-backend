@@ -6,6 +6,12 @@ from sqlalchemy import engine_from_config, pool
 from app.core.config import Settings
 from app.db.base_class import Base
 
+# Import all models
+from app.models.user import User
+from app.models.database import Stock, Portfolio, PortfolioWeight, Report, Backup
+from app.models.trading import Strategy, Position, Trade, Signal
+
+
 # Add the parent directory to sys.path
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 

@@ -1,4 +1,4 @@
-# Core FastAPI and web framework
+﻿# Core FastAPI and web framework
 fastapi==0.115.13
 uvicorn==0.34.3
 pydantic==2.11.7
@@ -45,5 +45,4 @@ pytz==2025.2
 
 # Type hints and annotations
 typing_extensions==4.14.0
-annotated-types==0.7.0
-slowapi==0.1.9
+annotated-types==0.7.0汳睯灡㵩〽ㄮ㤮

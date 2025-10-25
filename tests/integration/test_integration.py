@@ -3,8 +3,7 @@ from fastapi.testclient import TestClient
 from app.main import app
 from app.core.security import get_password_hash
 from app.models.user import User
-from app.models.portfolio import Portfolio
-from app.models.stock import Stock
+from app.models.database import Portfolio, Stock
 from app.db.session import get_db
 import jwt
 from datetime import datetime, timedelta

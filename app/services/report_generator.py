@@ -56,67 +56,89 @@ class ReportGenerator:
         try:
             logger.info(f"Starting report generation for {symbol}")
             
-            # Fetch stock data
-            stock = yf.Ticker(symbol)
-            info = stock.info
-            
-            if not info:
-                raise ValueError(f"No data found for {symbol}")
-                
-            # Get historical data for technical analysis
-            end_date = datetime.now()
-            start_date = end_date - timedelta(days=200)
-            hist = stock.history(start=start_date, end=end_date)
-            
-            # Calculate financial metrics
-            financials = self._calculate_financial_metrics(info)
-            
-            # Calculate technical indicators if requested
-            technicals = None
-            if include_technical and not hist.empty:
-                technicals = self._calculate_technical_indicators(hist)
-                
-            # Calculate sentiment if requested
-            sentiment = None
-            if include_sentiment:
-                sentiment = self._calculate_sentiment(symbol)
-                
-            # Get competitors if requested
-            competitors = None
-            if include_competitors:
-                competitors = self._get_competitors(symbol)
-                
-            # Generate summary and recommendations
-            summary = self._generate_summary(symbol, info, financials, technicals, sentiment)
-            recommendations = self._generate_recommendations(financials, technicals, sentiment)
-            risk_factors = self._identify_risk_factors(financials, technicals, sentiment)
-            
-            # Create report response
-            report = ReportResponse(
-                symbol=symbol,
-                company_name=info.get('longName', symbol),
-                sector=info.get('sector', ''),
-                industry=info.get('industry', ''),
-                current_price=info.get('currentPrice', 0.0),
-                financials=financials,
-                technicals=technicals,
-                sentiment=sentiment,
-                competitors=competitors,
-                summary=summary,
-                recommendations=recommendations,
-                risk_factors=risk_factors
+            report = await asyncio.to_thread(
+                self._generate_report_sync,
+                symbol,
+                include_technical,
+                include_sentiment,
+                include_competitors,
+                format
             )
             
-            # Generate PDF if requested
-            if format.lower() == "pdf":
-                report.report_url = self._generate_pdf(report)
-                
             logger.info(f"Successfully generated report for {symbol}")
             return report
             
         except Exception as e:
             logger.error(f"Error generating report for {symbol}: {str(e)}")
             raise
+
+    def _generate_report_sync(
+        self,
+        symbol: str,
+        include_technical: bool = True,
+        include_sentiment: bool = True,
+        include_competitors: bool = True,
+        format: str = "pdf"
+    ) -> ReportResponse:
+        """
+        Generate a research report for a given stock (sync version)
+        """
+        # Fetch stock data
+        stock = yf.Ticker(symbol)
+        info = stock.info
+
+        if not info:
+            raise ValueError(f"No data found for {symbol}")
+
+        # Get historical data for technical analysis
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=200)
+        hist = stock.history(start=start_date, end=end_date)
+
+        # Calculate financial metrics
+        financials = self._calculate_financial_metrics(info)
+
+        # Calculate technical indicators if requested
+        technicals = None
+        if include_technical and not hist.empty:
+            technicals = self._calculate_technical_indicators(hist)
+
+        # Calculate sentiment if requested
+        sentiment = None
+        if include_sentiment:
+            sentiment = self._calculate_sentiment(symbol)
+
+        # Get competitors if requested
+        competitors = None
+        if include_competitors:
+            competitors = self._get_competitors(symbol)
+
+        # Generate summary and recommendations
+        summary = self._generate_summary(symbol, info, financials, technicals, sentiment)
+        recommendations = self._generate_recommendations(financials, technicals, sentiment)
+        risk_factors = self._identify_risk_factors(financials, technicals, sentiment)
+
+        # Create report response
+        report = ReportResponse(
+            symbol=symbol,
+            company_name=info.get('longName', symbol),
+            sector=info.get('sector', ''),
+            industry=info.get('industry', ''),
+            current_price=info.get('currentPrice', 0.0),
+            financials=financials,
+            technicals=technicals,
+            sentiment=sentiment,
+            competitors=competitors,
+            summary=summary,
+            recommendations=recommendations,
+            risk_factors=risk_factors
+        )
+
+        # Generate PDF if requested
+        if format.lower() == "pdf":
+            report.report_url = self._generate_pdf(report)
+
+        return report
             
     def _calculate_financial_metrics(self, info: Dict) -> FinancialMetrics:
         """Calculate financial metrics from stock info"""
