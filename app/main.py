@@ -35,4 +35,4 @@ def health_check():
 
 @app.get("/test")
 def test_endpoint():
-    return {"message": "Test endpoint working"} 
+    return {"message": "Test endpoint working"}

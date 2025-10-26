@@ -116,4 +116,4 @@ class Cache:
 cache = Cache(redis_cache)
 
 # For direct decorator usage
-cache_response = cache.cache_response 
+cache_response = cache.cache_response

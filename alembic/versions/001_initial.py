@@ -1,7 +1,7 @@
 """initial
 
 Revision ID: 001
-Revises: 
+Revises:
 Create Date: 2024-03-19 10:00:00.000000
 
 """
@@ -29,7 +29,7 @@ def upgrade():
         sa.UniqueConstraint('email')
     )
     op.create_index('ix_users_created_at', 'users', ['created_at'])
-    
+
     # Create stocks table
     op.create_table(
         'stocks',
@@ -48,7 +48,7 @@ def upgrade():
     op.create_index('ix_stocks_industry', 'stocks', ['industry'])
     op.create_index('ix_stocks_last_updated', 'stocks', ['last_updated'])
     op.create_index('ix_stocks_sector_industry', 'stocks', ['sector', 'industry'])
-    
+
     # Create portfolios table
     op.create_table(
         'portfolios',
@@ -63,7 +63,7 @@ def upgrade():
     op.create_index('ix_portfolios_user_id', 'portfolios', ['user_id'])
     op.create_index('ix_portfolios_user_created', 'portfolios', ['user_id', 'created_at'])
     op.create_index('ix_portfolios_last_updated', 'portfolios', ['last_updated'])
-    
+
     # Create stock_portfolio association table
     op.create_table(
         'stock_portfolio',
@@ -75,7 +75,7 @@ def upgrade():
     )
     op.create_index('ix_stock_portfolio_stock_id', 'stock_portfolio', ['stock_id'])
     op.create_index('ix_stock_portfolio_portfolio_id', 'stock_portfolio', ['portfolio_id'])
-    
+
     # Create portfolio_weights table
     op.create_table(
         'portfolio_weights',
@@ -92,7 +92,7 @@ def upgrade():
     op.create_index('ix_portfolio_weights_stock_id', 'portfolio_weights', ['stock_id'])
     op.create_index('ix_portfolio_weights_portfolio_stock', 'portfolio_weights', ['portfolio_id', 'stock_id'])
     op.create_index('ix_portfolio_weights_last_updated', 'portfolio_weights', ['last_updated'])
-    
+
     # Create reports table
     op.create_table(
         'reports',
@@ -111,7 +111,7 @@ def upgrade():
     op.create_index('ix_reports_report_type', 'reports', ['report_type'])
     op.create_index('ix_reports_user_created', 'reports', ['user_id', 'created_at'])
     op.create_index('ix_reports_stock_type', 'reports', ['stock_id', 'report_type'])
-    
+
     # Create backups table
     op.create_table(
         'backups',
@@ -132,4 +132,4 @@ def downgrade():
     op.drop_table('stock_portfolio')
     op.drop_table('portfolios')
     op.drop_table('stocks')
-    op.drop_table('users') 
+    op.drop_table('users')

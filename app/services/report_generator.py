@@ -59,38 +59,38 @@ class ReportGenerator:
             # Fetch stock data
             stock = yf.Ticker(symbol)
             info = stock.info
-            
+
             if not info:
                 raise ValueError(f"No data found for {symbol}")
-                
+
             # Get historical data for technical analysis
             end_date = datetime.now()
             start_date = end_date - timedelta(days=200)
             hist = stock.history(start=start_date, end=end_date)
-            
+
             # Calculate financial metrics
             financials = self._calculate_financial_metrics(info)
-            
+
             # Calculate technical indicators if requested
             technicals = None
             if include_technical and not hist.empty:
                 technicals = self._calculate_technical_indicators(hist)
-                
+
             # Calculate sentiment if requested
             sentiment = None
             if include_sentiment:
                 sentiment = self._calculate_sentiment(symbol)
-                
+
             # Get competitors if requested
             competitors = None
             if include_competitors:
                 competitors = self._get_competitors(symbol)
-                
+
             # Generate summary and recommendations
             summary = self._generate_summary(symbol, info, financials, technicals, sentiment)
             recommendations = self._generate_recommendations(financials, technicals, sentiment)
             risk_factors = self._identify_risk_factors(financials, technicals, sentiment)
-            
+
             # Create report response
             report = ReportResponse(
                 symbol=symbol,
@@ -110,7 +110,7 @@ class ReportGenerator:
             # Generate PDF if requested
             if format.lower() == "pdf":
                 report.report_url = self._generate_pdf(report)
-                
+
             logger.info(f"Successfully generated report for {symbol}")
             return report
             
