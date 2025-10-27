@@ -8,7 +8,7 @@ import requests
 from textblob import TextBlob
 import numpy as np
 from app.core.config import Settings
-from app.core.cache import get_cache, set_cache
+from app.core.cache import cache
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 logger = logging.getLogger(__name__)
@@ -40,7 +40,7 @@ class SentimentAnalyzer:
             
             # Check cache
             cache_key = f"sentiment_{symbol}"
-            cached_data = await get_cache(cache_key)
+            cached_data = await cache.get(cache_key)
             if cached_data:
                 logger.info(f"Returning cached sentiment data for {symbol}")
                 return SentimentAnalysis(**cached_data)
@@ -70,7 +70,7 @@ class SentimentAnalyzer:
             )
             
             # Cache the result
-            await set_cache(cache_key, result.dict(), ttl=self.cache_ttl)
+            await cache.set(cache_key, result.dict(), ttl=self.cache_ttl)
             
             return result
             

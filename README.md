@@ -31,8 +31,7 @@ A modern web-based trading system built with Python (FastAPI) and React (TypeScr
 ### Frontend
 - React 18
 - TypeScript
-- shadcn/ui
-- tailwindcss
+- Material-UI
 - Recharts
 - Axios
 
@@ -81,12 +80,12 @@ cd frontend
 npm install
 
 # Start the development server
-npm run dev
+npm start
 ```
 
 4. Access the application:
 - Backend API: http://localhost:8000
-- Frontend: http://localhost:3001
+- Frontend: http://localhost:3000
 - API Documentation: http://localhost:8000/docs
 
 ## Project Structure
@@ -177,7 +176,7 @@ trading-system/
 
 #### Backend
 ```bash
-python run_tests.py
+pytest
 ```
 
 #### Frontend

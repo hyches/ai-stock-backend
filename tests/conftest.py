@@ -10,7 +10,7 @@ from app.db.base_class import Base
 from app.core.config import settings
 from app.db.session import get_db
 from app.models.user import User
-from app.core.security import create_access_token
+from app.core.security import create_access_token, get_current_user
 
 # Test database URL
 TEST_DATABASE_URL = "sqlite:///./test.db"
@@ -36,7 +36,7 @@ def db() -> Generator:
         db.close()
         Base.metadata.drop_all(bind=engine)
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def client(db: TestingSessionLocal) -> Generator:
     """Create test client with test database"""
     def override_get_db():
@@ -50,7 +50,7 @@ def client(db: TestingSessionLocal) -> Generator:
         yield test_client
     app.dependency_overrides.clear()
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def redis_client() -> Generator:
     """Create test Redis client"""
     client = redis.Redis(
@@ -64,7 +64,7 @@ def redis_client() -> Generator:
     finally:
         client.close()
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def test_user(db: TestingSessionLocal) -> User:
     """Create test user"""
     user = User(
@@ -80,7 +80,7 @@ def test_user(db: TestingSessionLocal) -> User:
     db.refresh(user)
     return user
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def test_superuser(db: TestingSessionLocal) -> User:
     """Create test superuser"""
     user = User(
@@ -96,21 +96,28 @@ def test_superuser(db: TestingSessionLocal) -> User:
     db.refresh(user)
     return user
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def test_user_token(test_user: User) -> str:
     """Create test user token"""
     return create_access_token(
-        data={"sub": test_user.id, "permissions": test_user.permissions}
+        data={"sub": test_user.email, "role": "admin"}
     )
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
+def test_admin_token(test_superuser: User) -> str:
+    """Create test admin token"""
+    return create_access_token(
+        data={"sub": test_superuser.email, "role": "admin"}
+    )
+
+@pytest.fixture(scope="session")
 def test_superuser_token(test_superuser: User) -> str:
     """Create test superuser token"""
     return create_access_token(
-        data={"sub": test_superuser.id, "permissions": []}
+        data={"sub": test_superuser.email, "role": "admin"}
     )
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def authorized_client(client: TestClient, test_user_token: str) -> TestClient:
     """Create authorized test client"""
     client.headers = {
@@ -119,7 +126,21 @@ def authorized_client(client: TestClient, test_user_token: str) -> TestClient:
     }
     return client
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
+def mock_authorized_client(db: TestingSessionLocal) -> Generator:
+    """Create a test client with mocked authorization."""
+    def mock_get_current_user():
+        # This mock will bypass the actual token decoding and user lookup
+        return {"username": "test@example.com", "role": "admin"}
+
+    app.dependency_overrides[get_current_user] = mock_get_current_user
+    with TestClient(app) as test_client:
+        # Add a dummy token to satisfy the OAuth2PasswordBearer dependency
+        test_client.headers["Authorization"] = "Bearer dummytoken"
+        yield test_client
+    app.dependency_overrides.clear()
+
+@pytest.fixture(scope="function")
 def superuser_client(client: TestClient, test_superuser_token: str) -> TestClient:
     """Create superuser test client"""
     client.headers = {
@@ -128,7 +149,7 @@ def superuser_client(client: TestClient, test_superuser_token: str) -> TestClien
     }
     return client
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def test_strategy(db: TestingSessionLocal, test_user: User) -> Dict:
     """Create test strategy"""
     strategy = {
@@ -140,11 +161,13 @@ def test_strategy(db: TestingSessionLocal, test_user: User) -> Dict:
             "slow_period": 26,
             "signal_period": 9
         },
-        "owner_id": test_user.id
+        "user_id": test_user.id,
+        "symbols": ["AAPL", "GOOG"],
+        "timeframe": "1d"
     }
     return strategy
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def test_portfolio(db: TestingSessionLocal, test_user: User) -> Dict:
     """Create test portfolio"""
     portfolio = {
@@ -155,7 +178,7 @@ def test_portfolio(db: TestingSessionLocal, test_user: User) -> Dict:
     }
     return portfolio
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def test_trade(db: TestingSessionLocal, test_user: User) -> Dict:
     """Create test trade"""
     trade = {
@@ -167,7 +190,7 @@ def test_trade(db: TestingSessionLocal, test_user: User) -> Dict:
     }
     return trade
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def test_position(db: TestingSessionLocal, test_user: User) -> Dict:
     """Create test position"""
     position = {
@@ -179,7 +202,7 @@ def test_position(db: TestingSessionLocal, test_user: User) -> Dict:
     }
     return position
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def test_backtest(db: TestingSessionLocal, test_user: User) -> Dict:
     """Create test backtest"""
     backtest = {

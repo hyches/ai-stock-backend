@@ -2,7 +2,8 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from app.models.trading import Strategy, Signal, Trade, Portfolio, Position, BacktestResult
+from app.models.trading import Strategy, Signal, Trade, Position, BacktestResult
+from app.models.database import Portfolio
 from app.schemas.trading import (
     StrategyCreate, StrategyUpdate,
     SignalCreate, TradeCreate, TradeUpdate,
@@ -34,7 +35,7 @@ class TradingService:
     @cache_response(ttl=60, key_prefix="strategies")
     async def get_strategies(self, skip: int = 0, limit: int = 100) -> List[Strategy]:
         """Get strategies with pagination and caching"""
-        return self.db.query(Strategy).offset(skip).limit(limit).all()
+        return self.db.query(Strategy).options(lazyload(Strategy.signals)).offset(skip).limit(limit).all()
 
     async def create_strategy(self, strategy: StrategyCreate) -> Strategy:
         """Create new strategy and invalidate cache"""
@@ -109,7 +110,7 @@ class TradingService:
     @cache_response(ttl=60, key_prefix="trades")
     async def get_trades(self, skip: int = 0, limit: int = 100) -> List[Trade]:
         """Get trades with pagination and caching"""
-        return self.db.query(Trade).offset(skip).limit(limit).all()
+        return self.db.query(Trade).options(lazyload(Trade.position)).offset(skip).limit(limit).all()
 
     async def create_trade(self, trade: TradeCreate) -> Trade:
         """Create new trade and invalidate cache"""
@@ -141,7 +142,7 @@ class TradingService:
     @cache_response(ttl=60, key_prefix="portfolios")
     async def get_portfolios(self, skip: int = 0, limit: int = 100) -> List[Portfolio]:
         """Get portfolios with pagination and caching"""
-        return self.db.query(Portfolio).offset(skip).limit(limit).all()
+        return self.db.query(Portfolio).options(lazyload(Portfolio.positions)).offset(skip).limit(limit).all()
 
     async def create_portfolio(self, portfolio: PortfolioCreate) -> Portfolio:
         """Create new portfolio and invalidate cache"""

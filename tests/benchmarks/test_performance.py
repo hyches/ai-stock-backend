@@ -5,7 +5,8 @@ from typing import List, Dict
 from sqlalchemy import text
 from app.db.session import SessionLocal
 from app.core.cache import Cache
-from app.models.trading import Strategy, Trade, Portfolio, Position
+from app.models.trading import Strategy, Trade, Position
+from app.models.portfolio import PortfolioOutput as Portfolio
 from app.services.trading import TradingService
 
 @pytest.fixture

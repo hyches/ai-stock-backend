@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,13 +45,29 @@ import {
 } from '@/utils/icons';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-// Trading API functions (placeholder for future implementation)
-const tradingApi = {
-  getOrders: () => Promise.resolve({ data: [] }),
-  placeOrder: () => Promise.resolve({ data: { id: 1, status: 'pending' } }),
-  cancelOrder: () => Promise.resolve({ data: { success: true } }),
-};
+import { useTrades, usePositions } from '@/lib/queries';
 
+// Mock data for strategies
+const mockStrategies = [
+  {
+    id: 1,
+    name: 'Bull Call Spread',
+    type: 'Options',
+    is_active: true,
+    performance: { total_return: 15.5, sharpe_ratio: 1.2, max_drawdown: 5.2 },
+    created_at: '2023-10-26T10:00:00Z',
+    description: 'A bullish strategy involving two call options.'
+  },
+  {
+    id: 2,
+    name: 'Iron Condor',
+    type: 'Options',
+    is_active: false,
+    performance: { total_return: 8.2, sharpe_ratio: 0.9, max_drawdown: 3.1 },
+    created_at: '2023-10-25T12:30:00Z',
+    description: 'A neutral strategy with limited risk and profit.'
+  }
+];
 
 const Trading = () => {
   const [selectedStrategy, setSelectedStrategy] = useState('bullish');
@@ -59,57 +75,9 @@ const Trading = () => {
   const [tabValue, setTabValue] = useState('signals');
   const { toast } = useToast();
 
-  // State for API data
-  const [strategies, setStrategies] = useState([]);
-  const [trades, setTrades] = useState([]);
-  const [positions, setPositions] = useState([]);
-  const [strategiesLoading, setStrategiesLoading] = useState(false);
-  const [tradesLoading, setTradesLoading] = useState(false);
-  const [positionsLoading, setPositionsLoading] = useState(false);
-
   // Fetch data from APIs
-  useEffect(() => {
-    const fetchData = async () => {
-      console.log('🔄 Fetching trading data...');
-      try {
-        setStrategiesLoading(true);
-        console.log('📡 Calling tradingApi.getStrategies()...');
-        const strategiesResponse = await tradingApi.getStrategies();
-        console.log('✅ Strategies response:', strategiesResponse.data);
-        setStrategies(strategiesResponse.data);
-      } catch (error) {
-        console.error('❌ Failed to fetch strategies:', error);
-      } finally {
-        setStrategiesLoading(false);
-      }
-
-      try {
-        setTradesLoading(true);
-        console.log('📡 Calling tradingApi.getTrades()...');
-        const tradesResponse = await tradingApi.getTrades();
-        console.log('✅ Trades response:', tradesResponse.data);
-        setTrades(tradesResponse.data);
-      } catch (error) {
-        console.error('❌ Failed to fetch trades:', error);
-      } finally {
-        setTradesLoading(false);
-      }
-
-      try {
-        setPositionsLoading(true);
-        console.log('📡 Calling tradingApi.getPositions()...');
-        const positionsResponse = await tradingApi.getPositions();
-        console.log('✅ Positions response:', positionsResponse.data);
-        setPositions(positionsResponse.data);
-      } catch (error) {
-        console.error('❌ Failed to fetch positions:', error);
-      } finally {
-        setPositionsLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
+  const { data: trades, isLoading: tradesLoading } = useTrades();
+  const { data: positions, isLoading: positionsLoading } = usePositions();
 
   const handleRunBacktest = () => {
     setIsRunningBacktest(true);
@@ -152,11 +120,10 @@ const Trading = () => {
                     <CardTitle className="text-sm font-medium text-muted-foreground">Total Signals</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">{strategies?.length || 0}</div>
+                    <div className="text-2xl font-bold">{mockStrategies.length}</div>
                     <p className="text-xs text-muted-foreground">
-                      {strategiesLoading ? 'Loading...' : 'Active strategies'}
+                      Active strategies
                     </p>
-                    <p className="text-xs text-blue-500">Debug: {JSON.stringify(strategies?.slice(0, 2))}</p>
                   </CardContent>
                 </CustomCard>
                 
@@ -166,11 +133,11 @@ const Trading = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold text-stockup flex items-center">
-                      {strategies?.filter(s => s.is_active).length || 0}
+                      {mockStrategies.filter(s => s.is_active).length}
                       <TrendingUp className="ml-2 h-4 w-4" />
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {strategiesLoading ? 'Loading...' : `${Math.round((strategies?.filter(s => s.is_active).length / strategies?.length) * 100) || 0}% of total`}
+                      {`${Math.round((mockStrategies.filter(s => s.is_active).length / mockStrategies.length) * 100)}% of total`}
                     </p>
                   </CardContent>
                 </CustomCard>
@@ -181,11 +148,11 @@ const Trading = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold text-stockdown flex items-center">
-                      {strategies?.filter(s => !s.is_active).length || 0}
+                      {mockStrategies.filter(s => !s.is_active).length}
                       <TrendingDown className="ml-2 h-4 w-4" />
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {strategiesLoading ? 'Loading...' : `${Math.round((strategies?.filter(s => !s.is_active).length / strategies?.length) * 100) || 0}% of total`}
+                      {`${Math.round((mockStrategies.filter(s => !s.is_active).length / mockStrategies.length) * 100)}% of total`}
                     </p>
                   </CardContent>
                 </CustomCard>
@@ -196,10 +163,10 @@ const Trading = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      {strategiesLoading ? '...' : `${Math.round(strategies?.reduce((sum, s) => sum + (s.performance?.total_return || 0), 0) / strategies?.length) || 0}%`}
+                      {`${Math.round(mockStrategies.reduce((sum, s) => sum + (s.performance?.total_return || 0), 0) / mockStrategies.length)}%`}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {strategiesLoading ? 'Loading...' : 'Average performance'}
+                      Average performance
                     </p>
                   </CardContent>
                 </CustomCard>
@@ -229,11 +196,7 @@ const Trading = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {strategiesLoading ? (
-                        <TableRow>
-                          <TableCell colSpan={8} className="text-center">Loading signals...</TableCell>
-                        </TableRow>
-                      ) : strategies?.map(strategy => (
+                      {mockStrategies.map(strategy => (
                         <TableRow key={strategy.id}>
                           <TableCell className="font-medium">{strategy.name}</TableCell>
                           <TableCell>{strategy.type}</TableCell>
@@ -256,7 +219,7 @@ const Trading = () => {
                             </Button>
                           </TableCell>
                         </TableRow>
-                      )) || []}
+                      ))}
                     </TableBody>
                   </Table>
                 </div>
@@ -332,11 +295,8 @@ const Trading = () => {
                       <BarChart2 className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                      {strategiesLoading ? (
-                        <div className="text-center py-8">Loading strategies...</div>
-                      ) : (
                         <div className="space-y-4">
-                          {strategies?.map(strategy => (
+                          {mockStrategies.map(strategy => (
                             <div key={strategy.id} className="border rounded-lg p-4">
                               <div className="flex justify-between items-start">
                                 <div>
@@ -353,9 +313,8 @@ const Trading = () => {
                                 </Badge>
                               </div>
                             </div>
-                          )) || []}
+                          ))}
                         </div>
-                      )}
                     </CardContent>
                   </CustomCard>
                 </div>

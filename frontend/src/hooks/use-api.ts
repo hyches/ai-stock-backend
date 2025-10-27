@@ -9,7 +9,7 @@ import {
   getStockAnalysis,
   getStockFinancials,
   getStockPeers,
-} from '@/lib/api-services';
+} from '@/lib/api';
 
 // Market data hooks
 export const useMarketOverview = () => {

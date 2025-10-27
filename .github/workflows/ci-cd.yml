@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: Consolidated CI/CD Pipeline
 
 on:
   push:
@@ -7,12 +7,14 @@ on:
     branches: [ main ]
 
 env:
-  DOCKER_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/ai-stock-backend
+  DOCKER_IMAGE_BACKEND: ${{ secrets.DOCKERHUB_USERNAME }}/ai-trading-backend
+  DOCKER_IMAGE_FRONTEND: ${{ secrets.DOCKERHUB_USERNAME }}/ai-trading-frontend
   DOCKER_TAG: ${{ github.sha }}
   PYTHON_VERSION: '3.11'
+  NODE_VERSION: '20'
 
 jobs:
-  test:
+  backend-ci:
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -53,29 +55,21 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install -r requirements-test.txt
-        pip install black flake8 mypy pytest-cov
     
-    - name: Lint with flake8
+    - name: Lint, format, and type check
       run: |
+        pip install black flake8 mypy
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    
-    - name: Check formatting with black
-      run: |
         black . --check
-    
-    - name: Type check with mypy
-      run: |
         mypy app/
     
     - name: Run tests with coverage
       env:
         DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
         REDIS_URL: redis://localhost:6379/0
-        ZERODHA_API_KEY: ${{ secrets.ZERODHA_API_KEY }}
-        ZERODHA_API_SECRET: ${{ secrets.ZERODHA_API_SECRET }}
         TESTING: "true"
       run: |
+        pip install pytest-cov
         pytest --cov=app --cov-report=xml tests/
     
     - name: Upload coverage to Codecov
@@ -84,12 +78,6 @@ jobs:
         file: ./coverage.xml
         fail_ci_if_error: true
 
-  security-scan:
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    
     - name: Run Snyk to check for vulnerabilities
       uses: snyk/actions/python@master
       env:
@@ -97,8 +85,36 @@ jobs:
       with:
         args: --severity-threshold=high
 
+  frontend-ci:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Lint and format
+      run: npm run lint
+
+    - name: Run tests
+      run: npm run test
+
+    - name: Build
+      run: npm run build
+
   build-and-push:
-    needs: [test, security-scan]
+    needs: [backend-ci, frontend-ci]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     
@@ -114,51 +130,47 @@ jobs:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
     
-    - name: Build and push
+    - name: Build and push backend
       uses: docker/build-push-action@v5
       with:
         context: .
+        file: ./Dockerfile
         push: true
-        tags: ${{ env.DOCKER_IMAGE }}:${{ env.DOCKER_TAG }},${{ env.DOCKER_IMAGE }}:latest
-        cache-from: type=registry,ref=${{ env.DOCKER_IMAGE }}:buildcache
-        cache-to: type=registry,ref=${{ env.DOCKER_IMAGE }}:buildcache,mode=max
+        tags: ${{ env.DOCKER_IMAGE_BACKEND }}:${{ env.DOCKER_TAG }},${{ env.DOCKER_IMAGE_BACKEND }}:latest
+        cache-from: type=registry,ref=${{ env.DOCKER_IMAGE_BACKEND }}:buildcache
+        cache-to: type=registry,ref=${{ env.DOCKER_IMAGE_BACKEND }}:buildcache,mode=max
 
-  deploy-staging:
+    - name: Build and push frontend
+      uses: docker/build-push-action@v5
+      with:
+        context: ./frontend
+        file: ./frontend/Dockerfile
+        push: true
+        tags: ${{ env.DOCKER_IMAGE_FRONTEND }}:${{ env.DOCKER_TAG }},${{ env.DOCKER_IMAGE_FRONTEND }}:latest
+        cache-from: type=registry,ref=${{ env.DOCKER_IMAGE_FRONTEND }}:buildcache
+        cache-to: type=registry,ref=${{ env.DOCKER_IMAGE_FRONTEND }}:buildcache,mode=max
+
+  deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    strategy:
+      matrix:
+        environment: [staging, production]
+
     environment: 
-      name: staging
-      url: https://staging.ai-stock-backend.com
+      name: ${{ matrix.environment }}
+      url: https://${{ matrix.environment }}.ai-trading-system.com
     
     steps:
-    - name: Deploy to staging
+    - name: Deploy to ${{ matrix.environment }}
       uses: appleboy/ssh-action@master
       with:
-        host: ${{ secrets.STAGING_SSH_HOST }}
-        username: ${{ secrets.STAGING_SSH_USERNAME }}
-        key: ${{ secrets.STAGING_SSH_KEY }}
+        host: ${{ secrets[format('{0}_SSH_HOST', upper(matrix.environment))] }}
+        username: ${{ secrets[format('{0}_SSH_USERNAME', upper(matrix.environment))] }}
+        key: ${{ secrets[format('{0}_SSH_KEY', upper(matrix.environment))] }}
         script: |
           cd /path/to/app
           docker-compose pull
           docker-compose up -d
-
-  deploy-production:
-    needs: deploy-staging
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    environment:
-      name: production
-      url: https://ai-stock-backend.com
-    
-    steps:
-    - name: Deploy to production
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.PROD_SSH_HOST }}
-        username: ${{ secrets.PROD_SSH_USERNAME }}
-        key: ${{ secrets.PROD_SSH_KEY }}
-        script: |
-          cd /path/to/app
-          docker-compose pull
-          docker-compose up -d 

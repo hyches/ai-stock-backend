@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { searchStocks, getStockDetails } from '@/lib/api-services';
+import { searchStocks, getStockDetails } from '@/lib/api';
 import TradingActions from '@/components/TradingActions';
 
 interface StockSuggestion {

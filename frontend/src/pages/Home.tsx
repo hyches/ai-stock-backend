@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { getMarketOverview, getPopularStocks } from '@/lib/api-services';
+import { getMarketOverview, getPopularStocks } from '@/lib/api';
 import SearchBar from '@/components/SearchBar';
 
 interface MarketOverview {

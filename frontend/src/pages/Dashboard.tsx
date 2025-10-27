@@ -26,7 +26,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { usePortfolio, useWatchlist, useModelPerformance } from '@/hooks/use-api';
+import { usePortfolio, useWatchlist, useModelPerformance } from '@/lib/queries';
 import { useTrading } from '@/context/TradingContext';
 
 // No fallback data - show loading states instead

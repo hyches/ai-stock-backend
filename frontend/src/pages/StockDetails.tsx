@@ -45,7 +45,7 @@ import {
   getStockAnalysis,
   getStockFinancials,
   getStockPeers
-} from '@/lib/api-services';
+} from '@/lib/api';
 
 interface StockDetails {
   symbol: string;

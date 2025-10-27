@@ -89,6 +89,10 @@ class Settings(BaseSettings):
     RATE_LIMIT_BY_IP: bool = True
     RATE_LIMIT_BY_USER: bool = True
 
+    # Alerting
+    ALERT_WEBHOOK_URL: Optional[str] = None
+    ALERT_EMAIL: Optional[str] = None
+
     # Trading settings
     DEFAULT_TIMEFRAME: str = "1d"
     DEFAULT_SYMBOLS: List[str] = ["AAPL", "MSFT", "GOOGL", "AMZN", "META"]

@@ -3,25 +3,15 @@ import logging
 import yfinance as yf
 import pandas as pd
 from datetime import datetime, timedelta
-from app.core.cache import redis_cache
+import asyncio
+from app.core.cache import Cache
 
 logger = logging.getLogger(__name__)
 
 class MarketDataService:
-    def __init__(self):
+    def __init__(self, cache: Cache):
+        self.cache = cache
         self.cache_ttl = 3600  # 1 hour
-        self.symbol_mapping = {
-            "NIFTY 50": "^NSEI",
-            "BANK NIFTY": "^NSEBANK",
-            "RELIANCE": "RELIANCE.NS",
-            "TCS": "TCS.NS",
-            "INFY": "INFY.NS",
-            "HDFCBANK": "HDFCBANK.NS",
-            "ICICIBANK": "ICICIBANK.NS",
-            "HINDUNILVR": "HINDUNILVR.NS",
-            "HDFC": "HDFC.NS",
-            "SBIN": "SBIN.NS"
-        }
 
     async def get_historical_data(
         self,
@@ -37,17 +27,14 @@ class MarketDataService:
             
             # Get data from cache first
             cache_key = f"historical:{symbol}:{from_date.date()}:{to_date.date()}:{interval}"
-            cached_data = await redis_cache.get(cache_key)
+            cached_data = await self.cache.get(cache_key)
             if cached_data:
                 return cached_data
 
             # Get data from Yahoo Finance
-            ticker = yf.Ticker(self.symbol_mapping.get(symbol, f"{symbol}.NS"))
-            df = ticker.history(
-                start=from_date,
-                end=to_date,
-                interval=yf_interval
-            )
+            loop = asyncio.get_event_loop()
+            ticker = yf.Ticker(symbol)
+            df = await loop.run_in_executor(None, lambda: ticker.history(start=from_date, end=to_date, interval=yf_interval))
 
             # Convert to list of dicts
             data = []
@@ -62,7 +49,7 @@ class MarketDataService:
                 })
 
             # Cache the data
-            await redis_cache.set(cache_key, data, self.cache_ttl)
+            await self.cache.set(cache_key, data, self.cache_ttl)
             return data
         except Exception as e:
             logger.error(f"Error fetching historical data for {symbol}: {str(e)}")
@@ -73,13 +60,14 @@ class MarketDataService:
         try:
             # Get from cache first
             cache_key = f"quote:{symbol}"
-            cached_quote = await redis_cache.get(cache_key)
+            cached_quote = await self.cache.get(cache_key)
             if cached_quote:
                 return cached_quote
 
             # Get live quote
-            ticker = yf.Ticker(self.symbol_mapping.get(symbol, f"{symbol}.NS"))
-            info = ticker.info
+            loop = asyncio.get_event_loop()
+            ticker = yf.Ticker(symbol)
+            info = await loop.run_in_executor(None, lambda: ticker.info)
 
             quote = {
                 "symbol": symbol,
@@ -95,7 +83,7 @@ class MarketDataService:
             }
 
             # Cache for 1 minute
-            await redis_cache.set(cache_key, quote, 60)
+            await self.cache.set(cache_key, quote, 60)
             return quote
         except Exception as e:
             logger.error(f"Error fetching live quote for {symbol}: {str(e)}")
@@ -117,8 +105,9 @@ class MarketDataService:
         """Get current market status"""
         try:
             # Get NSE status
+            loop = asyncio.get_event_loop()
             nifty = yf.Ticker("^NSEI")
-            info = nifty.info
+            info = await loop.run_in_executor(None, lambda: nifty.info)
 
             return {
                 "is_market_open": info.get("marketState", "") == "REGULAR",
@@ -128,4 +117,4 @@ class MarketDataService:
             }
         except Exception as e:
             logger.error(f"Error fetching market status: {str(e)}")
-            raise 
+            raise

@@ -2,7 +2,6 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useTrading } from '@/context/TradingContext';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -12,9 +11,11 @@ import {
   ArrowDownRight
 } from 'lucide-react';
 import AppLayout from '@/components/layout/AppLayout';
+import { useTransactions, usePortfolio } from '@/lib/queries';
 
 const Transactions: React.FC = () => {
-  const { transactions, virtualCash } = useTrading();
+  const { data: transactions, isLoading: transactionsLoading } = useTransactions();
+  const { data: portfolio, isLoading: portfolioLoading } = usePortfolio();
 
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('en-IN', {
@@ -27,14 +28,16 @@ const Transactions: React.FC = () => {
   };
 
   const totalInvested = transactions
-    .filter(t => t.type === 'buy')
-    .reduce((sum, t) => sum + t.total, 0);
+    ?.filter(t => t.type === 'buy')
+    .reduce((sum, t) => sum + t.total, 0) || 0;
 
   const totalSold = transactions
-    .filter(t => t.type === 'sell')
-    .reduce((sum, t) => sum + t.total, 0);
+    ?.filter(t => t.type === 'sell')
+    .reduce((sum, t) => sum + t.total, 0) || 0;
 
   const netProfit = totalSold - totalInvested;
+
+  const virtualCash = portfolio?.virtualCash || 0;
 
   return (
     <AppLayout title="Transactions" description="View your trading history and performance">
@@ -111,7 +114,13 @@ const Transactions: React.FC = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {transactions.length === 0 ? (
+            {transactionsLoading ? (
+              <div className="text-center py-8">
+                <div className="text-muted-foreground mb-4">
+                  Loading transactions...
+                </div>
+              </div>
+            ) : transactions?.length === 0 ? (
               <div className="text-center py-8">
                 <div className="text-muted-foreground mb-4">
                   No transactions yet. Start trading to see your history here.
@@ -122,7 +131,7 @@ const Transactions: React.FC = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                {transactions.map((transaction) => (
+                {transactions?.map((transaction) => (
                   <div
                     key={transaction.id}
                     className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"

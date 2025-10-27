@@ -2,74 +2,29 @@ import logging
 from typing import Dict, List, Optional
 import httpx
 from datetime import datetime
+from sqlalchemy.orm import Session
 from app.core.config import settings
-from app.db.session import SessionLocal
 from app.models.alert import Alert
+from app.schemas.alert import AlertCreate, AlertUpdate
 
 logger = logging.getLogger(__name__)
 
 class AlertService:
-    def __init__(self):
-        self.alerts = []
-        self.alert_levels = {
-            "info": "INFO",
-            "warning": "WARNING",
-            "error": "ERROR",
-            "critical": "CRITICAL"
-        }
+    def __init__(self, db: Session):
+        self.db = db
 
-    def create_alert(self, user_id: int, message: str, level: str = 'info'):
-        alert = {
-            'id': len(self.alerts) + 1,
-            'user_id': user_id,
-            'message': message,
-            'level': level,
-            'read': False,
-            'timestamp': datetime.utcnow().isoformat()
-        }
-        self.alerts.append(alert)
-        return alert
-
-    def get_alerts(self, user_id: int) -> List[Dict]:
-        return [a for a in self.alerts if a['user_id'] == user_id]
-
-    def mark_as_read(self, alert_id: int):
-        for alert in self.alerts:
-            if alert['id'] == alert_id:
-                alert['read'] = True
-                return alert
-        return None
-
-    async def create_alert_db(
-        self,
-        message: str,
-        level: str = "info",
-        source: str = "system",
-        metadata: Optional[Dict] = None
-    ) -> Alert:
+    async def create_alert(self, alert: AlertCreate) -> Alert:
         """Create a new alert"""
-        if level not in self.alert_levels:
-            level = "info"
+        db_alert = Alert(**alert.dict())
+        self.db.add(db_alert)
+        self.db.commit()
+        self.db.refresh(db_alert)
 
-        db = SessionLocal()
-        try:
-            alert = Alert(
-                message=message,
-                level=level,
-                source=source,
-                metadata=metadata or {}
-            )
-            db.add(alert)
-            db.commit()
-            db.refresh(alert)
+        # Send notifications
+        await self._send_notifications(db_alert)
+        return db_alert
 
-            # Send notifications
-            await self._send_notifications(alert)
-            return alert
-        finally:
-            db.close()
-
-    async def get_alerts_db(
+    def get_alerts(
         self,
         level: Optional[str] = None,
         source: Optional[str] = None,
@@ -77,22 +32,32 @@ class AlertService:
         end_date: Optional[datetime] = None
     ) -> List[Alert]:
         """Get alerts with filters"""
-        db = SessionLocal()
-        try:
-            query = db.query(Alert)
-            
-            if level:
-                query = query.filter(Alert.level == level)
-            if source:
-                query = query.filter(Alert.source == source)
-            if start_date:
-                query = query.filter(Alert.created_at >= start_date)
-            if end_date:
-                query = query.filter(Alert.created_at <= end_date)
-            
-            return query.order_by(Alert.created_at.desc()).all()
-        finally:
-            db.close()
+        query = self.db.query(Alert)
+
+        if level:
+            query = query.filter(Alert.level == level)
+        if source:
+            query = query.filter(Alert.source == source)
+        if start_date:
+            query = query.filter(Alert.created_at >= start_date)
+        if end_date:
+            query = query.filter(Alert.created_at <= end_date)
+
+        return query.order_by(Alert.created_at.desc()).all()
+
+    def get_alert(self, alert_id: int) -> Optional[Alert]:
+        """Get a single alert by ID"""
+        return self.db.query(Alert).filter(Alert.id == alert_id).first()
+
+    def update_alert(self, alert_id: int, alert: AlertUpdate) -> Optional[Alert]:
+        """Update an alert"""
+        db_alert = self.get_alert(alert_id)
+        if db_alert:
+            for key, value in alert.dict(exclude_unset=True).items():
+                setattr(db_alert, key, value)
+            self.db.commit()
+            self.db.refresh(db_alert)
+        return db_alert
 
     async def _send_notifications(self, alert: Alert):
         """Send notifications for alert"""
@@ -122,5 +87,3 @@ class AlertService:
                 pass
             except Exception as e:
                 logger.error(f"Error sending email notification: {str(e)}")
-
-alert_service = AlertService() 

@@ -18,6 +18,12 @@ redis_cache = redis.Redis(
     decode_responses=True
 )
 
+class BytesEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, bytes):
+            return obj.decode('utf-8')
+        return json.JSONEncoder.default(self, obj)
+
 class Cache:
     """
     Cache utility class for Redis operations.
@@ -43,12 +49,12 @@ class Cache:
             Optional[Any]: Cached value or None if not found.
         """
         value = self.client.get(key)
-        if value is not None:
-            try:
-                return json.loads(value)
-            except Exception:
-                return value
-        return None
+        if value is None:
+            return None
+        try:
+            return json.loads(value)
+        except (json.JSONDecodeError, TypeError):
+            return value
 
     def set(self, key: str, value: Any, ttl: int = None):
         """
@@ -59,11 +65,11 @@ class Cache:
             value (Any): Value to cache.
             ttl (int, optional): Time-to-live in seconds. Defaults to None (no expiration).
         """
-        value = json.dumps(value)
+        serialized_value = json.dumps(value, cls=BytesEncoder)
         if ttl:
-            self.client.setex(key, ttl, value)
+            self.client.setex(key, ttl, serialized_value)
         else:
-            self.client.set(key, value)
+            self.client.set(key, serialized_value)
 
     def delete(self, key: str):
         """

@@ -1,0 +1,13 @@
+{
+  "scripts": {
+    "test": "cd frontend && npx vitest --run"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^14.3.1",
+    "@testing-library/user-event": "^14.6.1",
+    "@vitest/ui": "^4.0.3",
+    "jsdom": "^27.0.1",
+    "vitest": "^4.0.3"
+  }
+}

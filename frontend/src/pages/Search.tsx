@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useQuery } from '@tanstack/react-query';
-import { getMarketOverview, getPopularStocks } from '@/lib/api-services';
+import { getMarketOverview, getPopularStocks } from '@/lib/api';
 import AppLayout from '@/components/layout/AppLayout';
 import SearchBar from '@/components/SearchBar';
 

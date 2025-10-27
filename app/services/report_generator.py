@@ -14,8 +14,6 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 import logging
 import os
 from pathlib import Path
-from app.services.sentiment_analysis import SentimentAnalysis
-from app.services.ml_predictions import get_price_predictions
 try:
     from textblob import TextBlob
 except ImportError:

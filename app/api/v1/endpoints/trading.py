@@ -13,7 +13,7 @@ from app.schemas.trading import (
 )
 from app.services.trading import TradingService
 from app.core.config import settings
-from app.core.security import rate_limit, check_permissions, get_current_user
+from app.core.security import check_permissions, get_current_user
 from app.utils.pagination import PaginatedResponse
 
 router = APIRouter()
@@ -28,7 +28,6 @@ def create_response(data: Any = None, message: str = None, status_code: int = 20
     return response
 
 @router.post("/strategies/", response_model=Dict)
-@rate_limit(limit=settings.RATE_LIMIT_PER_MINUTE)
 async def create_strategy(
     strategy: StrategyCreate,
     db: Session = Depends(deps.get_db),
@@ -45,7 +44,6 @@ async def create_strategy(
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("/strategies/", response_model=Dict)
-@rate_limit(limit=settings.RATE_LIMIT_PER_MINUTE)
 async def get_strategies(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
@@ -72,7 +70,6 @@ async def get_strategies(
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("/strategies/{strategy_id}", response_model=Dict)
-@rate_limit(limit=settings.RATE_LIMIT_PER_MINUTE)
 async def get_strategy(
     strategy_id: int,
     db: Session = Depends(deps.get_db),
@@ -93,7 +90,6 @@ async def get_strategy(
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.put("/strategies/{strategy_id}", response_model=Dict)
-@rate_limit(limit=settings.RATE_LIMIT_PER_MINUTE)
 async def update_strategy(
     strategy_id: int,
     strategy: StrategyUpdate,
@@ -115,7 +111,6 @@ async def update_strategy(
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.delete("/strategies/{strategy_id}", response_model=Dict)
-@rate_limit(limit=settings.RATE_LIMIT_PER_MINUTE)
 async def delete_strategy(
     strategy_id: int,
     db: Session = Depends(deps.get_db),
@@ -135,7 +130,6 @@ async def delete_strategy(
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/strategies/{strategy_id}/signals", response_model=Dict)
-@rate_limit(limit=settings.RATE_LIMIT_PER_MINUTE)
 async def generate_signals(
     strategy_id: int,
     symbol: str,
@@ -153,7 +147,6 @@ async def generate_signals(
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/trades/", response_model=Dict)
-@rate_limit(limit=settings.RATE_LIMIT_PER_MINUTE)
 async def create_trade(
     trade: TradeCreate,
     db: Session = Depends(deps.get_db),
@@ -170,7 +163,6 @@ async def create_trade(
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("/trades/", response_model=Dict)
-@rate_limit(limit=settings.RATE_LIMIT_PER_MINUTE)
 async def get_trades(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
@@ -197,7 +189,6 @@ async def get_trades(
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/portfolios/", response_model=Dict)
-@rate_limit(limit=settings.RATE_LIMIT_PER_MINUTE)
 async def create_portfolio(
     portfolio: PortfolioCreate,
     db: Session = Depends(deps.get_db),
@@ -214,7 +205,6 @@ async def create_portfolio(
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("/portfolios/", response_model=Dict)
-@rate_limit(limit=settings.RATE_LIMIT_PER_MINUTE)
 async def get_portfolios(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
@@ -241,7 +231,6 @@ async def get_portfolios(
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("/portfolios/{portfolio_id}", response_model=Dict)
-@rate_limit(limit=settings.RATE_LIMIT_PER_MINUTE)
 async def get_portfolio(
     portfolio_id: int,
     db: Session = Depends(deps.get_db),
@@ -262,7 +251,6 @@ async def get_portfolio(
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.put("/portfolios/{portfolio_id}", response_model=Dict)
-@rate_limit(limit=settings.RATE_LIMIT_PER_MINUTE)
 async def update_portfolio(
     portfolio_id: int,
     portfolio: PortfolioUpdate,
@@ -284,7 +272,6 @@ async def update_portfolio(
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/portfolios/{portfolio_id}/positions", response_model=Dict)
-@rate_limit(limit=settings.RATE_LIMIT_PER_MINUTE)
 async def create_position(
     portfolio_id: int,
     position: PositionCreate,
@@ -302,7 +289,6 @@ async def create_position(
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("/portfolios/{portfolio_id}/positions", response_model=Dict)
-@rate_limit(limit=settings.RATE_LIMIT_PER_MINUTE)
 async def get_positions(
     portfolio_id: int,
     skip: int = Query(0, ge=0),
@@ -330,7 +316,6 @@ async def get_positions(
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("/portfolios/{portfolio_id}/positions/{position_id}", response_model=Dict)
-@rate_limit(limit=settings.RATE_LIMIT_PER_MINUTE)
 async def get_position(
     portfolio_id: int,
     position_id: int,
@@ -352,7 +337,6 @@ async def get_position(
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.put("/portfolios/{portfolio_id}/positions/{position_id}", response_model=Dict)
-@rate_limit(limit=settings.RATE_LIMIT_PER_MINUTE)
 async def update_position(
     portfolio_id: int,
     position_id: int,
@@ -375,7 +359,6 @@ async def update_position(
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.post("/strategies/{strategy_id}/backtest", response_model=Dict)
-@rate_limit(limit=settings.RATE_LIMIT_PER_MINUTE)
 async def run_backtest(
     strategy_id: int,
     backtest: BacktestResultCreate,
@@ -393,7 +376,6 @@ async def run_backtest(
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("/strategies/{strategy_id}/backtest-results", response_model=Dict)
-@rate_limit(limit=settings.RATE_LIMIT_PER_MINUTE)
 async def get_backtest_results(
     strategy_id: int,
     skip: int = Query(0, ge=0),
