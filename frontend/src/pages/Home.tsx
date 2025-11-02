@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { getMarketOverview, getPopularStocks } from '@/lib/api-services';
+import AppLayout from '@/components/layout/AppLayout';
 import SearchBar from '@/components/SearchBar';
 
 interface MarketOverview {
@@ -48,9 +49,9 @@ const Home = () => {
   });
 
   return (
-    <div className="min-h-screen bg-background">
+    <AppLayout title="AlgoSentia" description="AI-powered stock analysis and trading platform">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-20">
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-20 rounded-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-4xl md:text-6xl font-bold mb-6">
@@ -66,6 +67,7 @@ const Home = () => {
                 placeholder="Search for stocks (e.g., AAPL, Microsoft, Tesla)"
                 showInlineDetails={true}
                 className="w-full"
+                pageContext="home"
               />
             </div>
           </div>
@@ -73,7 +75,7 @@ const Home = () => {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="space-y-12">
         <div className="space-y-12">
           {/* Market Overview */}
           <Card>
@@ -198,14 +200,14 @@ const Home = () => {
               <Button size="lg" onClick={() => navigate('/login')}>
                 Get Started
               </Button>
-              <Button size="lg" variant="outline" onClick={() => navigate('/search')}>
-                Explore Stocks
+              <Button size="lg" variant="outline" onClick={() => navigate('/dashboard')}>
+                Explore Dashboard
               </Button>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </AppLayout>
   );
 };
 

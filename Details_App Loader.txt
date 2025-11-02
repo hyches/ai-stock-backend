@@ -1,0 +1,133 @@
+This file contains a more extensive log output from `app.utils.data_loader` to show the data being retrieved for various stocks.
+
+---
+**Data for JSWSTEEL.NS**
+---
+INFO:app.utils.data_loader:Fetching data for JSWSTEEL.NS
+INFO:app.utils.data_loader:Raw data for JSWSTEEL.NS:
+(A large number of raw key-value pairs from the yfinance 'info' object are logged here)
+INFO:app.utils.data_loader:Sector for JSWSTEEL.NS: Basic Materials
+INFO:app.utils.data_loader:Industry for JSWSTEEL.NS: Steel
+INFO:app.utils.data_loader:Historical data for JSWSTEEL.NS:
+INFO:app.utils.data_loader:Latest close price: 1206.0
+INFO:app.utils.data_loader:Processed data for JSWSTEEL.NS:
+INFO:app.utils.data_loader:symbol: JSWSTEEL.NS
+INFO:app.utils.data_loader:name: JSW Steel Limited
+INFO:app.utils.data_loader:sector: Basic Materials
+INFO:app.utils.data_loader:industry: Steel
+INFO:app.utils.data_loader:price: 1208.1
+INFO:app.utils.data_loader:volume: 1337807
+INFO:app.utils.data_loader:market_cap: 2950963.658752
+INFO:app.utils.data_loader:pe_ratio: 49.109753
+INFO:app.utils.data_loader:dividend_yield: 23.0
+INFO:app.utils.data_loader:ma_50: 1123.047998046875
+INFO:app.utils.data_loader:ma_200: nan
+INFO:app.utils.data_loader:last_updated: 2025-11-02 18:22:55.839091
+
+---
+**Data for ADANIPORTS.NS**
+---
+INFO:app.utils.data_loader:Fetching data for ADANIPORTS.NS
+INFO:app.utils.data_loader:Raw data for ADANIPORTS.NS:
+(A large number of raw key-value pairs from the yfinance 'info' object are logged here)
+INFO:app.utils.data_loader:Sector for ADANIPORTS.NS: Industrials
+INFO:app.utils.data_loader:Industry for ADANIPORTS.NS: Marine Shipping
+INFO:app.utils.data_loader:Historical data for ADANIPORTS.NS:
+INFO:app.utils.data_loader:Latest close price: 1451.5
+INFO:app.utils.data_loader:Processed data for ADANIPORTS.NS:
+INFO:app.utils.data_loader:symbol: ADANIPORTS.NS
+INFO:app.utils.data_loader:name: Adani Ports and Special Economic Zone Limited
+INFO:app.utils.data_loader:sector: Industrials
+INFO:app.utils.data_loader:industry: Marine Shipping
+INFO:app.utils.data_loader:price: 1450.5
+INFO:app.utils.data_loader:volume: 1141853
+INFO:app.utils.data_loader:market_cap: 3133281.665024
+INFO:app.utils.data_loader:pe_ratio: 27.760765
+INFO:app.utils.data_loader:dividend_yield: 48.0
+INFO:app.utils.data_loader:ma_50: 1400.2439990234375
+INFO:app.utils.data_loader:ma_200: nan
+INFO:app.utils.data_loader:last_updated: 2025-11-02 18:23:02.077458
+
+---
+**Data for ADANIENT.NS**
+---
+INFO:app.utils.data_loader:Fetching data for ADANIENT.NS
+INFO:app.utils.data_loader:Raw data for ADANIENT.NS:
+(A large number of raw key-value pairs from the yfinance 'info' object are logged here)
+INFO:app.utils.data_loader:Sector for ADANIENT.NS: Energy
+INFO:app.utils.data_loader:Industry for ADANIENT.NS: Thermal Coal
+INFO:app.utils.data_loader:Historical data for ADANIENT.NS:
+INFO:app.utils.data_loader:Latest close price: 2481.0
+INFO:app.utils.data_loader:Processed data for ADANIENT.NS:
+INFO:app.utils.data_loader:symbol: ADANIENT.NS
+INFO:app.utils.data_loader:name: Adani Enterprises Limited
+INFO:app.utils.data_loader:sector: Energy
+INFO:app.utils.data_loader:industry: Thermal Coal
+INFO:app.utils.data_loader:price: 2474.9
+INFO:app.utils.data_loader:volume: 848642
+INFO:app.utils.data_loader:market_cap: 2856999.714816
+INFO:app.utils.data_loader:pe_ratio: 45.553097
+INFO:app.utils.data_loader:dividend_yield: 5.0
+INFO:app.utils.data_loader:ma_50: 2455.9439697265625
+INFO:app.utils.data_loader:ma_200: nan
+INFO:app.utils.data_loader:last_updated: 2025-11-02 18:23:01.968374
+
+---
+**Data for ASIANPAINT.NS**
+---
+INFO:app.utils.data_loader:Fetching data for ASIANPAINT.NS
+INFO:app.utils.data_loader:Raw data for ASIANPAINT.NS:
+(A large number of raw key-value pairs from the yfinance 'info' object are logged here)
+INFO:app.utils.data_loader:Sector for ASIANPAINT.NS: Basic Materials
+INFO:app.utils.data_loader:Industry for ASIANPAINT.NS: Specialty Chemicals
+INFO:app.utils.data_loader:Historical data for ASIANPAINT.NS:
+INFO:app.utils.data_loader:Latest close price: 2510.800048828125
+INFO:app.utils.data_loader:Processed data for ASIANPAINT.NS:
+INFO:app.utils.data_loader:symbol: ASIANPAINT.NS
+INFO:app.utils.data_loader:name: Asian Paints Limited
+INFO:app.utils.data_loader:sector: Basic Materials
+INFO:app.utils.data_loader:industry: Specialty Chemicals
+INFO:app.utils.data_loader:price: 2508.1
+INFO:app.utils.data_loader:volume: 609128
+INFO:app.utils.data_loader:market_cap: 2404210.180096
+INFO:app.utils.data_loader:pe_ratio: 67.04357
+INFO:app.utils.data_loader:dividend_yield: 99.0
+INFO:app.utils.data_loader:ma_50: 2467.9640087890625
+INFO:app.utils.data_loader:ma_200: nan
+INFO:app.utils.data_loader:last_updated: 2025-11-02 18:23:01.853283
+
+---
+**Data for ZOMATO.NS (Failed Fetch)**
+---
+INFO:app.utils.data_loader:Fetching data for ZOMATO.NS
+INFO:app.utils.data_loader:Raw data for ZOMATO.NS:
+INFO:app.utils.data_loader:quoteType: NONE
+... (very few key-value pairs, indicating a problem)
+INFO:app.utils.data_loader:Sector for ZOMATO.NS:
+INFO:app.utils.data_loader:Industry for ZOMATO.NS:
+ERROR:yfinance:$ZOMATO.NS: possibly delisted; no timezone found
+ERROR:app.utils.data_loader:No historical data found for ZOMATO.NS
+
+---
+**Data for NYKAA.NS**
+---
+INFO:app.utils.data_loader:Fetching data for NYKAA.NS
+INFO:app.utils.data_loader:Raw data for NYKAA.NS:
+(A large number of raw key-value pairs from the yfinance 'info' object are logged here)
+INFO:app.utils.data_loader:Sector for NYKAA.NS: Consumer Cyclical
+INFO:app.utils.data_loader:Industry for NYKAA.NS: Internet Retail
+INFO:app.utils.data_loader:Historical data for NYKAA.NS:
+INFO:app.utils.data_loader:Latest close price: 247.94000244140625
+INFO:app.utils.data_loader:Processed data for NYKAA.NS:
+INFO:app.utils.data_loader:symbol: NYKAA.NS
+INFO:app.utils.data_loader:name: FSN E-Commerce Ventures Limited
+INFO:app.utils.data_loader:sector: Consumer Cyclical
+INFO:app.utils.data_loader:industry: Internet Retail
+INFO:app.utils.data_loader:price: 248.47
+INFO:app.utils.data_loader:volume: 4251232
+INFO:app.utils.data_loader:market_cap: 710941.999104
+INFO:app.utils.data_loader:pe_ratio: 920.2592
+INFO:app.utils.data_loader:dividend_yield: None
+INFO:app.utils.data_loader:ma_50: 244.76079895019532
+INFO:app.utils.data_loader:ma_200: nan
+INFO:app.utils.data_loader:last_updated: 2025-11-02 18:23:08.071859

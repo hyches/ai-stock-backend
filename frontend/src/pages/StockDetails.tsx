@@ -19,6 +19,7 @@ import {
   Bookmark
 } from 'lucide-react';
 import TradingActions from '@/components/TradingActions';
+import AppLayout from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -116,54 +117,23 @@ interface Peer {
   marketCap: number;
 }
 
+import { useStockData } from '@/context/StockDataContext';
+
 const StockDetails = () => {
-  const { symbol } = useParams<{ symbol: string }>();
   const navigate = useNavigate();
   const [timeframe, setTimeframe] = useState('1Y');
   const [isBookmarked, setIsBookmarked] = useState(false);
-
-  // Fetch stock details
-  const { data: stockDetails, isLoading: detailsLoading, error: detailsError } = useQuery({
-    queryKey: ['stock-details', symbol],
-    queryFn: () => getStockDetails(symbol!),
-    enabled: !!symbol,
-    refetchInterval: 30000, // Refetch every 30 seconds
-  });
-
-  // Fetch historical data
-  const { data: historicalData, isLoading: historicalLoading } = useQuery({
-    queryKey: ['stock-historical', symbol, timeframe],
-    queryFn: () => getStockHistoricalData(symbol!, timeframe),
-    enabled: !!symbol,
-  });
-
-  // Fetch news
-  const { data: news, isLoading: newsLoading } = useQuery({
-    queryKey: ['stock-news', symbol],
-    queryFn: () => getStockNews(symbol!),
-    enabled: !!symbol,
-  });
-
-  // Fetch analysis
-  const { data: analysis, isLoading: analysisLoading } = useQuery({
-    queryKey: ['stock-analysis', symbol],
-    queryFn: () => getStockAnalysis(symbol!),
-    enabled: !!symbol,
-  });
-
-  // Fetch financials
-  const { data: financials, isLoading: financialsLoading } = useQuery({
-    queryKey: ['stock-financials', symbol],
-    queryFn: () => getStockFinancials(symbol!),
-    enabled: !!symbol,
-  });
-
-  // Fetch peers
-  const { data: peers, isLoading: peersLoading } = useQuery({
-    queryKey: ['stock-peers', symbol],
-    queryFn: () => getStockPeers(symbol!),
-    enabled: !!symbol,
-  });
+  const { 
+    symbol, 
+    stockDetails, 
+    historicalData, 
+    news, 
+    analysis, 
+    financials, 
+    peers, 
+    isLoading, 
+    error: detailsError 
+  } = useStockData();
 
   // Format numbers
   const formatNumber = (value: number) => {
@@ -191,52 +161,46 @@ const StockDetails = () => {
 
   if (detailsError) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <AlertTriangle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Stock Not Found</h2>
-          <p className="text-gray-600 mb-4">The stock symbol "{symbol}" could not be found.</p>
-          <Button onClick={() => navigate('/')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Search
-          </Button>
+      <AppLayout title="Stock Not Found" description="The requested stock could not be found">
+        <div className="flex items-center justify-center min-h-96">
+          <div className="text-center">
+            <AlertTriangle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-foreground mb-2">Stock Not Found</h2>
+            <p className="text-muted-foreground mb-4">The stock symbol "{symbol}" could not be found.</p>
+            <Button onClick={() => navigate('/')}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Search
+            </Button>
+          </div>
         </div>
-      </div>
+      </AppLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <AppLayout title={`${symbol} - Stock Details`} description={`Detailed analysis and trading information for ${symbol}`}>
       {/* Header */}
-      <header className="bg-card border-b border-border sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" onClick={() => navigate('/')}>
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back
-              </Button>
-              <div className="flex items-center space-x-2">
-                <BarChart3 className="h-6 w-6 text-primary" />
-                <span className="text-xl font-bold text-foreground">AlgoSentia</span>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button variant="outline" size="sm">
-                <Bookmark className="h-4 w-4 mr-2" />
-                {isBookmarked ? 'Bookmarked' : 'Bookmark'}
-              </Button>
-              <Button variant="outline" size="sm">
-                <Share2 className="h-4 w-4 mr-2" />
-                Share
-              </Button>
-            </div>
-          </div>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center space-x-4">
+          <Button variant="ghost" onClick={() => navigate('/')}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
         </div>
-      </header>
+        <div className="flex items-center space-x-2">
+          <Button variant="outline" size="sm">
+            <Bookmark className="h-4 w-4 mr-2" />
+            {isBookmarked ? 'Bookmarked' : 'Bookmark'}
+          </Button>
+          <Button variant="outline" size="sm">
+            <Share2 className="h-4 w-4 mr-2" />
+            Share
+          </Button>
+        </div>
+      </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {detailsLoading ? (
+      <div className="space-y-8">
+        {isLoading ? (
           <div className="space-y-8">
             <div className="flex items-center space-x-4">
               <Skeleton className="h-8 w-32" />
@@ -330,10 +294,10 @@ const StockDetails = () => {
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent>
-                    {historicalLoading ? (
-                      <Skeleton className="h-96 w-full" />
-                    ) : historicalData ? (
+                    <CardContent>
+                      {isLoading ? (
+                        <Skeleton className="h-96 w-full" />
+                      ) : historicalData ? (
                       <ResponsiveContainer width="100%" height={400}>
                         <AreaChart data={historicalData}>
                           <defs>
@@ -519,7 +483,7 @@ const StockDetails = () => {
                       <CardTitle>Latest News</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {newsLoading ? (
+                      {isLoading ? (
                         <div className="space-y-4">
                           {[...Array(3)].map((_, i) => (
                             <div key={i} className="border-b border-gray-200 pb-4">
@@ -556,7 +520,7 @@ const StockDetails = () => {
                       <CardTitle>Financial Data</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {financialsLoading ? (
+                      {isLoading ? (
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                           {[...Array(8)].map((_, i) => (
                             <div key={i} className="text-center">
@@ -611,7 +575,7 @@ const StockDetails = () => {
                       <CardTitle>Peer Companies</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {peersLoading ? (
+                      {isLoading ? (
                         <div className="space-y-4">
                           {[...Array(5)].map((_, i) => (
                             <div key={i} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
@@ -664,8 +628,8 @@ const StockDetails = () => {
             </div>
           </>
         ) : null}
-      </main>
-    </div>
+      </div>
+    </AppLayout>
   );
 };
 

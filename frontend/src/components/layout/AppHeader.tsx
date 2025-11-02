@@ -17,11 +17,43 @@ import { useNavigate } from 'react-router-dom';
 import ThemeToggle from '@/components/ThemeToggle';
 import SearchBar from '@/components/SearchBar';
 
+interface StockDetails {
+  symbol: string;
+  name: string;
+  price: number;
+  change: number;
+  changePercent: number;
+  volume: number;
+  marketCap: number;
+  pe: number;
+  eps: number;
+  dividend: number;
+  dividendYield: number;
+  high52Week: number;
+  low52Week: number;
+  avgVolume: number;
+  beta: number;
+  sector: string;
+  industry: string;
+  description: string;
+  website: string;
+  employees: number;
+  founded: number;
+  headquarters: string;
+}
+
 const AppHeader = () => {
   const [notificationCount, setNotificationCount] = useState(3);
   const { toast } = useToast();
   const { logout } = useAuth();
   const navigate = useNavigate();
+
+  // Handle stock selection from SearchBar
+  const handleStockSelect = (stock: StockDetails | null) => {
+    // Dispatch custom event to communicate with page components
+    const event = new CustomEvent('stockSelected', { detail: stock });
+    window.dispatchEvent(event);
+  };
 
   const handleNotificationClick = () => {
     if (notificationCount > 0) {
@@ -44,11 +76,13 @@ const AppHeader = () => {
     <header className="flex items-center justify-between p-4 border-b border-border bg-card">
       <div className="flex gap-2 items-center">
         <div className="hidden md:block w-96">
-          <SearchBar 
-            placeholder="Search for stocks (e.g., RELIANCE, TCS, HDFC, AAPL)..."
-            showInlineDetails={true}
-            className="w-full"
-          />
+                      <SearchBar 
+                        placeholder="Search for stocks (e.g., RELIANCE, TCS, HDFC, AAPL)..."
+                        showInlineDetails={true}
+                        className="w-full"
+                        pageContext="header"
+                        onStockSelect={handleStockSelect}
+                      />
         </div>
       </div>
       <div className="flex gap-4 items-center">

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -14,6 +15,7 @@ import {
 import AppLayout from '@/components/layout/AppLayout';
 
 const Transactions: React.FC = () => {
+  const navigate = useNavigate();
   const { transactions, virtualCash } = useTrading();
 
   const formatDate = (date: Date) => {
@@ -116,7 +118,7 @@ const Transactions: React.FC = () => {
                 <div className="text-muted-foreground mb-4">
                   No transactions yet. Start trading to see your history here.
                 </div>
-                <Button onClick={() => window.location.href = '/search'}>
+                <Button onClick={() => navigate('/trading')}>
                   Start Trading
                 </Button>
               </div>

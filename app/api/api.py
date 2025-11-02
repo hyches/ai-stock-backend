@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.endpoints import auth, market_simple, market_data, ml, ml_analysis, settings, backup, portfolio, trading, research
+from app.api.endpoints import auth, market_simple, market_data, ml, ml_analysis, settings, backup, portfolio, trading, research, screener
 
 api_router = APIRouter()
 
@@ -13,4 +13,5 @@ api_router.include_router(settings.router, prefix="/settings", tags=["settings"]
 api_router.include_router(backup.router, prefix="/backup", tags=["backup"])
 api_router.include_router(portfolio.router, prefix="/portfolio", tags=["portfolio"])
 api_router.include_router(trading.router, prefix="/trading", tags=["trading"])
-api_router.include_router(research.router, prefix="/research", tags=["research"]) 
+api_router.include_router(research.router, prefix="/research", tags=["research"])
+api_router.include_router(screener.router, prefix="", tags=["screener"]) 

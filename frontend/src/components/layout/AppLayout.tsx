@@ -43,17 +43,19 @@ const AppLayout = ({ children, title, description }: AppLayoutProps) => {
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden ml-0">
         <AppHeader />
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
-          {title && (
-            <div className="mb-6">
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground">{title}</h1>
-              {description && (
-                <p className="text-muted-foreground mt-1">{description}</p>
-              )}
-              <div className="mt-1 h-1 w-16 bg-primary rounded-full"></div>
-            </div>
-          )}
-          {children}
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 w-full">
+          <div className="max-w-full">
+            {title && (
+              <div className="mb-6">
+                <h1 className="text-2xl md:text-3xl font-bold text-foreground">{title}</h1>
+                {description && (
+                  <p className="text-muted-foreground mt-1">{description}</p>
+                )}
+                <div className="mt-1 h-1 w-16 bg-primary rounded-full"></div>
+              </div>
+            )}
+            {children}
+          </div>
         </main>
       </div>
     </div>

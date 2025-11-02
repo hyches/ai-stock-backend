@@ -12,20 +12,33 @@ class StockScreener:
     Service for screening stocks based on various criteria.
     """
     
-    # List of stock symbols to screen (Indian stocks with .BO suffix for BSE)
+    # List of stock symbols to screen (Indian stocks with .NS suffix for NSE)
     STOCK_SYMBOLS = [
         # Technology
-        "TCS.BO", "INFY.BO", "WIPRO.BO",
+        "TCS.NS", "INFY.NS", "WIPRO.NS", "HCLTECH.NS", "TECHM.NS",
         # Banking & Finance
-        "HDFCBANK.BO", "ICICIBANK.BO",
+        "HDFCBANK.NS", "ICICIBANK.NS", "SBIN.NS", "KOTAKBANK.NS", "AXISBANK.NS",
+        "BAJFINANCE.NS", "BAJAJFINSV.NS",
         # FMCG
-        "HINDUNILVR.BO", "ITC.BO",
+        "HINDUNILVR.NS", "ITC.NS", "NESTLEIND.NS", "TITAN.NS",
         # Energy
-        "RELIANCE.BO", "ONGC.BO",
+        "RELIANCE.NS", "ONGC.NS", "NTPC.NS",
         # Healthcare
-        "SUNPHARMA.BO", "DRREDDY.BO",
+        "SUNPHARMA.NS", "DRREDDY.NS", "CIPLA.NS",
         # Auto
-        "MARUTI.BO", "TATAMOTORS.BO"
+        "MARUTI.NS", "TATAMOTORS.NS",
+        # Infrastructure
+        "LT.NS", "ULTRACEMCO.NS", "POWERGRID.NS",
+        # Telecom
+        "BHARTIARTL.NS",
+        # Steel
+        "TATASTEEL.NS", "JSWSTEEL.NS",
+        # Adani Group
+        "ADANIPORTS.NS", "ADANIENT.NS",
+        # Paint
+        "ASIANPAINT.NS",
+        # E-commerce
+        "ZOMATO.NS", "NYKAA.NS"
     ]
     
     # Sector mapping for more flexible matching

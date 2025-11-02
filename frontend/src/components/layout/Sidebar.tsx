@@ -14,7 +14,6 @@ import {
   ChevronRight,
   DollarSign,
   Download,
-  Search,
   History
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -57,7 +56,6 @@ const NavItem = ({
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
-  { icon: Search, label: "Stock Search", path: "/search" },
   { icon: Filter, label: "Stock Screener", path: "/screener" },
   { icon: BookOpen, label: "AI Research Reports", path: "/research" },
   { icon: PieChart, label: "Portfolio Optimizer", path: "/optimizer" },

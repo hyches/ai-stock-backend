@@ -143,7 +143,7 @@ const Investments = () => {
           ) : (
             <div className="text-center py-12">
               <div className="text-muted-foreground mb-4">No investments yet</div>
-              <Button onClick={() => navigate('/search')}>
+              <Button onClick={() => navigate('/dashboard')}>
                 Start Investing
               </Button>
             </div>

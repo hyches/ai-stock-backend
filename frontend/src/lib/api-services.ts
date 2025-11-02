@@ -136,6 +136,110 @@ export const getStockPeers = async (symbol: string) => {
   }
 };
 
+// Screen stocks with criteria
+export interface ScreenerCriteria {
+  sector?: string;
+  min_volume?: number;
+  max_pe?: number;
+  min_market_cap?: number;
+  min_price?: number;
+  max_price?: number;
+  min_dividend_yield?: number;
+}
 
+export interface ScreenedStock {
+  symbol: string;
+  name: string;
+  sector: string;
+  price: number;
+  volume: number;
+  market_cap: number;
+  pe_ratio?: number;
+  dividend_yield?: number;
+  ma_50?: number;
+  ma_200?: number;
+  last_updated: string;
+}
+
+export const screenStocks = async (criteria: ScreenerCriteria): Promise<ScreenedStock[]> => {
+  try {
+    const response = await apiClient.post('/screener', criteria);
+    return response.data;
+  } catch (error) {
+    console.error('Screen stocks error:', error);
+    throw new Error(`Failed to screen stocks: ${error.response?.data?.detail || error.message}`);
+  }
+};
+
+// Research Report interfaces
+export interface ResearchReportRequest {
+  symbol: string;
+  include_technical?: boolean;
+  include_sentiment?: boolean;
+  include_competitors?: boolean;
+  format?: string;
+}
+
+export interface ResearchReportResponse {
+  symbol: string;
+  company_name: string;
+  sector: string;
+  industry: string;
+  current_price: number;
+  financials: {
+    revenue: number;
+    net_income: number;
+    eps: number;
+    pe_ratio: number;
+    market_cap: number;
+    dividend_yield?: number;
+    debt_to_equity?: number;
+    profit_margin: number;
+  };
+  technicals?: {
+    ma_50: number;
+    ma_200: number;
+    rsi: number;
+    macd: number;
+    volume_avg: number;
+  };
+  sentiment?: {
+    overall_score: number;
+    news_sentiment: number;
+    social_sentiment: number;
+    analyst_rating: string;
+    price_target: number;
+  };
+  competitors?: string[];
+  summary: string;
+  recommendations: string[];
+  risk_factors: string[];
+  generated_at: string;
+  report_url?: string;
+}
+
+// Generate research report
+export const generateResearchReport = async (request: ResearchReportRequest): Promise<ResearchReportResponse> => {
+  try {
+    const response = await apiClient.post('/research/report', request);
+    return response.data;
+  } catch (error) {
+    console.error('Generate research report error:', error);
+    throw new Error(`Failed to generate research report: ${error.response?.data?.detail || error.message}`);
+  }
+};
+
+// Get research report (GET endpoint)
+export const getResearchReport = async (symbol: string): Promise<any> => {
+  try {
+    // Ensure Indian stock format (.NS suffix)
+    const formattedSymbol = symbol.toUpperCase().endsWith('.NS') ? symbol.toUpperCase() : `${symbol.toUpperCase()}.NS`;
+    const response = await apiClient.get(`/research/research/${formattedSymbol}`);
+    return response.data;
+  } catch (error) {
+    console.error('Get research report error:', error);
+    throw new Error(`Failed to get research report: ${error.response?.data?.detail || error.message}`);
+  }
+};
 
 export default apiClient;

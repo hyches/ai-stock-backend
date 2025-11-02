@@ -13,13 +13,13 @@ import StockDetails from "./pages/StockDetails";
 import NotFound from "./pages/NotFound";
 import Screener from "./pages/Screener";
 import Research from "./pages/Research";
+import { StockDataProvider } from "@/context/StockDataContext";
 import Optimizer from "./pages/Optimizer";
 import Trading from "./pages/Trading";
 import Policy from "./pages/Policy";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import Login from "./pages/Login";
-import Search from "./pages/Search";
 import Transactions from "./pages/Transactions";
 import Investments from "./pages/Investments";
 
@@ -38,14 +38,13 @@ const App = () => (
               {/* Public routes */}
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
-              <Route path="/stock/:symbol" element={<StockDetails />} />
+              <Route path="/stock/:symbol" element={<StockDataProvider><StockDetails /></StockDataProvider>} />
 
               {/* Protected routes */}
               <Route element={<ProtectedRoute />}>
                 <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/search" element={<Search />} />
                 <Route path="/screener" element={<Screener />} />
-                <Route path="/research" element={<Research />} />
+                <Route path="/research" element={<StockDataProvider><Research /></StockDataProvider>} />
                 <Route path="/optimizer" element={<Optimizer />} />
                 <Route path="/trading" element={<Trading />} />
                 <Route path="/investments" element={<Investments />} />
