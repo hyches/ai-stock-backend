@@ -16,11 +16,13 @@ def main():
     # Add current directory to Python path
     sys.path.insert(0, str(backend_dir))
     
-    print("🚀 Starting AI Stock Backend Server...")
-    print(f"📁 Working Directory: {os.getcwd()}")
-    print(f"🌐 Server URL: http://127.0.0.1:8000")
-    print(f"📊 Health Check: http://127.0.0.1:8000/health")
+    print("=" * 50)
+    print("Starting AI Stock Backend Server...")
+    print(f"Working Directory: {os.getcwd()}")
+    print(f"Server URL: http://127.0.0.1:8000")
+    print(f"Health Check: http://127.0.0.1:8000/health")
     print("Press Ctrl+C to stop the server")
+    print("=" * 50)
     
     # Start the server
     uvicorn.run(
@@ -28,7 +30,10 @@ def main():
         host="127.0.0.1",
         port=8000,
         reload=True,
-        log_level="info"
+        log_level="info",
+        timeout_keep_alive=30,  # Prevent stuck connections
+        limit_concurrency=100,  # Limit concurrent connections
+        backlog=50  # Limit connection backlog
     )
 
 if __name__ == "__main__":

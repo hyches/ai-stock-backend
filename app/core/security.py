@@ -123,8 +123,19 @@ class CSRFMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
     
     def _verify_csrf_token(self, token: str, request: Request) -> bool:
-        # Implement your CSRF token verification logic here
-        return True  # Placeholder
+        """
+        Verify CSRF token using Double Submit Cookie pattern.
+        """
+        # Allow requests with valid API key to bypass CSRF (for external services)
+        if request.headers.get(API_KEY_NAME) == settings.API_KEY:
+            return True
+            
+        csrf_cookie = request.cookies.get("csrf_token")
+        if not csrf_cookie:
+            return False
+            
+        # Constant time comparison
+        return secrets.compare_digest(token, csrf_cookie)
 
 # Rate limiting configuration
 RATE_LIMIT_WINDOW = 60  # 1 minute

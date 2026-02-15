@@ -163,7 +163,14 @@ export interface ScreenedStock {
 
 export const screenStocks = async (criteria: ScreenerCriteria): Promise<ScreenedStock[]> => {
   try {
-    const response = await apiClient.post('/screener', criteria);
+    // Try main screener endpoint first, fallback to research endpoint
+    let response;
+    try {
+      response = await apiClient.post('/screener', criteria);
+    } catch (e) {
+      // Fallback to research screener endpoint
+      response = await apiClient.post('/research/screener', criteria);
+    }
     return response.data;
   } catch (error) {
     console.error('Screen stocks error:', error);
@@ -229,16 +236,179 @@ export const generateResearchReport = async (request: ResearchReportRequest): Pr
   }
 };
 
-// Get research report (GET endpoint)
-export const getResearchReport = async (symbol: string): Promise<any> => {
+// Get comprehensive stock data for details page
+export const getComprehensiveStockData = async (symbol: string): Promise<any> => {
   try {
-    // Ensure Indian stock format (.NS suffix)
-    const formattedSymbol = symbol.toUpperCase().endsWith('.NS') ? symbol.toUpperCase() : `${symbol.toUpperCase()}.NS`;
-    const response = await apiClient.get(`/research/research/${formattedSymbol}`);
+    const formattedSymbol = symbol.toUpperCase();
+    const response = await apiClient.get(`/research/${formattedSymbol}`);
     return response.data;
   } catch (error) {
-    console.error('Get research report error:', error);
-    throw new Error(`Failed to get research report: ${error.response?.data?.detail || error.message}`);
+    console.error('Get comprehensive stock data error:', error);
+    throw new Error(`Failed to get comprehensive stock data: ${error.response?.data?.detail || error.message}`);
+  }
+};
+
+// Get lightweight quote for fast loading
+export const getStockQuoteLite = async (symbol: string): Promise<any> => {
+  try {
+    const formattedSymbol = symbol.toUpperCase();
+    const response = await apiClient.get(`/research/${formattedSymbol}/quote`);
+    return response.data;
+  } catch (error) {
+    console.error('Get quote lite error:', error);
+    throw new Error(`Failed to get quote: ${error.response?.data?.detail || error.message}`);
+  }
+};
+
+// ML and Pattern Detection endpoints
+export const getMLFeatures = async (symbol: string, period: string = "2y") => {
+  try {
+    const response = await apiClient.post(`/research-ml/${symbol}/ml-features?period=${period}`);
+    return response.data;
+  } catch (error) {
+    console.error('Get ML features error:', error);
+    throw error;
+  }
+};
+
+export const triggerMLTraining = async (symbol: string) => {
+  try {
+    const response = await apiClient.post(`/research-ml/${symbol}/train-on-patterns`);
+    return response.data;
+  } catch (error) {
+    console.error('Trigger ML training error:', error);
+    throw error;
+  }
+};
+
+export const getTrainingStatus = async (symbol: string, jobId: string) => {
+  try {
+    const response = await apiClient.get(`/research-ml/${symbol}/train-status/${jobId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Get training status error:', error);
+    throw error;
+  }
+};
+
+export const getPatternAnalysis = async (symbol: string) => {
+  try {
+    const response = await apiClient.get(`/research-ml/${symbol}/pattern-analysis`);
+    return response.data;
+  } catch (error) {
+    console.error('Get pattern analysis error:', error);
+    throw error;
+  }
+};
+
+// --- Professional Trading Platform Endpoints ---
+
+// Backtesting
+export interface BacktestRequest {
+  symbol: string;
+  days: number;
+  strategy: string;
+  initial_capital: number;
+  params?: Record<string, any>;
+}
+
+export const runProfessionalBacktest = async (request: BacktestRequest) => {
+  try {
+    const response = await apiClient.post('/backtest/run', request);
+    return response.data;
+  } catch (error) {
+    console.error('Run backtest error:', error);
+    throw error;
+  }
+};
+
+export const getMonteCarloSimulation = async (backtestId: string) => {
+  try {
+    const response = await apiClient.get(`/backtest/${backtestId}/monte-carlo`);
+    return response.data;
+  } catch (error) {
+    console.error('Monte Carlo error:', error);
+    throw error;
+  }
+};
+
+// Risk Management
+export const getPortfolioRiskMetrics = async () => {
+  try {
+    const response = await apiClient.get('/risk/metrics');
+    return response.data;
+  } catch (error) {
+    console.error('Get risk metrics error:', error);
+    throw error;
+  }
+};
+
+export const getCorrelationMatrix = async (symbols: string[]) => {
+  try {
+    const response = await apiClient.post('/risk/correlation', { symbols });
+    return response.data;
+  } catch (error) {
+    console.error('Get correlation error:', error);
+    throw error;
+  }
+};
+
+export const calculatePositionSize = async (params: {
+  method: 'kelly' | 'fixed' | 'volatility';
+  symbol: string;
+  [key: string]: any;
+}) => {
+  try {
+    const response = await apiClient.post('/risk/position-size', params);
+    return response.data;
+  } catch (error) {
+    console.error('Position size error:', error);
+    throw error;
+  }
+};
+
+// Advanced Execution
+export interface AdvancedOrderRequest {
+  symbol: string;
+  side: 'BUY' | 'SELL';
+  order_type: 'MARKET' | 'LIMIT' | 'BRACKET' | 'TRAILING_STOP';
+  quantity: number;
+  price?: number;
+  stop_price?: number;
+  target_price?: number;
+  trail_percent?: number;
+}
+
+export const submitAdvancedOrder = async (order: AdvancedOrderRequest) => {
+  try {
+    const response = await apiClient.post('/trading/advanced-order', order);
+    return response.data;
+  } catch (error) {
+    console.error('Submit advanced order error:', error);
+    throw error;
+  }
+};
+
+// Tax and Reporting
+export const calculateTaxLiability = async (year: number) => {
+  try {
+    const response = await apiClient.get(`/reports/tax-liability?year=${year}`);
+    return response.data;
+  } catch (error) {
+    console.error('Tax liability error:', error);
+    throw error;
+  }
+};
+
+export const downloadProfessionalReport = async (symbol: string, format: 'pdf' | 'csv' = 'pdf') => {
+  try {
+    const response = await apiClient.get(`/reports/generate/${symbol}?format=${format}`, {
+      responseType: 'blob'
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Download report error:', error);
+    throw error;
   }
 };
 

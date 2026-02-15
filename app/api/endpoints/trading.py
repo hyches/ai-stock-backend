@@ -2,201 +2,283 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from typing import List, Optional
 from datetime import datetime, date
 from typing import Any
-from app.core.security import get_current_user
-from app.schemas.trading import (
-    StrategyCreate, Strategy, StrategyUpdate,
-    TradeCreate, Trade, TradeUpdate,
-    PortfolioCreate, Portfolio, PortfolioUpdate,
-    PositionCreate, Position, PositionUpdate,
-    BacktestResultCreate, BacktestResult
-)
+from sqlalchemy.orm import Session
+from app.api.deps import get_current_user, get_db
 from app.models.user import User
+from app.models.database import Portfolio, Stock
+from app.models.trading import Strategy, Trade, Position, Signal
+from app.schemas.trading import (
+    StrategyCreate, Strategy as StrategySchema, StrategyUpdate,
+    TradeCreate, Trade as TradeSchema, TradeUpdate,
+    Portfolio as PortfolioSchema, PortfolioCreate,
+    Position as PositionSchema, PositionCreate
+)
 
 router = APIRouter()
 
 # Strategy endpoints
-@router.post("/strategies/", response_model=Strategy, status_code=status.HTTP_201_CREATED)
+@router.post("/strategies/", response_model=StrategySchema, status_code=status.HTTP_201_CREATED)
 def create_strategy(
     strategy_in: StrategyCreate,
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    # Mock implementation
-    return {**strategy_in.dict(), "id": 1, "user_id": current_user.id, "created_at": datetime.now(), "updated_at": datetime.now()}
+    """Create a new trading strategy in the DB."""
+    strategy = Strategy(
+        user_id=current_user.id,
+        name=strategy_in.name,
+        type=strategy_in.type,
+        description=strategy_in.description,
+        parameters=strategy_in.parameters,
+        is_active=strategy_in.is_active,
+        symbols=["NIFTY", "BANKNIFTY"], # Default symbols
+        timeframe="1h" # Default timeframe
+    )
+    db.add(strategy)
+    db.commit()
+    db.refresh(strategy)
+    return strategy
 
-@router.get("/strategies/")
-def get_strategies():
-    # Return proper trading strategies
-    return [
-        {
-            "id": 1, 
-            "name": "Momentum Strategy", 
-            "description": "Follows price trends using moving averages", 
-            "type": "trend_following",
-            "parameters": {"fast_period": 12, "slow_period": 26, "signal_period": 9},
-            "is_active": True,
-            "performance": {"total_return": 15.2, "sharpe_ratio": 1.8, "max_drawdown": -5.1}
-        },
-        {
-            "id": 2, 
-            "name": "Mean Reversion Strategy", 
-            "description": "Trades against price extremes", 
-            "type": "mean_reversion",
-            "parameters": {"lookback_period": 20, "entry_std": 2.0, "exit_std": 0.5},
-            "is_active": True,
-            "performance": {"total_return": 8.7, "sharpe_ratio": 1.2, "max_drawdown": -3.2}
-        },
-        {
-            "id": 3, 
-            "name": "Breakout Strategy", 
-            "description": "Captures price breakouts", 
-            "type": "breakout",
-            "parameters": {"lookback_period": 20, "breakout_threshold": 0.02},
-            "is_active": False,
-            "performance": {"total_return": 12.1, "sharpe_ratio": 1.5, "max_drawdown": -7.8}
-        }
-    ]
+@router.get("/strategies/", response_model=List[StrategySchema])
+def get_strategies(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Fetch real strategies from the database."""
+    return db.query(Strategy).filter(Strategy.user_id == current_user.id).all()
 
 # Trade endpoints
-@router.post("/trades/", response_model=Trade, status_code=status.HTTP_201_CREATED)
+@router.post("/trades/", response_model=TradeSchema, status_code=status.HTTP_201_CREATED)
 def create_trade(
     trade_in: TradeCreate,
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    # Mock implementation
-    return {**trade_in.dict(), "id": 1, "user_id": current_user.id, "created_at": datetime.utcnow()}
+    """Log a real trade in the DB."""
+    # Find active portfolio
+    portfolio = db.query(Portfolio).filter(Portfolio.user_id == current_user.id).first()
+    if not portfolio:
+        raise HTTPException(status_code=404, detail="Portfolio not found")
+        
+    trade = Trade(
+        portfolio_id=portfolio.id,
+        symbol=trade_in.symbol,
+        quantity=trade_in.quantity,
+        price=trade_in.price,
+        side=trade_in.action,
+        pnl=trade_in.pnl or 0.0,
+        fees=0.1, # Dummy fee
+        created_at=datetime.utcnow()
+    )
+    db.add(trade)
+    db.commit()
+    db.refresh(trade)
+    return trade
 
-@router.get("/trades/")
-def get_trades():
-    # Return proper trade history
-    return [
-        {
-            "id": 1, 
-            "symbol": "AAPL", 
-            "action": "buy", 
-            "quantity": 100, 
-            "price": 175.50, 
-            "status": "executed",
-            "pnl": 250.0,
-            "created_at": "2024-01-15T10:30:00Z",
-            "strategy": "Momentum Strategy"
-        },
-        {
-            "id": 2, 
-            "symbol": "GOOGL", 
-            "action": "sell", 
-            "quantity": 50, 
-            "price": 2850.0, 
-            "status": "executed",
-            "pnl": -150.0,
-            "created_at": "2024-01-14T14:20:00Z",
-            "strategy": "Mean Reversion Strategy"
-        },
-        {
-            "id": 3, 
-            "symbol": "MSFT", 
-            "action": "buy", 
-            "quantity": 75, 
-            "price": 408.25, 
-            "status": "pending",
-            "pnl": 0.0,
-            "created_at": "2024-01-16T09:15:00Z",
-            "strategy": "Breakout Strategy"
-        }
-    ]
+@router.get("/trades/", response_model=List[TradeSchema])
+def get_trades(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Fetch real trade history from the database."""
+    return db.query(Trade).join(Portfolio).filter(Portfolio.user_id == current_user.id).all()
 
 # Portfolio endpoints
-@router.post("/portfolios/", response_model=Portfolio, status_code=status.HTTP_201_CREATED)
-def create_portfolio(
-    portfolio_in: PortfolioCreate,
-    current_user: User = Depends(get_current_user)
-):
-    # Mock implementation
-    return {**portfolio_in.dict(), "id": 1, "user_id": current_user.id, "created_at": datetime.utcnow()}
-
-@router.get("/portfolios/", response_model=List[Portfolio])
+@router.get("/portfolios/", response_model=List[PortfolioSchema])
 def get_portfolios(
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    # Mock implementation
-    return [
-        {"id": 1, "user_id": current_user.id, "name": "My First Portfolio", "description": "Long-term investments", "created_at": datetime.utcnow()},
-        {"id": 2, "user_id": current_user.id, "name": "Aggressive Growth", "description": "High-risk, high-reward", "created_at": datetime.utcnow()},
-    ]
+    """Fetch user portfolios from DB."""
+    return db.query(Portfolio).filter(Portfolio.user_id == current_user.id).all()
 
 # Position endpoints
-@router.post("/positions/", response_model=Position, status_code=status.HTTP_201_CREATED)
-def create_position(
-    position_in: PositionCreate,
+@router.get("/positions/", response_model=List[PositionSchema])
+def get_positions(
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    # Mock implementation
-    return {**position_in.dict(), "id": 1, "user_id": current_user.id, "created_at": datetime.utcnow()}
+    """Fetch real open positions from the database."""
+    return db.query(Position).join(Portfolio).filter(
+        Portfolio.user_id == current_user.id,
+        Position.status == "open"
+    ).all()
 
-@router.get("/positions/")
-def get_positions():
-    # Return proper current positions
-    return [
-        {
-            "id": 1, 
-            "symbol": "AAPL", 
-            "quantity": 100, 
-            "avg_price": 170.0, 
-            "current_price": 175.50, 
-            "unrealized_pnl": 550.0,
-            "realized_pnl": 250.0,
-            "status": "open",
-            "created_at": "2024-01-10T09:00:00Z",
-            "strategy": "Momentum Strategy"
-        },
-        {
-            "id": 2, 
-            "symbol": "MSFT", 
-            "quantity": 75, 
-            "avg_price": 400.0, 
-            "current_price": 408.25, 
-            "unrealized_pnl": 618.75,
-            "realized_pnl": 0.0,
-            "status": "open",
-            "created_at": "2024-01-12T11:30:00Z",
-            "strategy": "Breakout Strategy"
-        },
-        {
-            "id": 3, 
-            "symbol": "TSLA", 
-            "quantity": 25, 
-            "avg_price": 180.0, 
-            "current_price": 178.80, 
-            "unrealized_pnl": -30.0,
-            "realized_pnl": 0.0,
-            "status": "open",
-            "created_at": "2024-01-13T14:45:00Z",
-            "strategy": "Mean Reversion Strategy"
+# ... existing endpoints ...
+
+# Paper Trading Models
+from pydantic import BaseModel
+
+class PaperOrderRequest(BaseModel):
+    symbol: str
+    side: str  # BUY or SELL
+    quantity: int
+    order_type: str = "MARKET"
+
+class GridBotRequest(BaseModel):
+    symbol: str
+    lower_range: float
+    upper_range: float
+    grid_count: int
+    investment: float
+
+# Paper Trading Endpoints
+from app.services.paper_trading import paper_trading_service
+from app.strategies.grid import GridStrategy, active_bots
+import yfinance as yf
+
+@router.get("/paper/portfolio")
+async def get_paper_portfolio():
+    """Get current paper trading portfolio and performance."""
+    return await paper_trading_service.get_portfolio()
+
+@router.post("/paper/orders")
+async def place_paper_order(order: PaperOrderRequest):
+    """Place a paper trade."""
+    return await paper_trading_service.place_order(
+        symbol=order.symbol.upper(),
+        quantity=order.quantity,
+        side=order.side,
+        order_type=order.order_type
+    )
+
+@router.get("/paper/orders")
+async def get_paper_orders():
+    """Get paper trading history."""
+    return paper_trading_service.trade_history
+
+@router.post("/paper/reset")
+async def reset_paper_balance(amount: float = 1000000.0):
+    """Add funds to paper trading account."""
+    return await paper_trading_service.reset_balance(amount)
+
+@router.post("/strategies/grid")
+async def start_grid_bot(config: GridBotRequest):
+    """Start a new Grid Trading Bot."""
+    bot_id = f"{config.symbol}_{datetime.now().timestamp()}"
+    bot = GridStrategy(
+        symbol=config.symbol.upper(),
+        lower_range=config.lower_range,
+        upper_range=config.upper_range,
+        grid_count=config.grid_count,
+        investment=config.investment
+    )
+    
+    initial_state = await bot.initialize()
+    active_bots[bot_id] = bot
+    
+    return {
+        "bot_id": bot_id,
+        "config": config.dict(),
+        "state": initial_state
+    }
+
+@router.get("/market/option-chain/{symbol}")
+async def get_option_chain(symbol: str):
+    """
+    Get option chain data for a symbol.
+    Logic:
+    1. If US Symbol (e.g. AAPL) -> Fetch from yfinance (Works).
+    2. If Indian Symbol (e.g. NIFTY) ->
+       - Fetch SPOT PRICE from yfinance (Works using proper mapping).
+       - Fetch CHAIN from Zerodha (if configured).
+       - If Zerodha not configured, return empty chain + warning.
+    """
+    try:
+        # 1. Symbol Mapping for yfinance Spot Price
+        # NIFTY -> ^NSEI
+        # BANKNIFTY -> ^NSEBANK
+        # RELIANCE -> RELIANCE.NS
+        yf_symbol = symbol
+        is_indian = False
+        
+        if symbol.upper() == "NIFTY":
+            yf_symbol = "^NSEI"
+            is_indian = True
+        elif symbol.upper() == "BANKNIFTY":
+            yf_symbol = "^NSEBANK"
+            is_indian = True
+        elif not symbol.endswith(".NS") and symbol.isupper() and not symbol.startswith("^"):
+            # Heuristic: If it's just 'RELIANCE' assume Indian stock
+            # But let's check if it exists in YF as is (US stock) or needs .NS
+            # For now, simplistic heuristic:
+            if symbol.upper() in ["AAPL", "GOOGL", "MSFT", "TSLA", "SPY"]:
+                is_indian = False
+            else:
+                yf_symbol = f"{symbol}.NS"
+                is_indian = True
+
+        # 2. Fetch Spot Price (Fast Info)
+        ticker = yf.Ticker(yf_symbol)
+        try:
+            # fast_info is faster than history
+            spot_price = ticker.fast_info.last_price
+            if spot_price is None:
+                 # Fallback to history
+                 hist = ticker.history(period="1d")
+                 if not hist.empty:
+                     spot_price = hist["Close"].iloc[-1]
+        except Exception:
+            spot_price = 0.0
+
+        # 3. Fetch Option Chain
+        calls = []
+        puts = []
+        expiry = ""
+        expirations = []
+        warning = None
+
+        # STRATEGY: Try Zerodha first if Indian, else YFinance
+        if is_indian:
+            from app.core.config import settings
+            if settings.ZERODHA_API_KEY:
+                # Try Zerodha
+                from app.services.zerodha_service import ZerodhaService
+                zs = ZerodhaService()
+                chain_data = await zs.get_option_chain(symbol)
+                # Parse if valid (mocked for now in service as 'not implemented' fully)
+                if chain_data.get("status") == "error":
+                     warning = "Broker Error: " + chain_data.get("message", "Unknown")
+                else:
+                     warning = "Option Chain requires Broker Data (Coming Soon)"
+            else:
+                warning = "Connect Zerodha for Indian Option Chain"
+        else:
+            # US Stock -> Try yfinance
+            try:
+                expirations = ticker.options
+                if expirations:
+                    expiry = expirations[0]
+                    chain = ticker.option_chain(expiry)
+                    
+                    def process_df(df, type_):
+                        # Filter for near-the-money to reduce payload? 
+                        # For now send all
+                        return df[['strike', 'lastPrice', 'bid', 'ask', 'volume', 'openInterest', 'impliedVolatility']].fillna(0).to_dict('records')
+                    
+                    calls = process_df(chain.calls, 'call')
+                    puts = process_df(chain.puts, 'put')
+                else:
+                    warning = "No options data found in yfinance"
+            except Exception as e:
+                warning = f"yfinance error: {str(e)}"
+
+        return {
+            "symbol": symbol,
+            "spot_price": spot_price,
+            "currency": "INR" if is_indian else "USD",
+            "expiry": expiry,
+            "all_expiries": expirations,
+            "calls": calls,
+            "puts": puts,
+            "warning": warning
         }
-    ]
 
-# Backtest endpoints
-@router.post("/backtest/", response_model=BacktestResult, status_code=status.HTTP_201_CREATED)
-def run_backtest(
-    backtest_in: BacktestResultCreate,
-    current_user: User = Depends(get_current_user)
-):
-    # Mock implementation
-    return {**backtest_in.dict(), "id": 1, "user_id": current_user.id, "result_data": {}, "created_at": datetime.utcnow()}
-
-@router.get("/backtest/", response_model=List[BacktestResult])
-def get_backtests(
-    current_user: User = Depends(get_current_user)
-):
-    # Mock implementation
-    return [
-        {"id": 1, "user_id": current_user.id, "strategy_id": 1, "symbol": "AAPL", "start_date": date(2023, 1, 1), "end_date": date(2023, 12, 31), "initial_balance": 100000.0, "result_data": {"final_balance": 110000.0}, "created_at": datetime.utcnow()},
-    ]
-
-# Legacy orders endpoint for backward compatibility
-@router.get("/orders")
-def get_orders(current_user: User = Depends(get_current_user)):
-    """Get orders (legacy endpoint)"""
-    return [
-        {"id": "1", "symbol": "AAPL", "side": "buy", "quantity": 10, "status": "filled", "price": 175.0},
-        {"id": "2", "symbol": "GOOGL", "side": "sell", "quantity": 5, "status": "pending", "price": 2850.0},
-    ] 
+    except Exception as e:
+        print(f"Option Chain Logic Error: {e}")
+        return {
+            "symbol": symbol, 
+            "error": str(e),
+            "spot_price": 0,
+            "calls": [], "puts": [] 
+        } 

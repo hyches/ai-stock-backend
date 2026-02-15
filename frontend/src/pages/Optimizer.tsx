@@ -1,11 +1,12 @@
 
 import React, { useState } from 'react';
 import AppLayout from '@/components/layout/AppLayout';
+import apiClient, { api } from '@/lib/api-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -25,23 +26,43 @@ const Optimizer = () => {
   const [isDeepOptimize, setIsDeepOptimize] = useState(false);
   const { toast } = useToast();
 
-  const handleOptimize = () => {
+  const [recommendations, setRecommendations] = useState<any[]>([]);
+
+  const handleOptimize = async () => {
     setIsLoading(true);
-    
-    // Simulating API call
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      // Fetch real rebalancing plan from backend
+      // Assuming portfolio ID 1 for now as per previous mocks
+      const response = await api.trading.rebalance(1, {
+        "AAPL": 0.2,
+        "GOOGL": 0.2,
+        "MSFT": 0.2,
+        "NVDA": 0.2,
+        "AMZN": 0.2
+        // In a real app, these weights would come from the UI inputs
+      });
+      setRecommendations(response.data.suggested_actions);
+
       toast({
         title: "Portfolio Optimized",
-        description: isDeepOptimize ? "Deep optimization complete" : "Quick optimization complete",
+        description: `Generated ${response.data.suggested_actions.length} rebalancing actions.`,
       });
-    }, 2500);
+    } catch (error) {
+      console.error("Optimization failed:", error);
+      toast({
+        title: "Optimization Failed",
+        description: "Could not fetch rebalancing plan from server.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleDownload = (type: string) => {
     setIsDownloading(true);
-    
-    // Simulating download
+
+    // Simulating download (backend export not implemented yet)
     setTimeout(() => {
       setIsDownloading(false);
       toast({
@@ -70,7 +91,7 @@ const Optimizer = () => {
                   </SelectContent>
                 </Select>
               </FormGroup>
-              
+
               <FormGroup htmlFor="riskTolerance" label="Risk Tolerance">
                 <Slider
                   id="riskTolerance"
@@ -85,24 +106,24 @@ const Optimizer = () => {
                   <span>Aggressive</span>
                 </div>
               </FormGroup>
-              
+
               <FormGroup htmlFor="optimizationType" label="Optimization Type">
                 <div className="flex items-center justify-between">
                   <span>Quick Optimize</span>
-                  <Switch 
+                  <Switch
                     id="optimizationType"
-                    checked={isDeepOptimize} 
+                    checked={isDeepOptimize}
                     onCheckedChange={setIsDeepOptimize}
                   />
                   <span>Deep Optimize</span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {isDeepOptimize 
-                    ? "Deep optimization uses advanced algorithms and Monte Carlo simulations (slower but more accurate)" 
+                  {isDeepOptimize
+                    ? "Deep optimization uses advanced algorithms and Monte Carlo simulations (slower but more accurate)"
                     : "Quick optimization provides rapid results using simplified models"}
                 </p>
               </FormGroup>
-              
+
               <FormGroup htmlFor="constraints" label="Additional Constraints">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
@@ -115,9 +136,9 @@ const Optimizer = () => {
                   </div>
                 </div>
               </FormGroup>
-              
-              <Button 
-                className="w-full" 
+
+              <Button
+                className="w-full"
                 disabled={isLoading}
                 onClick={handleOptimize}
               >
@@ -135,11 +156,11 @@ const Optimizer = () => {
               </Button>
             </div>
           </CustomCard>
-          
+
           <CustomCard title="Download Results">
             <div className="space-y-3">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="w-full justify-start"
                 disabled={isDownloading}
                 onClick={() => handleDownload('PDF')}
@@ -147,9 +168,9 @@ const Optimizer = () => {
                 <FilePdf className="mr-2 h-4 w-4 text-red-500" />
                 Download as PDF
               </Button>
-              
-              <Button 
-                variant="outline" 
+
+              <Button
+                variant="outline"
                 className="w-full justify-start"
                 disabled={isDownloading}
                 onClick={() => handleDownload('Excel')}
@@ -160,7 +181,7 @@ const Optimizer = () => {
             </div>
           </CustomCard>
         </div>
-        
+
         <div className="lg:col-span-2 space-y-6">
           <CustomCard title="AI Portfolio Suggestions" description="Optimization results based on your preferences">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -177,7 +198,7 @@ const Optimizer = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">Expected Return</span>
@@ -186,7 +207,7 @@ const Optimizer = () => {
                   <span className="text-green-500 text-xs">↑ 2.8%</span>
                 </div>
               </div>
-              
+
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">Portfolio Risk</span>
                 <div className="flex items-center">
@@ -194,7 +215,7 @@ const Optimizer = () => {
                   <span className="text-green-500 text-xs">↓ 3.4%</span>
                 </div>
               </div>
-              
+
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">Sharpe Ratio</span>
                 <div className="flex items-center">
@@ -202,7 +223,7 @@ const Optimizer = () => {
                   <span className="text-green-500 text-xs">↑ 0.3</span>
                 </div>
               </div>
-              
+
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">Diversification Score</span>
                 <div className="flex items-center">
@@ -212,89 +233,41 @@ const Optimizer = () => {
               </div>
             </div>
           </CustomCard>
-          
-          <Section 
-            title="Recommended Portfolio Changes" 
+
+          <Section
+            title="Recommended Portfolio Changes"
             description="Suggested actions to optimize your portfolio"
             columns={1}
           >
             <div className="space-y-4">
-              <div className="p-4 border rounded-md">
-                <div className="flex justify-between items-center mb-2">
-                  <div>
-                    <h4 className="font-medium">AAPL (Apple Inc.)</h4>
-                    <p className="text-xs text-muted-foreground">Technology</p>
+              {recommendations.length > 0 ? (
+                recommendations.map((rec, index) => (
+                  <div key={index} className="p-4 border rounded-md">
+                    <div className="flex justify-between items-center mb-2">
+                      <div>
+                        <h4 className="font-medium">{rec.symbol}</h4>
+                        <p className="text-xs text-muted-foreground">{rec.action === 'buy' ? 'Increase Position' : 'Reduce Position'}</p>
+                      </div>
+                      <Badge variant={rec.action === 'buy' ? 'success' : 'destructive'}>
+                        {rec.action === 'buy' ? <TrendingUp className="mr-1 h-3 w-3" /> : <TrendingUp className="mr-1 h-3 w-3 rotate-180" />}
+                        {rec.action.toUpperCase()}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center mb-2">
+                      <span className="text-sm text-muted-foreground w-24">Quantity:</span>
+                      <span className="text-sm ml-2 font-mono">{rec.quantity} shares</span>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="text-sm text-muted-foreground w-24">Est. Price:</span>
+                      <span className="text-sm ml-2">₹{rec.current_price || rec.price}</span>
+                    </div>
                   </div>
-                  <Badge variant="success"><TrendingUp className="mr-1 h-3 w-3" /> Increase</Badge>
+                ))
+              ) : (
+                <div className="p-8 text-center text-muted-foreground border border-dashed rounded-md">
+                  Click "Optimize Portfolio" to see real-time AI recommendations.
                 </div>
-                <div className="flex items-center mb-2">
-                  <span className="text-sm text-muted-foreground w-24">Current:</span>
-                  <div className="flex-1 h-2 bg-gray-200 rounded-full">
-                    <div className="h-2 bg-blue-500 rounded-full" style={{ width: '15%' }}></div>
-                  </div>
-                  <span className="text-sm ml-2">15%</span>
-                </div>
-                <div className="flex items-center">
-                  <span className="text-sm text-muted-foreground w-24">Recommended:</span>
-                  <div className="flex-1 h-2 bg-gray-200 rounded-full">
-                    <div className="h-2 bg-green-500 rounded-full" style={{ width: '20%' }}></div>
-                  </div>
-                  <span className="text-sm ml-2">20%</span>
-                </div>
-              </div>
-              
-              <div className="p-4 border rounded-md">
-                <div className="flex justify-between items-center mb-2">
-                  <div>
-                    <h4 className="font-medium">MSFT (Microsoft Corp.)</h4>
-                    <p className="text-xs text-muted-foreground">Technology</p>
-                  </div>
-                  <Badge variant="destructive"><TrendingUp className="mr-1 h-3 w-3 rotate-180" /> Decrease</Badge>
-                </div>
-                <div className="flex items-center mb-2">
-                  <span className="text-sm text-muted-foreground w-24">Current:</span>
-                  <div className="flex-1 h-2 bg-gray-200 rounded-full">
-                    <div className="h-2 bg-blue-500 rounded-full" style={{ width: '25%' }}></div>
-                  </div>
-                  <span className="text-sm ml-2">25%</span>
-                </div>
-                <div className="flex items-center">
-                  <span className="text-sm text-muted-foreground w-24">Recommended:</span>
-                  <div className="flex-1 h-2 bg-gray-200 rounded-full">
-                    <div className="h-2 bg-red-500 rounded-full" style={{ width: '20%' }}></div>
-                  </div>
-                  <span className="text-sm ml-2">20%</span>
-                </div>
-              </div>
-              
-              <div className="p-4 border rounded-md">
-                <div className="flex justify-between items-center mb-2">
-                  <div>
-                    <h4 className="font-medium">New Recommendation</h4>
-                    <p className="text-xs text-muted-foreground">Add to Portfolio</p>
-                  </div>
-                  <Badge variant="warning">New Addition</Badge>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
-                  <div className="p-3 border rounded-md">
-                    <h5 className="text-sm font-medium">NVDA</h5>
-                    <p className="text-xs text-muted-foreground">Nvidia Corp.</p>
-                    <p className="text-sm font-medium mt-1">Allocation: 5%</p>
-                  </div>
-                  
-                  <div className="p-3 border rounded-md">
-                    <h5 className="text-sm font-medium">GOOGL</h5>
-                    <p className="text-xs text-muted-foreground">Alphabet Inc.</p>
-                    <p className="text-sm font-medium mt-1">Allocation: 7%</p>
-                  </div>
-                  
-                  <div className="p-3 border rounded-md">
-                    <h5 className="text-sm font-medium">AMZN</h5>
-                    <p className="text-xs text-muted-foreground">Amazon.com Inc.</p>
-                    <p className="text-sm font-medium mt-1">Allocation: 8%</p>
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
           </Section>
         </div>

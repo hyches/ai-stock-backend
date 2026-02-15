@@ -4,7 +4,8 @@ from sqlalchemy.orm import sessionmaker
 from app.core.config import settings
 from app.db.base_class import Base
 from app.models.user import User
-from app.models.trading import Portfolio, Strategy, Position, Trade, Signal, BacktestResult, MarketData
+from app.models.database import Portfolio
+from app.models.trading import Strategy, Position, Trade, Signal, BacktestResult, MarketData
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

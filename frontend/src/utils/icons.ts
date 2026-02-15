@@ -1,21 +1,27 @@
 
 // Import all required icons from lucide-react
-import { 
-  FileText, 
-  FileSpreadsheet, 
-  Calendar, 
-  Download, 
-  Loader2, 
-  TrendingUp, 
-  TrendingDown, 
-  PlayCircle, 
+import {
+  FileText,
+  FileSpreadsheet,
+  Calendar,
+  Download,
+  Loader2,
+  TrendingUp,
+  TrendingDown,
+  PlayCircle,
   BarChart2,
   Filter,
   BookOpen,
   PieChart,
   FileSearch,
   Settings,
-  LayoutDashboard
+  LayoutDashboard,
+  RefreshCw,
+  Plus,
+  Minus,
+  MessageSquare,
+  ShieldCheck,
+  Scale
 } from "lucide-react";
 
 // Export all icons
@@ -35,5 +41,11 @@ export {
   PieChart,
   FileSearch,
   Settings,
-  LayoutDashboard
+  LayoutDashboard,
+  RefreshCw,
+  Plus,
+  Minus,
+  MessageSquare,
+  ShieldCheck,
+  Scale
 };

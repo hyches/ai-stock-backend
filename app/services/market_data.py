@@ -1,12 +1,21 @@
 from typing import List, Dict
 import yfinance as yf
 
-def get_stock_data(symbol: str) -> Dict:
+async def get_stock_data(symbol: str) -> Dict:
     """
-    Get stock data using yfinance
+    Get stock data using yfinance (async wrapper)
     """
+    import asyncio
+    return await asyncio.to_thread(_get_stock_data_sync, symbol)
+
+def _get_stock_data_sync(symbol: str) -> Dict:
+    """Blocking yfinance logic"""
     try:
-        ticker = yf.Ticker(symbol.upper())
+        search_symbol = symbol.upper()
+        if not search_symbol.endswith(".NS") and not search_symbol.endswith(".BO") and "^" not in search_symbol:
+            search_symbol = f"{symbol}.NS"
+            
+        ticker = yf.Ticker(search_symbol)
         info = ticker.info
         
         if not info or 'currentPrice' not in info:
@@ -49,10 +58,15 @@ def get_stock_data(symbol: str) -> Dict:
     except Exception as e:
         return {"error": f"Error fetching stock data: {str(e)}"}
 
-def search_symbols(query: str) -> List[Dict]:
+async def search_symbols(query: str) -> List[Dict]:
     """
-    Search for stocks by symbol or name
+    Search for stocks by symbol or name (async wrapper)
     """
+    import asyncio
+    return await asyncio.to_thread(_search_symbols_sync, query)
+
+def _search_symbols_sync(query: str) -> List[Dict]:
+    """Blocking yfinance logic"""
     try:
         if len(query) < 2:
             return []
@@ -85,6 +99,11 @@ def search_symbols(query: str) -> List[Dict]:
             ('META', 'Meta Platforms Inc.', 'NASDAQ'),
             ('NVDA', 'NVIDIA Corporation', 'NASDAQ'),
             ('NFLX', 'Netflix Inc.', 'NASDAQ'),
+            ('RELIANCE.NS', 'Reliance Industries', 'NSE'),
+            ('TCS.NS', 'Tata Consultancy Services', 'NSE'),
+            ('INFY.NS', 'Infosys', 'NSE'),
+            ('HDFCBANK.NS', 'HDFC Bank', 'NSE'),
+            ('TATAMOTORS.NS', 'Tata Motors', 'NSE')
         ]
         
         for symbol, name, exchange in popular_stocks:

@@ -1,0 +1,161 @@
+
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { 
+  LayoutDashboard, 
+  Filter, 
+  BookOpen, 
+  PieChart, 
+  TrendingUp, 
+  FileSearch, 
+  FileText, 
+  Settings,
+  ChevronLeft, 
+  ChevronRight,
+  DollarSign,
+  Download,
+  History
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
+import Logo from '@/components/Logo';
+
+interface NavItemProps {
+  icon: React.ElementType;
+  label: string;
+  path: string;
+  active?: boolean;
+  collapsed?: boolean;
+}
+
+const NavItem = ({ 
+  icon: Icon, 
+  label, 
+  path,
+  active = false, 
+  collapsed = false
+}: NavItemProps) => {
+  return (
+    <div
+      className={cn(
+        "flex items-center w-full px-[15px] py-[10px] my-1 rounded-md transition-all duration-200 text-left cursor-pointer",
+        active 
+          ? "bg-sidebar-primary/20 text-sidebar-primary hover:bg-sidebar-primary/30 font-medium" 
+          : "hover:bg-sidebar-accent text-sidebar-foreground hover:text-sidebar-foreground",
+        "group"
+      )}
+    >
+      <Link to={path} className="flex items-center gap-4">
+        <Icon className={cn("h-6 w-6 shrink-0", active ? "text-sidebar-primary" : "text-sidebar-foreground group-hover:text-sidebar-foreground")} />
+        {!collapsed && <span className="transition-opacity duration-200">{label}</span>}
+      </Link>
+    </div>
+  );
+};
+
+const navItems = [
+  { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
+  { icon: Filter, label: "Stock Screener", path: "/screener" },
+  { icon: BookOpen, label: "AI Research Reports", path: "/research" },
+  { icon: PieChart, label: "Portfolio Optimizer", path: "/optimizer" },
+  { icon: TrendingUp, label: "F&O Trading Terminal", path: "/trading" },
+  { icon: History, label: "Transactions", path: "/transactions" },
+  { icon: FileSearch, label: "Policy Opportunity", path: "/policy" },
+  { icon: FileText, label: "Reports & Downloads", path: "/reports" },
+  { icon: Settings, label: "Settings", path: "/settings" },
+];
+
+const Sidebar = () => {
+  const [collapsed, setCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const location = useLocation();
+  const { toast } = useToast();
+  
+  // Handle responsive sidebar
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+      if (window.innerWidth < 768) {
+        setCollapsed(true);
+      }
+    };
+
+    handleResize(); // Check on initial render
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+  
+  const toggleSidebar = () => {
+    setCollapsed(!collapsed);
+    
+    if (isMobile) {
+      toast({
+        title: collapsed ? "Navigation expanded" : "Navigation collapsed",
+        duration: 1500,
+      });
+    }
+  };
+
+  return (
+            <aside className={cn(
+              "h-screen flex flex-col bg-sidebar-background border-r border-sidebar-border transition-all duration-300 relative",
+              collapsed ? "w-16" : "w-64"
+            )}>
+      <div className="flex items-center p-4 border-b border-sidebar-border">
+        {!collapsed && (
+          <div className="flex items-center gap-3 flex-1">
+            <Logo size="md" className="text-sidebar-foreground" />
+          </div>
+        )}
+        {collapsed && (
+          <Logo size="sm" showText={false} className="mx-auto" />
+        )}
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={toggleSidebar} 
+          className={cn(
+            "text-sidebar-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent transition-all duration-200",
+            collapsed ? "mx-auto" : ""
+          )}
+        >
+          {collapsed ? 
+            <ChevronRight className="h-5 w-5" /> : 
+            <ChevronLeft className="h-5 w-5" />
+          }
+        </Button>
+      </div>
+      
+      <nav className="flex-1 py-4 pl-0 pr-2 space-y-1 overflow-y-auto scrollbar-hidden text-left">
+        {navItems.map((item) => (
+          <NavItem
+            key={item.label}
+            icon={item.icon}
+            label={item.label}
+            path={item.path}
+            active={location.pathname === item.path}
+            collapsed={collapsed}
+          />
+        ))}
+      </nav>
+      
+      <div className="p-4 border-t border-sidebar-border">
+        <div className={cn(
+          "flex items-center",
+          collapsed ? "justify-center" : "gap-3"
+        )}>
+          <div className="h-8 w-8 rounded-full bg-sidebar-primary/20 flex items-center justify-center text-sidebar-primary">
+            U
+          </div>
+          {!collapsed && <div className="text-sm font-medium text-sidebar-foreground">User</div>}
+        </div>
+      </div>
+    </aside>
+  );
+};
+
+export default Sidebar;

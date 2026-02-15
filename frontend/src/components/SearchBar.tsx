@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search as SearchIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -43,8 +44,7 @@ interface SearchBarProps {
   showInlineDetails?: boolean;
   className?: string;
   pageContext?: 'home' | 'search' | 'dashboard' | 'header';
-  onStockSelect?: (stock: StockDetails | null) => void; // This seems legacy, keeping for compatibility
-  onSymbolSelect?: (symbol: string) => void; // New callback for symbol selection
+  onStockSelect?: (stock: StockDetails | null) => void;
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({
@@ -52,8 +52,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
   showInlineDetails = true,
   className = "",
   pageContext = 'header',
-  onStockSelect,
-  onSymbolSelect,
+  onStockSelect
 }) => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
@@ -65,7 +64,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
   // Handle search input
   const handleSearchChange = async (value: string) => {
     setSearchQuery(value);
-    
+
     if (value.length >= 2) {
       setIsSearching(true);
       try {
@@ -88,37 +87,33 @@ const SearchBar: React.FC<SearchBarProps> = ({
   const handleStockSelect = (stock: StockSuggestion) => {
     setSearchQuery(stock.symbol);
     setShowSuggestions(false);
-    
-    if (onSymbolSelect) {
-      // If the callback is provided, use it instead of navigating
-      onSymbolSelect(stock.symbol);
-    } else if (stock.symbol) {
-      // Otherwise, perform the default navigation
-      navigate(`/stock/${stock.symbol}`);
+
+    // Default: Navigate to stock details page
+    if (stock.symbol) {
+      navigate(`/stock/${stock.symbol.toUpperCase()}`);
     }
-    
-    // Call original callback for backward compatibility if it exists
-    onStockSelect?.(null);
+
+    // Call callback if provided (for supplemental actions)
+    if (onStockSelect) {
+      onStockSelect(stock as any);
+    }
   };
 
   // Handle search submission
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const symbol = searchQuery.trim().toUpperCase();
-    if (!symbol) return;
-    
-    setShowSuggestions(false);
+    if (searchQuery.trim()) {
+      const symbol = searchQuery.trim().toUpperCase();
 
-    if (onSymbolSelect) {
-      // If the callback is provided, use it
-      onSymbolSelect(symbol);
-    } else {
-      // Otherwise, perform the default navigation
+      // Default: Navigate to stock details page
       navigate(`/stock/${symbol}`);
-    }
+      setShowSuggestions(false);
 
-    // Call original callback for backward compatibility if it exists
-    onStockSelect?.(null);
+      // Call callback if provided
+      if (onStockSelect) {
+        onStockSelect({ symbol } as any);
+      }
+    }
   };
 
   // Close suggestions when clicking outside
@@ -143,7 +138,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
           placeholder={placeholder}
           value={searchQuery}
           onChange={(e) => handleSearchChange(e.target.value)}
-          className="pl-10 pr-4"
+          className={cn("pl-10 pr-20", className)}
         />
         <Button type="submit" size="sm" className="absolute right-1 top-1/2 transform -translate-y-1/2">
           Search

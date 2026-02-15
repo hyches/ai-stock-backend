@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import AppHeader from './AppHeader';
-import Sidebar from './Sidebar';
+import { Sidebar } from './Sidebar';
 import { useToast } from '@/hooks/use-toast';
 
 interface AppLayoutProps {
@@ -13,15 +13,15 @@ interface AppLayoutProps {
 const AppLayout = ({ children, title, description }: AppLayoutProps) => {
   const [isMobileView, setIsMobileView] = useState(false);
   const { toast } = useToast();
-  
+
   useEffect(() => {
     const handleResize = () => {
       setIsMobileView(window.innerWidth < 768);
     };
-    
+
     handleResize(); // Check on initial load
     window.addEventListener('resize', handleResize);
-    
+
     return () => {
       window.removeEventListener('resize', handleResize);
     };
@@ -41,7 +41,7 @@ const AppLayout = ({ children, title, description }: AppLayoutProps) => {
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden ml-0">
+      <div className="flex-1 flex flex-col overflow-hidden ml-20">
         <AppHeader />
         <main className="flex-1 overflow-y-auto p-4 md:p-6 w-full">
           <div className="max-w-full">

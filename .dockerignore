@@ -1,13 +1,36 @@
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.venv/
-.git/
+# Git
+.git
 .gitignore
-pytest.ini
-*.md
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+.env.local
+.env.*
+! .env.example
+
+# Logs
+logs/
 *.log
-*.sqlite3
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+frontend/.env.*
+!frontend/.env.example
+
+# Docker
+Dockerfile
+.dockerignore
+
+# IDE
+.vscode/
+.idea/
 .pytest_cache/
-reports/ 
+pytest.ini
+*.sqlite3

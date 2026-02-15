@@ -1,6 +1,6 @@
 // API Configuration
 export const API_CONFIG = {
-  BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api/v1',
+  BASE_URL: import.meta.env.VITE_API_BASE_URL || '/api/v1',
   TIMEOUT: 10000,
   RETRY_ATTEMPTS: 3,
   RETRY_DELAY: 1000,
@@ -16,7 +16,7 @@ export const API_ENDPOINTS = {
     REFRESH: '/auth/refresh',
     ME: '/auth/me',
   },
-  
+
   // Portfolio
   PORTFOLIO: {
     LIST: '/portfolios/',
@@ -28,7 +28,7 @@ export const API_ENDPOINTS = {
     ADD_POSITION: (id: number) => `/portfolios/${id}/positions`,
     REMOVE_POSITION: (id: number, positionId: number) => `/portfolios/${id}/positions/${positionId}`,
   },
-  
+
   // Market Data
   MARKET: {
     DATA: (symbol: string) => `/market-data/${symbol}`,
@@ -37,7 +37,7 @@ export const API_ENDPOINTS = {
     REMOVE_WATCHLIST: (symbol: string) => `/market-data/watchlist/${symbol}`,
     HISTORICAL: (symbol: string) => `/market-data/${symbol}/historical`,
   },
-  
+
   // ML
   ML: {
     PREDICTIONS: (symbol: string) => `/ml/predictions/${symbol}`,
@@ -45,7 +45,7 @@ export const API_ENDPOINTS = {
     ANOMALY: '/ml/anomaly-detection',
     TRAIN: '/ml/train',
   },
-  
+
   // Trading
   TRADING: {
     ORDERS: '/trading/orders',
@@ -58,7 +58,7 @@ export const API_ENDPOINTS = {
     UPDATE_STRATEGY: (id: number) => `/trading/strategies/${id}`,
     DELETE_STRATEGY: (id: number) => `/trading/strategies/${id}`,
   },
-  
+
   // Research
   RESEARCH: {
     SCREENER: '/research/screener',
@@ -66,7 +66,7 @@ export const API_ENDPOINTS = {
     TECHNICAL: (symbol: string) => `/research/technical/${symbol}`,
     SENTIMENT: (symbol: string) => `/research/sentiment/${symbol}`,
   },
-  
+
   // Reports
   REPORTS: {
     LIST: '/reports/',
@@ -74,7 +74,7 @@ export const API_ENDPOINTS = {
     DETAIL: (id: number) => `/reports/${id}`,
     DELETE: (id: number) => `/reports/${id}`,
   },
-  
+
   // Settings
   SETTINGS: {
     GET: '/settings/',

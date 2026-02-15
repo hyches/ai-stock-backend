@@ -334,4 +334,44 @@ class ZerodhaService(BrokerBase):
                 pnl = (trade["price"] - current_price) * trade["quantity"]
             total_pnl += pnl
             
-        return {"total_pnl": total_pnl, "portfolio": portfolio} 
+
+    async def get_option_chain(self, symbol: str) -> Dict:
+        """
+        Fetch Option Chain for a symbol.
+        Note: The official Kite Connect API does not have a single 'get_option_chain' endpoint.
+        We typically need to fetch the full instrument list and filter for OPTIDX/OPTSTK 
+        matching the underlying symbol and near-term expiry.
+        
+        This implementation is a simplified version that would ideally interact with a specific 
+        Zerodha endpoint if one existed, but standard practice is client-side filtering 
+        of the master instrument dump or using NFO quote calls.
+        
+        For this simplified implementation, we will return a structure that indicates 
+        data is available if connected, but ideally, we would implement the full logic:
+        1. Download instrument list (cached).
+        2. Filter for Symbol + Segment (NFO).
+        3. Group by expiry.
+        4. Fetch Live Quotes for the strikes (Quote API).
+        """
+        if not self.api_key:
+             return {"status": "error", "message": "Zerodha API Key not configured"}
+
+        try:
+            # 1. We need to identify the underlying token
+            # This is complex in Kite; usually done by fetching all NFO instruments
+            # and filtering. For now, we place a placeholder that returns 'not implemented'
+            # effectively falling back to the UI warning, unless we build the full scraper.
+            if not self.connected and not self.use_alternative_data:
+                 await self._setup_websocket()
+
+            # Placeholder for actual Kite option chain construction
+            # Real implementation requires fetching ~50-100 instrument tokens and calling get_quote
+            return {
+                "symbol": symbol,
+                "status": "requires_full_implementation", 
+                "message": "Full Option Chain construction via API requires instrument dump"
+            }
+        except Exception as e:
+            logger.error(f"Error fetching Zerodha option chain: {e}")
+            return {"symbol": symbol, "error": str(e)}
+ 

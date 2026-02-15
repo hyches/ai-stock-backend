@@ -5,11 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useTrading } from '@/context/TradingContext';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  Star, 
-  StarOff, 
+import {
+  TrendingUp,
+  TrendingDown,
+  Star,
+  StarOff,
   DollarSign,
   Wallet
 } from 'lucide-react';
@@ -39,14 +39,14 @@ const TradingActions: React.FC<TradingActionsProps> = ({
     addToWatchlist,
     removeFromWatchlist,
     isInWatchlist,
-    getPortfolioItem
+    positions
   } = useTrading();
 
-  const portfolioItem = getPortfolioItem(symbol);
+  const portfolioItem = positions.find(p => p.symbol === symbol);
   const inWatchlist = isInWatchlist(symbol);
   const totalCost = quantity * currentPrice;
   const canBuy = totalCost <= virtualCash;
-  const canSell = portfolioItem && portfolioItem.quantity >= quantity;
+  const canSell = portfolioItem && portfolioItem.qty >= quantity;
 
   const handleBuy = async () => {
     if (!canBuy) {
@@ -153,20 +153,20 @@ const TradingActions: React.FC<TradingActionsProps> = ({
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Shares Owned:</span>
-                <span className="font-medium">{portfolioItem.quantity}</span>
+                <span className="font-medium">{portfolioItem.qty}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Avg. Price:</span>
-                <span className="font-medium">₹{portfolioItem.averagePrice.toFixed(2)}</span>
+                <span className="font-medium">₹{portfolioItem.avgPrice.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Total Value:</span>
-                <span className="font-medium">₹{portfolioItem.totalValue.toLocaleString()}</span>
+                <span className="font-medium">₹{(portfolioItem.qty * portfolioItem.ltp).toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">P&L:</span>
-                <span className={`font-medium ${portfolioItem.profitLoss >= 0 ? 'text-green-600' : 'text-destructive'}`}>
-                  ₹{portfolioItem.profitLoss.toLocaleString()} ({portfolioItem.profitLossPercent.toFixed(2)}%)
+                <span className={`font-medium ${portfolioItem.pnl >= 0 ? 'text-green-600' : 'text-destructive'}`}>
+                  ₹{portfolioItem.pnl.toLocaleString()} ({portfolioItem.pnlPercent.toFixed(2)}%)
                 </span>
               </div>
             </div>
@@ -212,7 +212,7 @@ const TradingActions: React.FC<TradingActionsProps> = ({
               <TrendingUp className="h-4 w-4 mr-2" />
               {isLoading ? 'Buying...' : 'Buy'}
             </Button>
-            
+
             <Button
               onClick={handleSell}
               disabled={!canSell || isLoading}

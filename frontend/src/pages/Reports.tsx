@@ -64,6 +64,11 @@ const mockReports = [
   }
 ];
 
+import {
+  downloadProfessionalReport,
+  calculateTaxLiability
+} from '@/lib/api-services';
+
 const Reports = () => {
   const [selectedReportType, setSelectedReportType] = useState('all');
   const [startDate, setStartDate] = useState('');
@@ -72,28 +77,61 @@ const Reports = () => {
   const [isExporting, setIsExporting] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const handleDownload = (reportId: number, format: string) => {
+  const handleDownload = async (reportId: number, name: string) => {
     setIsExporting(reportId.toString());
-    // Simulate download
-    setTimeout(() => {
+    try {
+      // Backend expects symbol for specific research reports
+      const symbol = name.split(' ')[0] || 'RELIANCE';
+      const blob = await downloadProfessionalReport(symbol, 'pdf');
+
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${name}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
       toast({
-        title: "Download started",
-        description: `Your ${format.toLowerCase()} file will be ready soon.`,
+        title: "Report Downloaded",
+        description: `Institutional PDF for ${name} generated and saved.`,
       });
+    } catch (error) {
+      toast({
+        title: "Download Failed",
+        description: "Could not generate institutional report on the backend.",
+        variant: "destructive"
+      });
+    } finally {
       setIsExporting(null);
-    }, 1500);
+    }
   };
 
-  const handleGenerateReport = () => {
+  const handleGenerateReport = async () => {
     setIsGenerating(true);
-    // Simulate report generation
-    setTimeout(() => {
+    try {
+      if (selectedReportType === 'tax') {
+        const taxData = await calculateTaxLiability(2025);
+        toast({
+          title: "Tax Report Generated",
+          description: `STCG: ₹${taxData.total_stcg.toLocaleString()}, LTCG: ₹${taxData.total_ltcg.toLocaleString()}`,
+        });
+      } else {
+        // Mocking other generation for now, but wired to logic
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        toast({
+          title: "Report Ready",
+          description: "Your custom report is being compiled by the engine.",
+        });
+      }
+    } catch (error) {
       toast({
-        title: "Report generated successfully",
-        description: "Your custom report is ready to download.",
+        title: "Generation Failed",
+        variant: "destructive"
       });
+    } finally {
       setIsGenerating(false);
-    }, 2000);
+    }
   };
 
   const getFormatIcon = (format: string) => {
@@ -112,8 +150,8 @@ const Reports = () => {
   return (
     <AppLayout title="Reports & Downloads" description="Access and generate reports on your portfolio and trading activities">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <CustomCard 
-          title="Generate Custom Report" 
+        <CustomCard
+          title="Generate Custom Report"
           description="Create a report with your preferred settings"
           className="lg:col-span-1"
         >
@@ -132,10 +170,10 @@ const Reports = () => {
                 </SelectContent>
               </Select>
             </FormGroup>
-            
-            <FormGroup 
-              htmlFor="dateRange" 
-              label="Date Range" 
+
+            <FormGroup
+              htmlFor="dateRange"
+              label="Date Range"
               tooltip="Select the period for your report data"
             >
               <div className="grid grid-cols-2 gap-3">
@@ -157,10 +195,10 @@ const Reports = () => {
                 </div>
               </div>
             </FormGroup>
-            
-            <FormGroup 
-              htmlFor="format" 
-              label="Format" 
+
+            <FormGroup
+              htmlFor="format"
+              label="Format"
               optional={true}
               hint="Default format is PDF"
             >
@@ -175,9 +213,9 @@ const Reports = () => {
                 </SelectContent>
               </Select>
             </FormGroup>
-            
-            <Button 
-              className="w-full mt-4" 
+
+            <Button
+              className="w-full mt-4"
               onClick={handleGenerateReport}
               disabled={isGenerating}
             >
@@ -195,9 +233,9 @@ const Reports = () => {
             </Button>
           </div>
         </CustomCard>
-        
-        <CustomCard 
-          title="Available Downloads" 
+
+        <CustomCard
+          title="Available Downloads"
           description="Documents and files ready for download"
           className="lg:col-span-2"
         >
@@ -245,9 +283,9 @@ const Reports = () => {
           </div>
         </CustomCard>
       </div>
-      
-      <Section 
-        title="Scheduled Reports" 
+
+      <Section
+        title="Scheduled Reports"
         description="Reports that are generated automatically"
         columns={3}
         action={
@@ -281,7 +319,7 @@ const Reports = () => {
             </div>
           </div>
         </CustomCard>
-        
+
         <CustomCard title="Monthly Portfolio Summary" description="Generated on the 1st of each month">
           <div className="space-y-2">
             <div className="flex justify-between items-center">
@@ -306,7 +344,7 @@ const Reports = () => {
             </div>
           </div>
         </CustomCard>
-        
+
         <CustomCard title="Quarterly Tax Report" description="Generated at the end of each quarter">
           <div className="space-y-2">
             <div className="flex justify-between items-center">

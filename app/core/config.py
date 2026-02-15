@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional, Union
 from pydantic_settings import BaseSettings
 from pydantic import PostgresDsn, validator
 import secrets
+import logging
 from pathlib import Path
 from app.core.roles import UserRole
 
@@ -27,13 +28,15 @@ class Settings(BaseSettings):
     
     # Stock Data API Keys
     ALPHA_VANTAGE_API_KEY: Optional[str] = None
+    FINNHUB_API_KEY: Optional[str] = None
+    FMP_API_KEY: Optional[str] = None
     YAHOO_FINANCE_API_KEY: Optional[str] = None
     
     # Security
-    SECRET_KEY: str = secrets.token_urlsafe(32)
+    SECRET_KEY: Optional[str] = None
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
-    API_KEY: str = secrets.token_urlsafe(32)
+    API_KEY: Optional[str] = None
     MAX_REQUEST_SIZE: int = 10 * 1024 * 1024  # 10MB
     SESSION_TTL: int = 3600  # 1 hour
     PASSWORD_MIN_LENGTH: int = 8
@@ -53,12 +56,35 @@ class Settings(BaseSettings):
     REDIS_DB: int = 0
     REDIS_PASSWORD: Optional[str] = None
     
+    # LLM Settings (for Trading Agents)
+    LLM_PROVIDER: str = "ollama"
+    OLLAMA_BASE_URL: str = "http://localhost:11434"
+    OLLAMA_MODEL: str = "llama3.1:latest"
+    OLLAMA_TIMEOUT: int = 300  # 5 minutes for local inference
+    
+    # Research Tab Caching (new)
+    CACHE_ENABLED: bool = True
+    RESEARCH_CACHE_TTL_INFO: int = 3600  # 1 hour for company info
+    RESEARCH_CACHE_TTL_HISTORY: int = 300  # 5 minutes for price history
+    RESEARCH_CACHE_TTL_NEWS: int = 600  # 10 minutes for news
+    RESEARCH_CACHE_TTL_TECHNICALS: int = 300  # 5 minutes for technicals
+    RESEARCH_CACHE_TTL_FINANCIALS: int = 86400  # 24 hours for financials
+    
+    # Rate Limiting for APIs (new)
+    RATE_LIMIT_ENABLED: bool = True
+    RATE_LIMIT_WINDOW: int = 60  # 1 minute window
+    ALPHAVANTAGE_RATE_LIMIT: int = 5  # 5 calls per minute
+    FINNHUB_RATE_LIMIT: int = 60  # 60 calls per minute
+    FMP_RATE_LIMIT: int = 250  # 250 calls per day
+    
     # CORS
     BACKEND_CORS_ORIGINS: List[str] = [
         "http://localhost:3000",
+        "http://localhost:5173",  # Vite dev server
         "http://localhost:8080", 
         "http://localhost:8081",
         "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173",  # Vite dev server
         "http://127.0.0.1:8080",
         "http://127.0.0.1:8081"
     ]
@@ -176,6 +202,18 @@ class Settings(BaseSettings):
         if not v:
             return v
         return v
+
+    @validator("SECRET_KEY", "API_KEY", pre=True, always=True)
+    def validate_security_keys(cls, v: Optional[str], values: Dict[str, Any], field: Any) -> str:
+        if v:
+            return v
+        
+        env = values.get("ENVIRONMENT", "development")
+        if env == "production":
+             raise ValueError(f"{field.name} must be set in production environment")
+        
+        logging.warning(f"{field.name} not set! Using ephemeral key for {env} environment.")
+        return secrets.token_urlsafe(32)
 
     class Config:
         case_sensitive = True

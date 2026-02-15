@@ -3,7 +3,8 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 from sqlalchemy.orm import Session
-from app.models.trading import Portfolio, Position, Trade
+from app.models.database import Portfolio
+from app.models.trading import Position, Trade
 from app.core.config import settings
 
 class RiskManagementService:

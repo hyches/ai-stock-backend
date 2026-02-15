@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: ai-stock-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: ai-stock-postgres
+    environment:
+      POSTGRES_USER: ${DB_USER:-aistock}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-aistock123}
+      POSTGRES_DB: ${DB_NAME:-ai_stock_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aistock"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  celery-worker:
+    build: .
+    container_name: ai-stock-celery-worker
+    command: celery -A app.core.celery_app worker --loglevel=info
+    volumes:
+      - .:/app
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=postgresql://aistock:aistock123@postgres:5432/ai_stock_db
+    depends_on:
+      - redis
+      - postgres
+    restart: unless-stopped
+
+  celery-beat:
+    build: .
+    container_name: ai-stock-celery-beat
+    command: celery -A app.core.celery_app beat --loglevel=info
+    volumes:
+      - .:/app
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=postgresql://aistock:aistock123@postgres:5432/ai_stock_db
+    depends_on:
+      - redis
+      - postgres
+      - celery-worker
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+  postgres_data:

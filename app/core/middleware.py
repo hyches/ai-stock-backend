@@ -111,7 +111,8 @@ class ErrorHandlingMiddleware(BaseHTTPMiddleware):
             return Response(
                 content=json.dumps({
                     "detail": "Internal server error",
-                    "error": str(e)
+                    # Only show error details in debug mode
+                    "error": str(e) if settings.DEBUG else "Full details hidden for security"
                 }),
                 status_code=500,
                 media_type="application/json"

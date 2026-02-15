@@ -1,161 +1,131 @@
-
-import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Filter, 
-  BookOpen, 
-  PieChart, 
-  TrendingUp, 
-  FileSearch, 
-  FileText, 
-  Settings,
-  ChevronLeft, 
-  ChevronRight,
-  DollarSign,
-  Download,
-  History
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import React from 'react';
 import { cn } from '@/lib/utils';
-import { useToast } from '@/hooks/use-toast';
-import Logo from '@/components/Logo';
+import { useNavigate, useLocation } from 'react-router-dom';
+import {
+  LayoutDashboard,
+  LineChart,
+  Layers,
+  History,
+  Brain,
+  Settings,
+  TrendingUp,
+  FlaskConical,
+  BarChart3,
+  Search,
+  BookOpen,
+  Activity,
+  Globe
+} from 'lucide-react';
 
-interface NavItemProps {
+interface NavItem {
   icon: React.ElementType;
   label: string;
-  path: string;
-  active?: boolean;
-  collapsed?: boolean;
+  id: string;
+  category?: string;
 }
 
-const NavItem = ({ 
-  icon: Icon, 
-  label, 
-  path,
-  active = false, 
-  collapsed = false
-}: NavItemProps) => {
-  return (
-    <div
-      className={cn(
-        "flex items-center w-full px-[15px] py-[10px] my-1 rounded-md transition-all duration-200 text-left cursor-pointer",
-        active 
-          ? "bg-sidebar-primary/20 text-sidebar-primary hover:bg-sidebar-primary/30 font-medium" 
-          : "hover:bg-sidebar-accent text-sidebar-foreground hover:text-sidebar-foreground",
-        "group"
-      )}
-    >
-      <Link to={path} className="flex items-center gap-4">
-        <Icon className={cn("h-6 w-6 shrink-0", active ? "text-sidebar-primary" : "text-sidebar-foreground group-hover:text-sidebar-foreground")} />
-        {!collapsed && <span className="transition-opacity duration-200">{label}</span>}
-      </Link>
-    </div>
-  );
-};
-
-const navItems = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
-  { icon: Filter, label: "Stock Screener", path: "/screener" },
-  { icon: BookOpen, label: "AI Research Reports", path: "/research" },
-  { icon: PieChart, label: "Portfolio Optimizer", path: "/optimizer" },
-  { icon: TrendingUp, label: "F&O Trading Terminal", path: "/trading" },
-  { icon: History, label: "Transactions", path: "/transactions" },
-  { icon: FileSearch, label: "Policy Opportunity", path: "/policy" },
-  { icon: FileText, label: "Reports & Downloads", path: "/reports" },
-  { icon: Settings, label: "Settings", path: "/settings" },
+const navItems: NavItem[] = [
+  { icon: LayoutDashboard, label: 'Dashboard', id: 'dashboard', category: 'main' },
+  { icon: LineChart, label: 'Charts', id: 'charts', category: 'main' },
+  { icon: Search, label: 'Scanner', id: 'scanner', category: 'main' },
+  { icon: Globe, label: 'Research', id: 'research', category: 'main' },
+  { icon: Layers, label: 'Options', id: 'options', category: 'trading' },
+  { icon: Activity, label: 'Greeks', id: 'greeks', category: 'trading' },
+  { icon: TrendingUp, label: 'Positions', id: 'positions', category: 'trading' },
+  { icon: History, label: 'History', id: 'history', category: 'trading' },
+  { icon: BookOpen, label: 'Journal', id: 'journal', category: 'trading' },
+  { icon: BarChart3, label: 'Analytics', id: 'analytics', category: 'tools' },
+  { icon: FlaskConical, label: 'Backtest', id: 'backtest', category: 'tools' },
+  { icon: Brain, label: 'ML Signals', id: 'ml', category: 'tools' },
 ];
 
-const Sidebar = () => {
-  const [collapsed, setCollapsed] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-  const location = useLocation();
-  const { toast } = useToast();
-  
-  // Handle responsive sidebar
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-      if (window.innerWidth < 768) {
-        setCollapsed(true);
-      }
-    };
+interface SidebarProps {
+  activeTab?: string;
+  onTabChange?: (tab: string) => void;
+}
 
-    handleResize(); // Check on initial render
-    window.addEventListener('resize', handleResize);
-    
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
-  
-  const toggleSidebar = () => {
-    setCollapsed(!collapsed);
-    
-    if (isMobile) {
-      toast({
-        title: collapsed ? "Navigation expanded" : "Navigation collapsed",
-        duration: 1500,
-      });
+export const Sidebar: React.FC<SidebarProps> = ({
+  activeTab,
+  onTabChange
+}) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Get active tab from props OR from URL search params
+  const searchParams = new URLSearchParams(location.search);
+  const urlTab = searchParams.get('tab');
+  const currentActiveTab = activeTab || urlTab || 'dashboard';
+
+  const mainItems = navItems.filter(i => i.category === 'main');
+  const tradingItems = navItems.filter(i => i.category === 'trading');
+  const toolsItems = navItems.filter(i => i.category === 'tools');
+
+  const handleClick = (id: string) => {
+    if (onTabChange) {
+      onTabChange(id);
+    } else {
+      // Automatic navigation for AppLayout usage
+      navigate(`/trading?tab=${id}`);
     }
   };
 
+  const renderNavItem = (item: NavItem) => (
+    <button
+      key={item.id}
+      onClick={() => handleClick(item.id)}
+      className={cn(
+        'w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-200 group relative',
+        currentActiveTab === item.id
+          ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/30'
+          : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+      )}
+    >
+      <item.icon size={20} />
+
+      <span className="absolute left-full ml-3 px-3 py-1.5 rounded-lg bg-popover text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 border border-border shadow-lg">
+        {item.label}
+      </span>
+    </button>
+  );
+
   return (
-            <aside className={cn(
-              "h-screen flex flex-col bg-sidebar-background border-r border-sidebar-border transition-all duration-300 relative",
-              collapsed ? "w-16" : "w-64"
-            )}>
-      <div className="flex items-center p-4 border-b border-sidebar-border">
-        {!collapsed && (
-          <div className="flex items-center gap-3 flex-1">
-            <Logo size="md" className="text-sidebar-foreground" />
-          </div>
-        )}
-        {collapsed && (
-          <Logo size="sm" showText={false} className="mx-auto" />
-        )}
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          onClick={toggleSidebar} 
-          className={cn(
-            "text-sidebar-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent transition-all duration-200",
-            collapsed ? "mx-auto" : ""
-          )}
-        >
-          {collapsed ? 
-            <ChevronRight className="h-5 w-5" /> : 
-            <ChevronLeft className="h-5 w-5" />
-          }
-        </Button>
-      </div>
-      
-      <nav className="flex-1 py-4 pl-0 pr-2 space-y-1 overflow-y-auto scrollbar-hidden text-left">
-        {navItems.map((item) => (
-          <NavItem
-            key={item.label}
-            icon={item.icon}
-            label={item.label}
-            path={item.path}
-            active={location.pathname === item.path}
-            collapsed={collapsed}
-          />
-        ))}
-      </nav>
-      
-      <div className="p-4 border-t border-sidebar-border">
-        <div className={cn(
-          "flex items-center",
-          collapsed ? "justify-center" : "gap-3"
-        )}>
-          <div className="h-8 w-8 rounded-full bg-sidebar-primary/20 flex items-center justify-center text-sidebar-primary">
-            U
-          </div>
-          {!collapsed && <div className="text-sm font-medium text-sidebar-foreground">User</div>}
+    <aside className="fixed left-0 top-0 h-screen w-20 bg-card border-r border-border flex flex-col items-center py-4 z-50">
+      <div className="mb-6 cursor-pointer" onClick={() => navigate('/trading')}>
+        <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg shadow-primary/20">
+          <TrendingUp className="text-primary-foreground" size={22} />
         </div>
       </div>
+
+      <nav className="flex-1 flex flex-col items-center gap-1 w-full px-3 overflow-y-auto scrollbar-hide">
+        <div className="flex flex-col items-center gap-1 w-full">
+          {mainItems.map(renderNavItem)}
+        </div>
+
+        <div className="w-8 h-px bg-border my-2" />
+
+        <div className="flex flex-col items-center gap-1 w-full">
+          {tradingItems.map(renderNavItem)}
+        </div>
+
+        <div className="w-8 h-px bg-border my-2" />
+
+        <div className="flex flex-col items-center gap-1 w-full">
+          {toolsItems.map(renderNavItem)}
+        </div>
+      </nav>
+
+      <button
+        onClick={() => navigate('/settings')}
+        className="w-12 h-12 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent transition-all group relative"
+      >
+        <Settings size={20} />
+        <span className="absolute left-full ml-3 px-3 py-1.5 rounded-lg bg-popover text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 border border-border shadow-lg">
+          Settings
+        </span>
+      </button>
     </aside>
   );
 };
 
 export default Sidebar;
+

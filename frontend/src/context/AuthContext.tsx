@@ -17,20 +17,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const token = localStorage.getItem('access_token');
     return stored === 'true' && !!token;
   });
-  
+
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     setLoading(true);
     try {
-      const formData = new FormData();
-      formData.append('username', email);
-      formData.append('password', password);
+      const params = new URLSearchParams();
+      params.append('username', email);
+      params.append('password', password);
 
-      const response = await fetch('http://localhost:8000/api/v1/auth/login', {
+      const response = await fetch('/api/v1/auth/login', {
         method: 'POST',
-        body: formData,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: params.toString(),
       });
 
       if (response.ok) {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bell } from 'lucide-react';
+import { Bell, Sun, Moon, LogOut, User, Settings, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -14,8 +14,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import ThemeToggle from '@/components/ThemeToggle';
 import SearchBar from '@/components/SearchBar';
+import { useTheme } from '@/context/ThemeContext';
+import ThemeToggle from '@/components/ThemeToggle';
 
 interface StockDetails {
   symbol: string;
@@ -47,6 +48,7 @@ const AppHeader = () => {
   const { toast } = useToast();
   const { logout } = useAuth();
   const navigate = useNavigate();
+  // const { setTheme } = useTheme(); // Removed as it is not exposed/needed anymore
 
   // Handle stock selection from SearchBar
   const handleStockSelect = (stock: StockDetails | null) => {
@@ -57,7 +59,6 @@ const AppHeader = () => {
 
   const handleNotificationClick = () => {
     if (notificationCount > 0) {
-      // In a real app, this would mark notifications as read
       setNotificationCount(0);
     }
   };
@@ -73,32 +74,34 @@ const AppHeader = () => {
   };
 
   return (
-    <header className="flex items-center justify-between p-4 border-b border-border bg-card">
-      <div className="flex gap-2 items-center">
-        <div className="hidden md:block w-96">
-                      <SearchBar 
-                        placeholder="Search for stocks (e.g., RELIANCE, TCS, HDFC, AAPL)..."
-                        showInlineDetails={true}
-                        className="w-full"
-                        pageContext="header"
-                        onStockSelect={handleStockSelect}
-                      />
+    <header className="flex items-center justify-between p-4 border-b border-border bg-card sticky top-0 z-30">
+      <div className="flex gap-2 items-center flex-1">
+        <div className="hidden md:block w-full max-w-xl">
+          <SearchBar
+            placeholder="Search for stocks (e.g., RELIANCE, TCS, HDFC)..."
+            showInlineDetails={true}
+            className="w-full"
+            pageContext="header"
+            onStockSelect={handleStockSelect}
+          />
         </div>
       </div>
-      <div className="flex gap-4 items-center">
+
+      <div className="flex gap-2 items-center ml-4">
         <ThemeToggle />
-        
+
+        {/* Notifications */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
               size="icon"
-              className="relative text-muted-foreground hover:text-foreground hover:bg-muted"
+              className="relative text-foreground/70 hover:text-foreground"
               onClick={handleNotificationClick}
             >
               <Bell className="h-5 w-5" />
               {notificationCount > 0 && (
-                <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-[10px]">
+                <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center p-0 text-[10px]">
                   {notificationCount}
                 </Badge>
               )}
@@ -107,48 +110,49 @@ const AppHeader = () => {
           <DropdownMenuContent align="end" className="w-80">
             <DropdownMenuLabel>Notifications</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="cursor-pointer">
-              <div className="flex flex-col">
-                <span className="font-semibold">Portfolio Alert</span>
-                <span className="text-xs text-muted-foreground">Apple (AAPL) is up by 5%</span>
-              </div>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer">
-              <div className="flex flex-col">
-                <span className="font-semibold">Research Report Ready</span>
-                <span className="text-xs text-muted-foreground">Tesla (TSLA) report is available</span>
-              </div>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="cursor-pointer">
-              <div className="flex flex-col">
-                <span className="font-semibold">Price Alert</span>
-                <span className="text-xs text-muted-foreground">Microsoft (MSFT) reached target price</span>
-              </div>
-            </DropdownMenuItem>
+            <div className="p-8 text-sm text-center text-muted-foreground">
+              No new notifications
+            </div>
           </DropdownMenuContent>
         </DropdownMenu>
-        
+
+        {/* User Profile */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="flex items-center gap-2 hover:bg-muted"
+              className="flex items-center gap-2 hover:bg-muted ml-1 px-2"
             >
-              <Avatar className="h-8 w-8">
+              <Avatar className="h-8 w-8 border border-border">
                 <AvatarImage src="https://github.com/shadcn.png" alt="User" />
                 <AvatarFallback className="bg-primary/20 text-primary">U</AvatarFallback>
               </Avatar>
-              <span className="hidden md:inline">John Doe</span>
+              <div className="hidden md:flex flex-col items-start text-xs">
+                <span className="font-medium">John Doe</span>
+                <span className="text-muted-foreground">Pro Plan</span>
+              </div>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Profile</DropdownMenuItem>
-            <DropdownMenuItem>Settings</DropdownMenuItem>
-            <DropdownMenuItem>Subscription</DropdownMenuItem>
+            <DropdownMenuItem>
+              <User className="mr-2 h-4 w-4" />
+              <span>Profile</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <CreditCard className="mr-2 h-4 w-4" />
+              <span>Billing</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Settings className="mr-2 h-4 w-4" />
+              <span>Settings</span>
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout} className="text-red-500 focus:text-red-500">
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Logout</span>
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

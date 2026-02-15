@@ -17,12 +17,12 @@ const AuthTest = () => {
   const testToken = () => {
     const token = localStorage.getItem('access_token');
     const isAuth = localStorage.getItem('isAuthenticated');
-    
+
     setTestResults(prev => ({
       ...prev,
-      token: { 
-        status: token ? 'success' : 'error', 
-        message: token ? `Token found: ${token.substring(0, 20)}...` : 'No token found' 
+      token: {
+        status: token ? 'success' : 'error',
+        message: token ? `Token found: ${token.substring(0, 20)}...` : 'No token found'
       }
     }));
   };
@@ -35,7 +35,7 @@ const AuthTest = () => {
 
     try {
       const token = localStorage.getItem('access_token');
-      const response = await fetch('http://localhost:8000/api/v1/trading/strategies/', {
+      const response = await fetch('/api/v1/trading/strategies/', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -47,26 +47,26 @@ const AuthTest = () => {
         const data = await response.json();
         setTestResults(prev => ({
           ...prev,
-          api: { 
-            status: 'success', 
-            message: `API call successful: ${data.length} strategies found` 
+          api: {
+            status: 'success',
+            message: `API call successful: ${data.length} strategies found`
           }
         }));
       } else {
         setTestResults(prev => ({
           ...prev,
-          api: { 
-            status: 'error', 
-            message: `API call failed: ${response.status} ${response.statusText}` 
+          api: {
+            status: 'error',
+            message: `API call failed: ${response.status} ${response.statusText}`
           }
         }));
       }
     } catch (error) {
       setTestResults(prev => ({
         ...prev,
-        api: { 
-          status: 'error', 
-          message: `Network error: ${error instanceof Error ? error.message : 'Unknown error'}` 
+        api: {
+          status: 'error',
+          message: `Network error: ${error instanceof Error ? error.message : 'Unknown error'}`
         }
       }));
     }

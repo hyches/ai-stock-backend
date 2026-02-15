@@ -16,10 +16,9 @@ import os
 from pathlib import Path
 from app.services.sentiment_analysis import SentimentAnalysis
 from app.services.ml_predictions import get_price_predictions
-try:
-    from textblob import TextBlob
-except ImportError:
-    TextBlob = None
+from app.services.tax_calculator import tax_calculator
+from app.services.risk_manager import risk_manager
+from app.services.ml_engine import ml_engine
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +37,8 @@ class ReportGenerator:
         include_technical: bool = True,
         include_sentiment: bool = True,
         include_competitors: bool = True,
+        include_tax: bool = False,
+        trades: List[Dict] = None,
         format: str = "pdf"
     ) -> ReportResponse:
         """
@@ -91,6 +92,11 @@ class ReportGenerator:
             recommendations = self._generate_recommendations(financials, technicals, sentiment)
             risk_factors = self._identify_risk_factors(financials, technicals, sentiment)
             
+            # Tax metrics if requested
+            tax_metrics = None
+            if include_tax and trades:
+                tax_metrics = tax_calculator.calculate_tax(trades)
+
             # Create report response
             report = ReportResponse(
                 symbol=symbol,
@@ -107,9 +113,12 @@ class ReportGenerator:
                 risk_factors=risk_factors
             )
             
+            # Add dynamic fields
+            report.tax_summary = tax_metrics.get("summary") if tax_metrics else None
+            
             # Generate PDF if requested
             if format.lower() == "pdf":
-                report.report_url = self._generate_pdf(report)
+                report.report_url = self._generate_pdf(report, tax_metrics)
                 
             logger.info(f"Successfully generated report for {symbol}")
             return report
@@ -367,6 +376,27 @@ class ReportGenerator:
                 content.append(Paragraph(f"• {rec}", normal_style))
             content.append(Spacer(1, 12))
             
+            # Tax Summary
+            if hasattr(report, 'tax_summary') and report.tax_summary:
+                content.append(Paragraph("Tax Analysis (STCG/LTCG)", heading_style))
+                tax_data = [
+                    ["Metric", "Value"],
+                    ["Total STCG", f"{report.tax_summary['total_stcg']:,.2f}"],
+                    ["Total LTCG", f"{report.tax_summary['total_ltcg']:,.2f}"],
+                    ["Est. STCG Tax (15%)", f"{report.tax_summary['stcg_tax_est']:,.2f}"],
+                    ["Est. LTCG Tax (10%)", f"{report.tax_summary['ltcg_tax_est']:,.2f}"],
+                    ["Total Tax Liability", f"{report.tax_summary['total_tax_est']:,.2f}"]
+                ]
+                tax_table = Table(tax_data)
+                tax_table.setStyle(TableStyle([
+                    ('BACKGROUND', (0, 0), (-1, 0), colors.darkblue),
+                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                    ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                    ('GRID', (0, 0), (-1, -1), 1, colors.black)
+                ]))
+                content.append(tax_table)
+                content.append(Spacer(1, 12))
+
             # Risk Factors
             content.append(Paragraph("Risk Factors", heading_style))
             for risk in report.risk_factors:

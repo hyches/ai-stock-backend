@@ -1,635 +1,357 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { 
-  ArrowLeft, 
-  TrendingUp, 
-  TrendingDown, 
-  DollarSign, 
-  BarChart3, 
-  Volume, 
-  Calendar,
-  Globe,
-  Building,
-  Users,
-  Target,
+import {
+  ArrowLeft,
+  TrendingUp,
+  TrendingDown,
   AlertTriangle,
-  Star,
-  Share2,
-  Bookmark
+  Bookmark,
+  Share2
 } from 'lucide-react';
-import TradingActions from '@/components/TradingActions';
 import AppLayout from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Progress } from '@/components/ui/progress';
-import { 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
+import {
   AreaChart,
   Area,
-  BarChart,
-  Bar
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid
 } from 'recharts';
-import { 
-  getStockDetails, 
-  getStockHistoricalData, 
-  getStockNews, 
-  getStockAnalysis,
-  getStockFinancials,
-  getStockPeers
-} from '@/lib/api-services';
-
-interface StockDetails {
-  symbol: string;
-  name: string;
-  price: number;
-  change: number;
-  changePercent: number;
-  volume: number;
-  marketCap: number;
-  pe: number;
-  eps: number;
-  dividend: number;
-  dividendYield: number;
-  high52Week: number;
-  low52Week: number;
-  avgVolume: number;
-  beta: number;
-  sector: string;
-  industry: string;
-  description: string;
-  website: string;
-  employees: number;
-  founded: number;
-  headquarters: string;
-}
-
-interface HistoricalData {
-  date: string;
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-  volume: number;
-}
-
-interface NewsItem {
-  title: string;
-  summary: string;
-  source: string;
-  publishedAt: string;
-  url: string;
-}
-
-interface Analysis {
-  buy: number;
-  hold: number;
-  sell: number;
-  targetPrice: number;
-  recommendation: string;
-}
-
-interface Financials {
-  revenue: number;
-  netIncome: number;
-  assets: number;
-  liabilities: number;
-  equity: number;
-  cash: number;
-  debt: number;
-}
-
-interface Peer {
-  symbol: string;
-  name: string;
-  price: number;
-  change: number;
-  changePercent: number;
-  marketCap: number;
-}
-
 import { useStockData } from '@/context/StockDataContext';
+import TradeDialog from '@/components/TradeDialog';
 
 const StockDetails = () => {
   const navigate = useNavigate();
+  const { symbol } = useParams<{ symbol: string }>();
   const [timeframe, setTimeframe] = useState('1Y');
-  const [isBookmarked, setIsBookmarked] = useState(false);
-  const { 
-    symbol, 
-    stockDetails, 
-    historicalData, 
-    news, 
-    analysis, 
-    financials, 
-    peers, 
-    isLoading, 
-    error: detailsError 
+
+  // Trade Dialog State
+  const [isTradeOpen, setTradeOpen] = useState(false);
+  const [tradeSide, setTradeSide] = useState<'buy' | 'sell'>('buy');
+
+  const {
+    stockDetails,
+    historicalData,
+    news,
+    recommendations,
+    technicals,
+    financials,
+    isLoading,
+    isAnalyzing,
+    error
   } = useStockData();
 
-  // Format numbers
-  const formatNumber = (value: number) => {
-    if (value >= 1e12) return `$${(value / 1e12).toFixed(2)}T`;
-    if (value >= 1e9) return `$${(value / 1e9).toFixed(2)}B`;
-    if (value >= 1e6) return `$${(value / 1e6).toFixed(2)}M`;
-    if (value >= 1e3) return `$${(value / 1e3).toFixed(2)}K`;
-    return `$${value.toFixed(2)}`;
+  // Helper to format large numbers
+  const formatNumber = (value: number | undefined) => {
+    const num = value || 0;
+    if (num >= 1e12) return `$${(num / 1e12).toFixed(2)}T`;
+    if (num >= 1e9) return `$${(num / 1e9).toFixed(2)}B`;
+    if (num >= 1e6) return `$${(num / 1e6).toFixed(2)}M`;
+    return `$${num.toLocaleString()}`;
   };
 
-  const formatVolume = (value: number) => {
-    if (value >= 1e9) return `${(value / 1e9).toFixed(2)}B`;
-    if (value >= 1e6) return `${(value / 1e6).toFixed(2)}M`;
-    if (value >= 1e3) return `${(value / 1e3).toFixed(2)}K`;
-    return value.toString();
+  const handleTrade = (side: 'buy' | 'sell') => {
+    setTradeSide(side);
+    setTradeOpen(true);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-
-  if (detailsError) {
+  // Display loading skeletons ONLY for initial load (Quote)
+  if (isLoading) {
     return (
-      <AppLayout title="Stock Not Found" description="The requested stock could not be found">
-        <div className="flex items-center justify-center min-h-96">
-          <div className="text-center">
-            <AlertTriangle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-foreground mb-2">Stock Not Found</h2>
-            <p className="text-muted-foreground mb-4">The stock symbol "{symbol}" could not be found.</p>
-            <Button onClick={() => navigate('/')}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Search
-            </Button>
+      <AppLayout title="Loading...">
+        <div className="space-y-4">
+          <Skeleton className="h-10 w-1/4" />
+          <Skeleton className="h-24 w-full" />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Skeleton className="h-96 lg:col-span-2" />
+            <Skeleton className="h-96" />
           </div>
         </div>
       </AppLayout>
     );
   }
 
-  return (
-    <AppLayout title={`${symbol} - Stock Details`} description={`Detailed analysis and trading information for ${symbol}`}>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-4">
-          <Button variant="ghost" onClick={() => navigate('/')}>
+  // Display error message
+  if (error) {
+    return (
+      <AppLayout title="Stock Not Found">
+        <div className="flex flex-col items-center justify-center text-center py-10">
+          <AlertTriangle className="h-16 w-16 text-red-500 mb-4" />
+          <h2 className="text-2xl font-bold mb-2">Error Fetching Stock Data</h2>
+          <p className="text-muted-foreground mb-4">Could not retrieve data for symbol "{symbol}". Please try again later.</p>
+          <Button onClick={() => navigate('/')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
+            Back to Home
           </Button>
         </div>
+      </AppLayout>
+    );
+  }
+
+  // Display message if no data is found after loading
+  if (!stockDetails) {
+    return (
+      <AppLayout title="Stock Not Found">
+        <div className="flex flex-col items-center justify-center text-center py-10">
+          <AlertTriangle className="h-16 w-16 text-yellow-500 mb-4" />
+          <h2 className="text-2xl font-bold mb-2">Stock Not Found</h2>
+          <p className="text-muted-foreground mb-4">The stock with symbol "{symbol}" could not be found.</p>
+          <Button onClick={() => navigate('/')}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Home
+          </Button>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  const price = stockDetails.currentPrice || (stockDetails.dayHigh && stockDetails.dayLow ? (stockDetails.dayHigh + stockDetails.dayLow) / 2 : 0);
+  const prevClose = stockDetails.previousClose || (historicalData?.[1]?.Close ?? price);
+  const change = price - prevClose;
+  const changePercent = prevClose ? (change / prevClose) * 100 : 0;
+
+  return (
+    <AppLayout title={`${stockDetails.symbol} - Stock Details`} description={`Detailed analysis for ${stockDetails.longName || symbol}`}>
+      {/* Header Actions */}
+      <div className="flex items-center justify-between mb-6">
+        <Button variant="ghost" onClick={() => navigate(-1)}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
+        </Button>
         <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm">
-            <Bookmark className="h-4 w-4 mr-2" />
-            {isBookmarked ? 'Bookmarked' : 'Bookmark'}
+          {/* Watchlist Toggle - Simplified for now */}
+          <Button variant="outline" size="sm" onClick={() => {
+            // Add simple watchlist logic or emit event
+            const event = new CustomEvent('add-watchlist', { detail: stockDetails });
+            window.dispatchEvent(event);
+          }}>
+            <Bookmark className="h-4 w-4 mr-2" />Watchlist
           </Button>
-          <Button variant="outline" size="sm">
-            <Share2 className="h-4 w-4 mr-2" />
-            Share
-          </Button>
+          <Button variant="outline" size="sm"><Share2 className="h-4 w-4 mr-2" />Share</Button>
         </div>
       </div>
 
       <div className="space-y-8">
-        {isLoading ? (
-          <div className="space-y-8">
-            <div className="flex items-center space-x-4">
-              <Skeleton className="h-8 w-32" />
-              <Skeleton className="h-8 w-24" />
+        {/* MAIN PRICE CARD */}
+        <Card className="border-l-4 border-l-primary">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-3">
+                  <h1 className="text-4xl font-bold">{stockDetails.symbol}</h1>
+                  {isAnalyzing && <Badge variant="outline" className="animate-pulse">Analyzing...</Badge>}
+                </div>
+                <p className="text-lg text-muted-foreground">{stockDetails.longName}</p>
+                <div className="flex items-center space-x-2 mt-2">
+                  <Badge variant="outline">{stockDetails.sector || '—'}</Badge>
+                  <Badge variant="secondary">{stockDetails.industry || '—'}</Badge>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-4xl font-bold font-mono">{price.toFixed(2)}</div>
+                <div className={`flex items-center justify-end space-x-2 ${change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {change >= 0 ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
+                  <span className="text-xl font-semibold">{change > 0 ? '+' : ''}{change.toFixed(2)} ({changePercent.toFixed(2)}%)</span>
+                </div>
+              </div>
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2">
-                <Skeleton className="h-96 w-full" />
-              </div>
-              <div className="space-y-4">
-                <Skeleton className="h-32 w-full" />
-                <Skeleton className="h-32 w-full" />
-                <Skeleton className="h-32 w-full" />
-              </div>
-            </div>
-          </div>
-        ) : stockDetails ? (
-          <>
-            {/* Stock Header */}
-            <div className="bg-card rounded-lg shadow-sm border border-border p-6 mb-8">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h1 className="text-3xl font-bold text-foreground">{stockDetails.symbol}</h1>
-                  <p className="text-lg text-muted-foreground">{stockDetails.name}</p>
-                  <div className="flex items-center space-x-2 mt-2">
-                    <Badge variant="outline">{stockDetails.sector}</Badge>
-                    <Badge variant="secondary">{stockDetails.industry}</Badge>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-3xl font-bold text-gray-900">
-                    ${stockDetails.price.toFixed(2)}
-                  </div>
-                  <div className={`flex items-center space-x-2 ${
-                    stockDetails.change >= 0 ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    {stockDetails.change >= 0 ? (
-                      <TrendingUp className="h-5 w-5" />
-                    ) : (
-                      <TrendingDown className="h-5 w-5" />
-                    )}
-                    <span className="text-lg font-semibold">
-                      {stockDetails.change >= 0 ? '+' : ''}{stockDetails.change.toFixed(2)}
-                    </span>
-                    <span className="text-lg">
-                      ({stockDetails.changePercent >= 0 ? '+' : ''}{stockDetails.changePercent.toFixed(2)}%)
-                    </span>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Key Metrics */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-gray-200">
-                <div className="text-center">
-                  <div className="text-sm text-gray-600">Market Cap</div>
-                  <div className="text-lg font-semibold">{formatNumber(stockDetails.marketCap)}</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-sm text-gray-600">P/E Ratio</div>
-                  <div className="text-lg font-semibold">{stockDetails.pe.toFixed(2)}</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-sm text-gray-600">Volume</div>
-                  <div className="text-lg font-semibold">{formatVolume(stockDetails.volume)}</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-sm text-gray-600">52W High</div>
-                  <div className="text-lg font-semibold">${stockDetails.high52Week.toFixed(2)}</div>
-                </div>
-              </div>
+          </CardHeader>
+          <CardContent>
+            {/* Action Buttons */}
+            <div className="flex gap-4 pt-4 border-t mb-6">
+              <Button className="w-32 bg-green-600 hover:bg-green-700" onClick={() => handleTrade('buy')}>Buy</Button>
+              <Button className="w-32" variant="destructive" onClick={() => handleTrade('sell')}>Sell</Button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* Main Chart */}
-              <div className="lg:col-span-2">
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle>Price Chart</CardTitle>
-                      <div className="flex space-x-2">
-                        {['1D', '1W', '1M', '3M', '1Y', '5Y'].map((period) => (
-                          <Button
-                            key={period}
-                            variant={timeframe === period ? 'default' : 'outline'}
-                            size="sm"
-                            onClick={() => setTimeframe(period)}
-                          >
-                            {period}
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
-                  </CardHeader>
-                    <CardContent>
-                      {isLoading ? (
-                        <Skeleton className="h-96 w-full" />
-                      ) : historicalData ? (
-                      <ResponsiveContainer width="100%" height={400}>
-                        <AreaChart data={historicalData}>
-                          <defs>
-                            <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.8}/>
-                              <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.1}/>
-                            </linearGradient>
-                          </defs>
-                          <XAxis 
-                            dataKey="date" 
-                            tickFormatter={(value) => new Date(value).toLocaleDateString()}
-                          />
-                          <YAxis domain={['dataMin - 5', 'dataMax + 5']} />
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <Tooltip 
-                            labelFormatter={(value) => new Date(value).toLocaleDateString()}
-                            formatter={(value) => [`$${value.toFixed(2)}`, 'Price']}
-                          />
-                          <Area 
-                            type="monotone" 
-                            dataKey="close" 
-                            stroke="#3B82F6" 
-                            fillOpacity={1} 
-                            fill="url(#colorPrice)" 
-                          />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    ) : (
-                      <div className="h-96 flex items-center justify-center text-gray-500">
-                        No historical data available
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-muted/20 rounded-lg">
+              <div className="text-center"><div className="text-sm text-muted-foreground">Market Cap</div><div className="text-lg font-semibold">{formatNumber(stockDetails.marketCap)}</div></div>
+              <div className="text-center"><div className="text-sm text-muted-foreground">P/E Ratio</div><div className="text-lg font-semibold">{(stockDetails.trailingPE || stockDetails.pe_ratio || 0).toFixed(2)}</div></div>
+              <div className="text-center"><div className="text-sm text-muted-foreground">Volume</div><div className="text-lg font-semibold">{formatNumber(stockDetails.volume)}</div></div>
+              <div className="text-center"><div className="text-sm text-muted-foreground">52W High</div><div className="text-lg font-semibold">{(stockDetails.fiftyTwoWeekHigh || 0).toFixed(2)}</div></div>
+            </div>
+          </CardContent>
+        </Card>
 
-              {/* Sidebar */}
-              <div className="space-y-6">
-                {/* Analysis */}
-                {analysis && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center space-x-2">
-                        <Target className="h-5 w-5" />
-                        <span>Analyst Ratings</span>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        <div>
-                          <div className="flex justify-between text-sm mb-2">
-                            <span>Buy</span>
-                            <span>{analysis.buy}%</span>
-                          </div>
-                          <Progress value={analysis.buy} className="h-2" />
-                        </div>
-                        <div>
-                          <div className="flex justify-between text-sm mb-2">
-                            <span>Hold</span>
-                            <span>{analysis.hold}%</span>
-                          </div>
-                          <Progress value={analysis.hold} className="h-2" />
-                        </div>
-                        <div>
-                          <div className="flex justify-between text-sm mb-2">
-                            <span>Sell</span>
-                            <span>{analysis.sell}%</span>
-                          </div>
-                          <Progress value={analysis.sell} className="h-2" />
-                        </div>
-                        <div className="pt-4 border-t border-gray-200">
-                          <div className="text-sm text-gray-600">Target Price</div>
-                          <div className="text-lg font-semibold">${analysis.targetPrice.toFixed(2)}</div>
-                          <div className="text-sm text-gray-600">Recommendation: {analysis.recommendation}</div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+        {/* TABS FOR DEEP DIVE */}
+        <Tabs defaultValue="chart" className="w-full">
+          <TabsList className="w-full justify-start overflow-x-auto">
+            <TabsTrigger value="chart">Chart</TabsTrigger>
+            <TabsTrigger value="research">Research & ML</TabsTrigger>
+            <TabsTrigger value="technicals">Technicals</TabsTrigger>
+            <TabsTrigger value="financials">Financials</TabsTrigger>
+            <TabsTrigger value="news">News</TabsTrigger>
+          </TabsList>
+
+          {/* TAB: CHART */}
+          <TabsContent value="chart">
+            <Card>
+              <CardHeader>
+                <CardTitle>Price Chart ({timeframe})</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isAnalyzing && !historicalData ? (
+                  <Skeleton className="h-[400px] w-full" />
+                ) : (
+                  <ResponsiveContainer width="100%" height={400}>
+                    <AreaChart data={historicalData}>
+                      <defs><linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#3B82F6" stopOpacity={0.8} /><stop offset="95%" stopColor="#3B82F6" stopOpacity={0.1} /></linearGradient></defs>
+                      <XAxis dataKey="Date" tickFormatter={(str) => new Date(str).toLocaleDateString()} />
+                      <YAxis domain={['auto', 'auto']} />
+                      <Tooltip />
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <Area type="monotone" dataKey="Close" stroke="#3B82F6" fill="url(#colorPrice)" />
+                    </AreaChart>
+                  </ResponsiveContainer>
                 )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-                {/* Trading Actions */}
-                <TradingActions
-                  symbol={stockDetails.symbol}
-                  name={stockDetails.name}
-                  currentPrice={stockDetails.price}
-                  change={stockDetails.change}
-                  changePercent={stockDetails.changePercent}
-                />
-
-                {/* Key Stats */}
+          {/* TAB: RESEARCH & ML */}
+          {/* TAB: RESEARCH & ML */}
+          <TabsContent value="research">
+            {isAnalyzing ? <Skeleton className="h-96 w-full" /> : (
+              <div className="grid grid-cols-1 gap-6">
                 <Card>
-                  <CardHeader>
-                    <CardTitle>Key Statistics</CardTitle>
-                  </CardHeader>
+                  <CardHeader><CardTitle>AI ML Insights</CardTitle></CardHeader>
                   <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">EPS</span>
-                        <span className="font-semibold">${stockDetails.eps.toFixed(2)}</span>
+                    {stockDetails?.ml_predictions ? (
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="p-4 border rounded bg-secondary/10 flex flex-col items-center justify-center">
+                          <h4 className="text-sm uppercase text-muted-foreground mb-2">Signal</h4>
+                          <div className={`text-3xl font-black ${stockDetails.ml_predictions.signal === 'BUY' ? 'text-green-500' : (stockDetails.ml_predictions.signal === 'SELL' ? 'text-red-500' : 'text-yellow-500')}`}>
+                            {stockDetails.ml_predictions.signal}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            Confidence: {Math.round((stockDetails.ml_predictions.confidence || 0) * 100)}%
+                          </div>
+                        </div>
+                        <div className="col-span-2 p-4 border rounded">
+                          <h4 className="font-semibold mb-2">Price Prediction (1 Week)</h4>
+                          <div className="flex items-end gap-2">
+                            <span className="text-2xl font-bold">${stockDetails.ml_predictions.predicted_price_1week?.toFixed(2) || '—'}</span>
+                            <span className={`text-sm mb-1 ${stockDetails.ml_predictions.predicted_return_pct >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              {stockDetails.ml_predictions.predicted_return_pct >= 0 ? '+' : ''}{stockDetails.ml_predictions.predicted_return_pct?.toFixed(2)}%
+                            </span>
+                          </div>
+                          <p className="text-sm text-muted-foreground mt-2">
+                            AI-generated forecast based on standard ML models. Not financial advice.
+                          </p>
+                        </div>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Dividend</span>
-                        <span className="font-semibold">${stockDetails.dividend.toFixed(2)}</span>
+                    ) : (
+                      <div className="p-8 text-center text-muted-foreground">
+                        <p>ML models are training. Insights will appear here shortly.</p>
+                        <Button variant="outline" size="sm" className="mt-4">Train Model Now</Button>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Dividend Yield</span>
-                        <span className="font-semibold">{stockDetails.dividendYield.toFixed(2)}%</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Beta</span>
-                        <span className="font-semibold">{stockDetails.beta.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">52W Low</span>
-                        <span className="font-semibold">${stockDetails.low52Week.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Avg Volume</span>
-                        <span className="font-semibold">{formatVolume(stockDetails.avgVolume)}</span>
-                      </div>
-                    </div>
+                    )}
                   </CardContent>
                 </Card>
 
-                {/* Company Info */}
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <Building className="h-5 w-5" />
-                      <span>Company Info</span>
-                    </CardTitle>
-                  </CardHeader>
+                  <CardHeader><CardTitle>Analyst Recommendations</CardTitle></CardHeader>
                   <CardContent>
-                    <div className="space-y-3">
-                      <div>
-                        <div className="text-sm text-gray-600">Description</div>
-                        <div className="text-sm text-gray-900 mt-1">{stockDetails.description}</div>
+                    {(recommendations || []).slice(0, 5).map((rec: any, i: number) => (
+                      <div key={i} className="flex justify-between items-center mb-2 p-2 border-b last:border-0 hover:bg-muted/50">
+                        <span className="text-sm font-medium">{rec.firm}</span>
+                        <Badge variant={rec.toGrade?.toLowerCase().includes('buy') ? 'success' : 'secondary'}>{rec.toGrade}</Badge>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Employees</span>
-                        <span className="font-semibold">{stockDetails.employees.toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Founded</span>
-                        <span className="font-semibold">{stockDetails.founded}</span>
-                      </div>
-                      <div>
-                        <div className="text-sm text-gray-600">Headquarters</div>
-                        <div className="text-sm font-semibold">{stockDetails.headquarters}</div>
-                      </div>
-                      {stockDetails.website && (
-                        <div>
-                          <div className="text-sm text-gray-600">Website</div>
-                          <a 
-                            href={stockDetails.website} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-sm text-blue-600 hover:underline"
-                          >
-                            {stockDetails.website}
-                          </a>
-                        </div>
-                      )}
-                    </div>
+                    ))}
+                    {(!recommendations || recommendations.length === 0) && <p className="text-sm text-muted-foreground">No recommendations found.</p>}
                   </CardContent>
                 </Card>
               </div>
-            </div>
+            )}
+          </TabsContent>
 
-            {/* Tabs Section */}
-            <div className="mt-8">
-              <Tabs defaultValue="news" className="w-full">
-                <TabsList className="grid w-full grid-cols-4">
-                  <TabsTrigger value="news">News</TabsTrigger>
-                  <TabsTrigger value="financials">Financials</TabsTrigger>
-                  <TabsTrigger value="peers">Peers</TabsTrigger>
-                  <TabsTrigger value="analysis">Analysis</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="news" className="mt-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Latest News</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {isLoading ? (
-                        <div className="space-y-4">
-                          {[...Array(3)].map((_, i) => (
-                            <div key={i} className="border-b border-gray-200 pb-4">
-                              <Skeleton className="h-4 w-3/4 mb-2" />
-                              <Skeleton className="h-3 w-1/2" />
-                            </div>
-                          ))}
-                        </div>
-                      ) : news && news.length > 0 ? (
-                        <div className="space-y-4">
-                          {news.map((item, index) => (
-                            <div key={index} className="border-b border-gray-200 pb-4 last:border-b-0">
-                              <h3 className="font-semibold text-gray-900 mb-2">{item.title}</h3>
-                              <p className="text-sm text-gray-600 mb-2">{item.summary}</p>
-                              <div className="flex items-center justify-between text-xs text-gray-500">
-                                <span>{item.source}</span>
-                                <span>{formatDate(item.publishedAt)}</span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="text-center text-gray-500 py-8">
-                          No news available
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </TabsContent>
+          {/* TAB: TECHNICALS */}
+          <TabsContent value="technicals">
+            {isAnalyzing && !technicals ? <Skeleton className="h-96 w-full" /> : (
+              <Card>
+                <CardHeader><CardTitle>Technical Indicators</CardTitle></CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="p-4 border rounded">
+                      <div className="text-sm text-muted-foreground">RSI (14)</div>
+                      <div className="text-2xl font-bold">{technicals?.rsi_14?.toFixed(2) || '—'}</div>
+                      <div className="text-xs text-muted-foreground">{technicals?.rsi_14 > 70 ? 'Overbought' : technicals?.rsi_14 < 30 ? 'Oversold' : 'Neutral'}</div>
+                    </div>
+                    <div className="p-4 border rounded">
+                      <div className="text-sm text-muted-foreground">SMA 50</div>
+                      <div className="text-2xl font-bold">{technicals?.sma_50?.toFixed(2) || '—'}</div>
+                    </div>
+                    <div className="p-4 border rounded">
+                      <div className="text-sm text-muted-foreground">SMA 200</div>
+                      <div className="text-2xl font-bold">{technicals?.sma_200?.toFixed(2) || '—'}</div>
+                    </div>
+                    <div className="p-4 border rounded">
+                      <div className="text-sm text-muted-foreground">Trend</div>
+                      <div className="text-2xl font-bold text-green-500">Bullish</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
 
-                <TabsContent value="financials" className="mt-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Financial Data</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {isLoading ? (
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                          {[...Array(8)].map((_, i) => (
-                            <div key={i} className="text-center">
-                              <Skeleton className="h-4 w-20 mx-auto mb-2" />
-                              <Skeleton className="h-6 w-16 mx-auto" />
-                            </div>
-                          ))}
-                        </div>
-                      ) : financials ? (
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                          <div className="text-center">
-                            <div className="text-sm text-gray-600">Revenue</div>
-                            <div className="text-lg font-semibold">{formatNumber(financials.revenue)}</div>
-                          </div>
-                          <div className="text-center">
-                            <div className="text-sm text-gray-600">Net Income</div>
-                            <div className="text-lg font-semibold">{formatNumber(financials.netIncome)}</div>
-                          </div>
-                          <div className="text-center">
-                            <div className="text-sm text-gray-600">Assets</div>
-                            <div className="text-lg font-semibold">{formatNumber(financials.assets)}</div>
-                          </div>
-                          <div className="text-center">
-                            <div className="text-sm text-gray-600">Liabilities</div>
-                            <div className="text-lg font-semibold">{formatNumber(financials.liabilities)}</div>
-                          </div>
-                          <div className="text-center">
-                            <div className="text-sm text-gray-600">Equity</div>
-                            <div className="text-lg font-semibold">{formatNumber(financials.equity)}</div>
-                          </div>
-                          <div className="text-center">
-                            <div className="text-sm text-gray-600">Cash</div>
-                            <div className="text-lg font-semibold">{formatNumber(financials.cash)}</div>
-                          </div>
-                          <div className="text-center">
-                            <div className="text-sm text-gray-600">Debt</div>
-                            <div className="text-lg font-semibold">{formatNumber(financials.debt)}</div>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="text-center text-gray-500 py-8">
-                          No financial data available
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </TabsContent>
+          {/* TAB: FINANCIALS */}
+          <TabsContent value="financials">
+            {isAnalyzing && !financials ? <Skeleton className="h-96 w-full" /> : (
+              <Card>
+                <CardHeader><CardTitle>Key Financials</CardTitle></CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex justify-between border-b py-2"><span>Revenue</span> <span className="font-mono">{formatNumber(financials?.revenue)}</span></div>
+                    <div className="flex justify-between border-b py-2"><span>Net Income</span> <span className="font-mono">{formatNumber(financials?.net_income)}</span></div>
+                    <div className="flex justify-between border-b py-2"><span>EPS</span> <span className="font-mono">{financials?.earnings_per_share?.toFixed(2) || '—'}</span></div>
+                    <div className="flex justify-between border-b py-2"><span>ROE</span> <span className="font-mono">{(financials?.roe * 100)?.toFixed(2) || '—'}%</span></div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
 
-                <TabsContent value="peers" className="mt-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Peer Companies</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {isLoading ? (
-                        <div className="space-y-4">
-                          {[...Array(5)].map((_, i) => (
-                            <div key={i} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                              <Skeleton className="h-4 w-32" />
-                              <Skeleton className="h-4 w-16" />
-                            </div>
-                          ))}
+          {/* TAB: NEWS */}
+          <TabsContent value="news">
+            {isAnalyzing && !news ? <Skeleton className="h-96 w-full" /> : (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="space-y-4">
+                    {(news || []).map((item: any, index: number) => (
+                      <div key={index} className="border-b pb-4 last:border-b-0">
+                        <a href={item.link} target="_blank" rel="noopener noreferrer">
+                          <h3 className="font-semibold hover:underline mb-1">{item.title}</h3>
+                        </a>
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <span>{item.publisher}</span>
+                          <span>{new Date((item.providerPublishTime || 0) * 1000).toLocaleDateString()}</span>
                         </div>
-                      ) : peers && peers.length > 0 ? (
-                        <div className="space-y-4">
-                          {peers.map((peer, index) => (
-                            <div key={index} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                              <div>
-                                <div className="font-semibold text-gray-900">{peer.symbol}</div>
-                                <div className="text-sm text-gray-600">{peer.name}</div>
-                              </div>
-                              <div className="text-right">
-                                <div className="font-semibold text-gray-900">${peer.price.toFixed(2)}</div>
-                                <div className={`text-sm ${
-                                  peer.change >= 0 ? 'text-green-600' : 'text-red-600'
-                                }`}>
-                                  {peer.change >= 0 ? '+' : ''}{peer.change.toFixed(2)} ({peer.changePercent >= 0 ? '+' : ''}{peer.changePercent.toFixed(2)}%)
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="text-center text-gray-500 py-8">
-                          No peer companies available
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-
-                <TabsContent value="analysis" className="mt-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Technical Analysis</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-center text-gray-500 py-8">
-                        Technical analysis coming soon...
                       </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-              </Tabs>
-            </div>
-          </>
-        ) : null}
+                    ))}
+                    {(!news || news.length === 0) && <p className="text-sm text-muted-foreground">No recent news found.</p>}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
-    </AppLayout>
+
+      <TradeDialog
+        isOpen={isTradeOpen}
+        onClose={() => setTradeOpen(false)}
+        symbol={symbol || ''}
+        currentPrice={price}
+        side={tradeSide}
+      />
+    </AppLayout >
   );
 };
 

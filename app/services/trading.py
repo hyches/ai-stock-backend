@@ -2,7 +2,8 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from app.models.trading import Strategy, Signal, Trade, Portfolio, Position, BacktestResult
+from app.models.trading import Strategy, Signal, Trade, Position, BacktestResult
+from app.models.database import Portfolio
 from app.schemas.trading import (
     StrategyCreate, StrategyUpdate,
     SignalCreate, TradeCreate, TradeUpdate,
@@ -96,6 +97,17 @@ class TradingService:
                 confidence=signal["confidence"],
                 metrics=signal["metrics"]
             )
+            
+            # Calculate Smart Stop Loss if price data is available
+            if "price" in signal["metrics"]:
+                current_price = signal["metrics"]["price"]
+                # Get ATR if available, otherwise default to 2%
+                atr = signal["metrics"].get("atr", current_price * 0.01)
+                
+                sl, tp = self.risk_manager.calculate_atr_stops(current_price, atr)
+                db_signal.metrics["stop_loss"] = sl
+                db_signal.metrics["take_profit"] = tp
+                
             self.db.add(db_signal)
             db_signals.append(db_signal)
 
@@ -165,8 +177,36 @@ class TradingService:
         self.db.commit()
         self.db.refresh(db_portfolio)
         await cache.clear_pattern(f"portfolio:{portfolio_id}")
-        await cache.clear_pattern("portfolios:*")
         return db_portfolio
+
+    async def rebalance_portfolio_execution(self, portfolio_id: int, target_weights: Dict[str, float]) -> List[Dict[str, Any]]:
+        """
+        Calculate portfolio rebalancing trades
+        """
+        portfolio = await self.get_portfolio(portfolio_id)
+        if not portfolio:
+            return []
+            
+        # Convert ORM model to dict for logic service
+        positions = await self.get_positions(portfolio_id, limit=1000)
+        
+        portfolio_dict = {
+            "current_balance": portfolio.current_balance,
+            "positions": [
+                {
+                    "symbol": p.symbol,
+                    "quantity": p.quantity,
+                    "current_price": p.current_price, # Assuming updated
+                    "average_price": p.average_price
+                } for p in positions
+            ]
+        }
+        
+        # Get suggested trades from PortfolioManager logic
+        suggested_trades = self.portfolio_manager.rebalance_portfolio(portfolio_dict, target_weights)
+        
+        # Return the plan directly (Controller will handle execution/paper trading)
+        return suggested_trades
 
     # Position Management
     @cache_response(ttl=60, key_prefix="positions")

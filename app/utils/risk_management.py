@@ -37,6 +37,14 @@ class RiskManager:
         
         return quantity, stop_loss, take_profit
 
+    def calculate_atr_stops(self, current_price: float, atr: float, multiplier_sl: float = 2.0, multiplier_tp: float = 3.0) -> Tuple[float, float]:
+        """
+        Calculate Stop Loss and Take Profit levels based on ATR
+        """
+        stop_loss = current_price - (atr * multiplier_sl)
+        take_profit = current_price + (atr * multiplier_tp)
+        return stop_loss, take_profit
+
     def calculate_portfolio_risk(self, positions: List[Dict[str, Any]]) -> Dict[str, float]:
         """
         Calculate portfolio risk metrics

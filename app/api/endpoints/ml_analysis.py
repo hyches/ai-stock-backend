@@ -14,6 +14,8 @@ from app.schemas.market import StockAnalysis
 
 router = APIRouter()
 
+from app.services.ml_engine import ml_engine
+
 @router.get("/analysis/{symbol}", response_model=StockAnalysis)
 async def get_stock_analysis(
     symbol: str,
@@ -21,114 +23,40 @@ async def get_stock_analysis(
     current_user: User = Depends(get_current_user)
 ):
     """
-    Get AI-powered stock analysis
+    Get AI-powered stock analysis from the primary ensemble engine.
     """
     try:
         ticker = yf.Ticker(symbol.upper())
-        
-        # Get historical data for analysis
         hist = ticker.history(period="2y")
         
         if hist.empty:
             raise HTTPException(status_code=404, detail="No historical data available")
         
-        # Calculate technical indicators
-        df = hist.copy()
-        df['SMA_20'] = df['Close'].rolling(window=20).mean()
-        df['SMA_50'] = df['Close'].rolling(window=50).mean()
-        df['RSI'] = calculate_rsi(df['Close'])
-        df['MACD'] = calculate_macd(df['Close'])
-        df['BB_Upper'], df['BB_Lower'] = calculate_bollinger_bands(df['Close'])
+        # Call the world-class engine
+        prediction = ml_engine.predict(symbol.upper(), hist)
         
-        # Calculate price change
-        df['Price_Change'] = df['Close'].pct_change()
-        df['Volume_Change'] = df['Volume'].pct_change()
-        
-        # Create features for ML model
-        features = ['SMA_20', 'SMA_50', 'RSI', 'MACD', 'BB_Upper', 'BB_Lower', 'Price_Change', 'Volume_Change']
-        df_features = df[features].dropna()
-        
-        # Create target variable (1 if price goes up next day, 0 if down)
-        df_features['Target'] = (df_features['Price_Change'].shift(-1) > 0).astype(int)
-        df_features = df_features.dropna()
-        
-        if len(df_features) < 100:
-            # Not enough data for reliable analysis
+        if prediction.get("status") == "error":
+            # Fallback if no model trained
             return StockAnalysis(
-                buy=50,
-                hold=30,
-                sell=20,
-                targetPrice=float(df['Close'].iloc[-1]) * 1.1,
+                buy=50, hold=30, sell=20,
+                targetPrice=float(hist['Close'].iloc[-1]) * 1.05,
                 recommendation="Hold"
             )
+
+        # Map ensemble result to Frontend Schema
+        signal = prediction.get("signal", "HOLD")
+        confidence = prediction.get("confidence", 0.5) * 100
         
-        # Prepare features and target
-        X = df_features[features]
-        y = df_features['Target']
-        
-        # Split data
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-        
-        # Train model
-        model = RandomForestClassifier(n_estimators=100, random_state=42)
-        model.fit(X_train, y_train)
-        
-        # Get predictions
-        y_pred = model.predict(X_test)
-        accuracy = accuracy_score(y_test, y_pred)
-        
-        # Get feature importance
-        feature_importance = model.feature_importances_
-        
-        # Get latest features for prediction
-        latest_features = X.iloc[-1:].values
-        
-        # Predict next day direction
-        prediction = model.predict(latest_features)[0]
-        probability = model.predict_proba(latest_features)[0]
-        
-        # Calculate target price based on analysis
-        current_price = float(df['Close'].iloc[-1])
-        
-        # Simple target price calculation based on technical indicators
-        sma_20 = df['SMA_20'].iloc[-1]
-        sma_50 = df['SMA_50'].iloc[-1]
-        rsi = df['RSI'].iloc[-1]
-        
-        target_multiplier = 1.0
-        
-        if sma_20 > sma_50:  # Uptrend
-            target_multiplier += 0.1
-        if rsi < 30:  # Oversold
-            target_multiplier += 0.05
-        elif rsi > 70:  # Overbought
-            target_multiplier -= 0.05
-            
-        target_price = current_price * target_multiplier
-        
-        # Determine recommendation
-        if prediction == 1 and probability[1] > 0.6:
-            recommendation = "Buy"
-            buy_pct = 70
-            hold_pct = 20
-            sell_pct = 10
-        elif prediction == 0 and probability[0] > 0.6:
-            recommendation = "Sell"
-            buy_pct = 10
-            hold_pct = 20
-            sell_pct = 70
-        else:
-            recommendation = "Hold"
-            buy_pct = 30
-            hold_pct = 50
-            sell_pct = 20
-        
+        buy_pct = confidence if signal == "BUY" else (100 - confidence) / 2
+        sell_pct = confidence if signal == "SELL" else (100 - confidence) / 2
+        hold_pct = 100 - buy_pct - sell_pct
+
         return StockAnalysis(
             buy=buy_pct,
             hold=hold_pct,
             sell=sell_pct,
-            targetPrice=target_price,
-            recommendation=recommendation
+            targetPrice=prediction.get("predicted_price_1week", hist['Close'].iloc[-1] * 1.02),
+            recommendation=signal.capitalize()
         )
         
     except HTTPException:
